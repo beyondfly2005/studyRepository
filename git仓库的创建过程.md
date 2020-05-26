@@ -32,12 +32,19 @@ git init
 git remote -v  
 
 git remote add upstream https://github.com/beyondfly2005/studyRepository.git
+git remote add upstream git@github.com:beyondfly2005/studyRepository.git
 
 # 添加文件
 git add *
 
 #提交
 git commit -'添加仓库自述文件'
+
+# 删除远程 Git 仓库
+$ git remote rm origin
+
+# 通过修改文件删除远程仓库
+vi .git/config
 
 # 推送到远程仓库
 git push upstream master
