@@ -31,7 +31,10 @@ git init
 #查看远程分支
 git remote -v  
 
+#http协议方式
 git remote add upstream https://github.com/beyondfly2005/studyRepository.git
+
+#ssh协议方式
 git remote add upstream git@github.com:beyondfly2005/studyRepository.git
 
 # 从远程仓库拉取代码
