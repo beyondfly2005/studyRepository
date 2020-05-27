@@ -34,6 +34,9 @@ git remote -v
 git remote add upstream https://github.com/beyondfly2005/studyRepository.git
 git remote add upstream git@github.com:beyondfly2005/studyRepository.git
 
+# 从远程仓库拉取代码
+git pull upstream master
+
 # 添加文件
 git add *
 
