@@ -41,7 +41,7 @@ git pull upstream master
 git add *
 
 #提交
-git commit -'添加仓库自述文件'
+git commit -m '添加仓库自述文件'
 
 # 删除远程 Git 仓库
 $ git remote rm origin
