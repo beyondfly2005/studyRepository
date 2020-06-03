@@ -80,9 +80,29 @@ cd /opt/openoffice4/program/
 
 #注意
 #若执行启动命令时报错 /opt/openoffice4/program/soffice.bin: error while loading shared libraries: libXext.so.6: cannot open shared object file: No such file or directory ，则需要安装 libXext 依赖包，根据 Linux 版本选择安装类型
-#执行 yum install libXext.x86_64
+#执行 
+$ yum install libXext.x86_64
 #在 /usr/lib64 或 /usr/lib 中找到 libXext.so.6 文件，复制到 /opt/openoffice4/program/ 目录中
-#对复制过来的文件执行 chmod 777 libXext.so.6
+$ cd /usr/lib64
+$ find -iname libXext.so.6
+$ cp libXext.so.6 /opt/openoffice4/program/
+#对复制过来的文件执行 
+$ cd /opt/openoffice4/program/
+$ chmod 777 libXext.so.6
+
+# 测试启动
+/opt/openoffice4/program/soffice -accept="socket,host=127.0.0.1,port=8100;urp;" -headless -nofirststartwizard
+
+# 报错
+#no suitable windowing system found, exiting.
+
+# 方法一 安装x-window
+yum groupinstall "X Window System"
+
+# 方法二 ubuntu系统可以尝试安装libxt6 and libxrender1
+# apt-get install libxt6
+# apt-get install libxrender
+
 
 #关闭openOffice服务，
 #命令：ps -ef|grep soffice
