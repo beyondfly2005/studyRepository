@@ -98,6 +98,23 @@ mybatis-plus:
     jdbc-type-for-null: ‘null‘
 ```
 
+
+
+##### SpringBoot使用MyBatis报错：Error invoking SqlProvider method (tk.mybatis.mapper.provider.base.BaseInsertProvider.dynamicSQL)
+
+> https://blog.csdn.net/qsx741olm/article/details/99010082
+
+```java
+//在SpringBoot的启动类上，使用@MapperScan注解时引入了错误的包下的。
+//正确的应该是：
+import tk.mybatis.spring.annotation.MapperScan;
+
+//错误的引入了：
+import org.mybatis.spring.annotation.MapperScan;
+```
+
+
+
 ##### SpringBoot如何集成druid数据源
 
 
