@@ -1,16 +1,16 @@
 # docker 私服搭建 registy
 
 ```bash
+# 创建安装目录
 cd /usr/local/
 mkdir docker/registry
+
+# 编辑docker-compose.yml文件
 vim docker-compose.yml
-
-
-
 ```
 
 ```yml
-version: 3.1
+version: '3.1'
 services:
   registry:
     image: registry
@@ -20,11 +20,12 @@ services:
       - 5000:5000
     volumns:
       - /usr/local/docker/registry/data:var/lib/registry
-    
 ```
 
 ```bash
+# 启动docker镜像
 $ docker-compose up
+$ docker-compose up -d
 ```
 
 > 浏览器打开
@@ -46,7 +47,7 @@ vim daemon.json
 
 #增加本地registy地址
 {
-
+	"insecure-registries":["192.168.1.205:5000"]
 }
 
 ```
@@ -90,20 +91,30 @@ http://192.168.1.131:5000/tomcat/v2/_catlog
 http://192.168.1.131:5000/tomcat/v2/tags/list
 http://192.168.1.131:5000/tomcat/v2/
 
+```
+#### 部署Docker Registry WebUI
 
+私服安装成功之后就可以使用docker命令行工具对registry做各种操作了，然而不方便的地方是不能直观的查看registry中俄资源情况，如果可以使用UI工具管理就更快了，这里介绍两个Docker Registry WebUI工具
+
+- docker-registry-frontend
+- docker-registry-web
+
+两个工具的功能和解密都差不多，这里以 docker-registry-fontend 为例讲解
+```bash
 # docker registry 只提供了restFul风格的API
 
 # python web UI页面
 
-docker-registry-fontend
-
 ```
 
-回到 registry
+##### docker-registry-fontend
+
+
 
 
 ```bash
-cd registry
+# 回到registry目录
+cd /usr/local/docker/registry
 
 #停掉之前的registry
 docker-compose down
@@ -111,31 +122,42 @@ docker-compose down
 #修改 docker-compose.yml文件
 vim docker-compose.yml
 ```
+在services节点 增加如下fontdend 配置
+
 ```yml
-fontend:
-  image: konradkleine/docker-registry-frontend:v2
-  ports:
-    - 8080:80
-  volumes:
-    - ./certs/frontend.crt:/etc/apache2/server.ccrt:ro
-    - ./certs/frontend.key:/etc/apache2/server.key:ro
-  environment:
-    - ENV_DOCKER_REGISTRY_HOOST=192.168.1.xx
-    - ENV_DOCKER_REGISTRY_PORT=5000
+version: '3.1'
+services:
+  fontend:
+    image: konradkleine/docker-registry-frontend:v2
+    ports:
+      - 8080:80
+    volumes:
+      - ./certs/frontend.crt:/etc/apache2/server.ccrt:ro
+      - ./certs/frontend.key:/etc/apache2/server.key:ro
+    environment:
+      - ENV_DOCKER_REGISTRY_HOOST=192.168.1.152
+      - ENV_DOCKER_REGISTRY_PORT=5000
 
 ```
 
 ```bash
 # 启动
+docker-compose up 
 docker-compose up -d
 
+# 查看运行的镜像
+docker ps
 ```
 
+浏览器访问 测试前端webUI
+
+http://ip:8080
 
 
 
 
-# Docker 
+
+## Docker 
 
 
 
