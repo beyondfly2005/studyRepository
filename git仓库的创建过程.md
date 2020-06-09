@@ -54,6 +54,9 @@ vi .git/config
 
 # 推送到远程仓库
 git push upstream master
+# 如果想要使用 
+git push upstream
+git push --set-upstream upstream master
 ```
 
 
