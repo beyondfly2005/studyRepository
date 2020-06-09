@@ -26,8 +26,111 @@ $ docker-compose up -d
 
 
 
+```bash
+# 进入到容器内
+docker exec -it 88343b33744c bash
+docker exec -it sonarqube_postgres_1 bash
+
+# 查看日志
+dockerlogs sonarqube_postgres_1
+```
+
+
+
+
+
 >参考文档
 >
 >https://github.com/Hello-Nemo/docker-SonarQube
 >
 >https://www.jianshu.com/p/eb891c37ffba
+
+
+
+
+
+## 另一个版本的安装
+
+> 参考文档
+
+https://www.jianshu.com/p/194a86df8e17
+
+https://hub.docker.com/r/jamesz2011/sonarqube6.7/
+
+https://github.com/jamesz2011/sonarqube/blob/master/postgres_sonarqube.yml
+
+#### 版本特点
+
+- 将内嵌的数据库改为了关联外部数据库PostgreSQL数据库
+- 系统默认语言设置为中文
+- 安装了一些常用工具wget curl vim lrzsz
+- 将镜像系统Debian9改为阿里Debian加速 并将默认时区改为Aisa/Shanghai
+
+
+
+#### 获取compose yaml文件
+
+```bash
+cd /usr/local/docker
+mkdir sonarqube
+cd sonarqube
+wget https://github.com/jamesz2011/sonarqube/blob/master/postgres_sonarqube.yml
+mv postgres_sonarqube.yml docker-compose.yml
+
+# 如果下载不到 直接 编辑
+vim docker-compose.yml
+
+# 添加一下内容
+```
+
+```yaml
+#这是一个利用docker-compose来构建【sonarqube6.7+PostgreSQL】环境的yml文件
+
+#sonarqube6.7的登录用户和密码均为admin,登录页面port为9000。
+
+#PostgreSQL数据库的用户和密码均为sonar[可以在浏览器输入ip+8088或navicat工具访问数据库]。
+version: "3"
+services:
+  db:
+    image: postgres
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=sonar
+      - POSTGRES_PASSWORD=sonar
+
+    adminer:
+      image: adminer
+      restart: always
+      ports:
+        - 8088:8080
+
+    sonarqube6.7:
+      image: jamesz2011/sonarqube6.7:latest
+      container_name: sonarqube
+      ports:
+        - "9000:9000"
+        - "9092:9092"
+      volumes:
+        - /etc/localtime:/etc/localtime:ro
+      links:
+        - db
+      environment:
+        - SONARQUBE_JDBC_URL=jdbc:postgresql://db:5432/sonar
+```
+
+### 运行Docker
+
+```bash
+docker-compose up 
+docker-compose up -d
+
+# 如果yaml文件不改名的情况下 可以使用如下命令启动
+docker-compose f postgres_sonarqube.yml up
+```
+
+
+
+**sonar**
+
