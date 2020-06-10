@@ -127,15 +127,15 @@ vim docker-compose.yml
 ```yml
 version: '3.1'
 services:
-  fontend:
+  frontend:
     image: konradkleine/docker-registry-frontend:v2
     ports:
       - 8080:80
     volumes:
-      - ./certs/frontend.crt:/etc/apache2/server.ccrt:ro
+      - ./certs/frontend.crt:/etc/apache2/server.crt:ro
       - ./certs/frontend.key:/etc/apache2/server.key:ro
     environment:
-      - ENV_DOCKER_REGISTRY_HOOST=192.168.1.152
+      - ENV_DOCKER_REGISTRY_HOST=192.168.1.152
       - ENV_DOCKER_REGISTRY_PORT=5000
 
 ```
