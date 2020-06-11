@@ -74,22 +74,26 @@ systemctl restart docker
 
 
 # 检查配置私服是否成功
-docker info
+$ docker info
+Insecure Registries:
+  192.168.0.108:5000
+  127.0.0.0/8
 
 # 下载tomcat
 docker pull tomcat
 
 #将本地的tomcat标记为 ip 端口 名称
 # 
-docker tag tomcat 192.168.1.131:5000/tomcat
-docker tag tomcat 192.168.1.131:5000/tomcat:5.5.32
+docker tag tomcat 192.168.1.252:5000/tomcat
+docker tag tomcat 192.168.1.252:5000/tomcat:5.5.32
 
 # 将本地的docker 推送到私服
-docker push 192.168.1.131:5000/tomcat
+docker push 192.168.1.252:5000/tomcat
 
-http://192.168.1.131:5000/tomcat/v2/_catlog
-http://192.168.1.131:5000/tomcat/v2/tags/list
-http://192.168.1.131:5000/tomcat/v2/
+# 浏览器查看镜像是否存在
+http://192.168.1.252:5000/v2/_catlog
+http://192.168.1.252:5000/v2/tomcat/tags/list
+http://192.168.1.252:5000/v2/tomcat/
 
 ```
 #### 部署Docker Registry WebUI
