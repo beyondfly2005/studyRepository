@@ -68,7 +68,7 @@ $ lsof -i:8081
 ### Docker-Compose文件
 
 ```yml
-version: '3.3'
+version: '3.1'
 services:
   nexus:
     restart: always
