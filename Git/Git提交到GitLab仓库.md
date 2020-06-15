@@ -24,11 +24,19 @@ git pull ssh://git@192.168.1.252:220/gaolongfei/hello-gitlab.git
 touch index.html
 
 git add index.html
+git add * 
 
 git commit -m 'new inedex.html'
 git commit -m '新建/创建/添加 inedex.html  作为项目首页'
 
+
+# git add 后取消
+git reset HEAD <file>
+
 # 提交到远程
+git push origin
+
+# 拉取远程代码
 git pull
 
 # 提示使用 git remote add <name> <url> 来设置远程仓库地址
@@ -85,7 +93,13 @@ Git 与 SVN 区别点：
 #### git 安装配置
 
 - git安装
+
+  
+
 - Tortoise git安装
+
+  - 中文包安装
+
 - 配置
 
 ```bash
@@ -139,13 +153,14 @@ $ rm -rf .git
 #### git 常用命令
 
 - git init
-- git clone
+- git clone 
 - git pull
 - git add
 - git status
 - git diff
 - git commit
 - git push 
+- git branch
 - git merge
 - git log
 - git ... 
@@ -163,7 +178,7 @@ git checkout (branchname)
 ## 当你切换分支的时候，Git 会用该分支的最后提交的快照替换你的工作目录的内容， 所以多个分支不需要多个目录。
 
 # 合并分支命令:
-git merge 
+git merge
 # 你可以多次合并到统一分支， 也可以选择在合并之后直接删除被并入的分支
 
 # 列出分支 *代表当前分支
@@ -186,6 +201,54 @@ git merge branchname
 
 # 合并冲突
 git diff
+```
+
+###### 远程分支
+
+```bash
+# 查看远程分支
+git branch -r
+
+# 推送分支
+git push origin sub1
+git push upstream sub1
+
+# 拉取远程分支
+git pull upstream sub1
+
+# 合并远程分支
+# XXXX 没办法直接进行 或者专属的命令
+# 拉取两个分支进行合并，然后推送到远程
+
+
+#————————————————————————————————————————
+
+# 查看远程库的信息
+git remote
+
+# 查看远程库的更多更详细信息
+git remote -v
+
+# 推送分支
+# 推送分支，就是把该分支上的所有本地提交推送到远程库
+git push origin master
+
+# 推送其他分支 如sub1
+git push origin sub1
+
+# 如果远程库不叫origin 叫upstream
+git push upstream sub1
+
+
+# 显式地获得远程引用的完整列表
+git ls-remote upstream
+
+# 获得远程分支的更多信息
+git remote show upstream
+
+# 删除远程分支
+
+
 ```
 
 
@@ -292,7 +355,7 @@ git merge
 git pull
 # git pull= git fetch + git merge
 
-#
+# 拉取远程分支 
 git fetch origin
 git fetch origin master
 
@@ -300,7 +363,7 @@ git fetch origin master
 git merge origin/master
 
 #推送你的新分支与数据到某个远端仓库命令:
-git push [alias] [branch]
+# git push [alias] [branch]
 git push origin sub1
 
 # 删除远程仓库你可以使用命令
@@ -378,4 +441,50 @@ git remote rm [别名]
 
 
 #### git 流程管理
+
+​	git 工作流程
+
+> 参考文档 https://blog.csdn.net/slowlifes/article/details/79569084
+
+​	常用的三种工作流程
+
+- Git flow
+- Github flow
+- Gitlab flow
+
+Git flow工作流
+
+![](http://www.ruanyifeng.com/blogimg/asset/2015/bg2015122302.png)
+
+```bash
+
+```
+
+
+
+#### git 常见问题
+
+###### git fetch 和 git pull的区别
+
+`git fetch` 命令从服务器上抓取本地没有的数据时，它并不会修改工作目录中的内容。 它只会获取数据然后让你自己合并。 然而，有一个命令叫作 `git pull` 在大多数情况下它的含义是一个 `git fetch` 紧接着一个 `git merge` 命令。 如果有一个像之前章节中演示的设置好的跟踪分支，不管它是显式地设置还是通过`clone` 或 `checkout` 命令为你创建的，`git pull` 都会查找当前分支所跟踪的服务器与分支， 从服务器上抓取数据然后尝试合并入那个远程分支。
+
+由于 `git pull` 的魔法经常令人困惑所以通常单独显式地使用 `fetch` 与 `merge` 命令会更好一些。
+
+
+
+## Idea中使用Git
+
+git add
+
+git repositry  reet HEAD
+
+git commit
+
+git commit and push
+
+git repositry  branch 
+
+
+
+## TortoiseGit
 
