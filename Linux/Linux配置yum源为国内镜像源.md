@@ -69,6 +69,7 @@ service network restart
 #重启网络后 
 # 查看配置
 cat /etc/resolv.conf
+
 #配置信息丢失
 #在/etc/sysconfig/network-scripts/ifcfg-eth0 文件中添加上面的DNS server信息，注意有=这个符号
 #注意网卡名称 可能不是这个名称 可能是 ifcfg-eno1
