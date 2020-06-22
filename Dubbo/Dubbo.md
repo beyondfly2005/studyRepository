@@ -115,7 +115,193 @@ Zooker常用功能 ：
 - 使用Java语言编写 
 - Zookeeper安装
 
-#### 六 Dubbo支持的协议
+```bash
+# 安装JDK
+cd /usr/local/
+mkdir jdk
+# 上传压缩包
 
-#### 七 Dubbo中Provider搭建
+# 解压
+tar -zxvf jdk-8u221-linux-x64.tar.gz
+
+vim /etc/profile
+export JAVA_HOME=/usr/local/jdk1.8
+export PATH=$JAVA_HOME/bin:$PATH
+source /etc/profile
+java -version
+# 安装Zookeeper
+
+#
+cd /usr/local/temp
+#上传文件
+
+#解压
+tar -zxvf zookeeper-3.4.6.tar.gz 
+
+# 复制
+cp -r /usr/local/temp/zookeeper-3.4.6 /usr/local/zookeeper
+
+cd /usr/local/zookeeper
+
+mkdir data
+cd conf
+cp zoo_sample.cfg zoo.cfg
+
+# 修改配置文件
+vim zoo.cfg
+dataDir=/usr/local/zookeeper/data
+
+# 启动Zookeeper 
+cd ../bin 
+# 或者
+cd /usr/local/zookeeper/bin
+
+# 启动zk
+./zkServer.sh start
+
+# 查看zk状态
+./zkServer.sh status
+# 启动成功显示 Mode: standalone
+
+# 默认端口2181
+# centos6.5 
+# 使用的iptables 防火墙
+vim /etc/sysconfig/iptables
+#增加一行
+-A INPUT -m state --state NEW -m tcp -p tcp --dport 2181 -j ACCEPT
+# 重启防火墙生效配置
+service iptables restart
+
+
+# centos7使用的是firewall
+
+# 查看防火墙状态
+systemctl status firewalld
+# Active: active (running) 表示运行中
+
+#查看firewall的状态
+firewall-cmd --state
+# 显示 running 表示运行中
+
+# 查询端口是否开放
+firewall-cmd --query-port=2181/tcp
+# 开放2181端口
+firewall-cmd --permanent --add-port=2181/tcp
+# 移除端口
+firewall-cmd --permanent --remove-port=2181/tcp
+
+#重启防火墙 生效配置
+firewall-cmd --reload
+```
+
+#### 六  Dubbo支持的协议
+
+- Dubbo协议
+
+  dubbo的默认协议，采用NIO复用单一长连接，并使用线程池并发处理，适合于小数据量大并发的服务调用，以及服务消费者机器数远大于服务提供者机器数的情况
+
+  缺点：不适合传送大数据量的服务，比如传文件，传视频等，除非请求量很低。
+
+  会采用vsftpd 处理文件 不使用dubbo
+
+- Rmi协议
+
+  JDK提供的协议，远程方法调用协议
+
+  缺点：偶尔调用失败
+
+  优点：JDK原生，不需要进行额外配置（不需要导入jar包）
+
+- Hessian协议
+
+  优点：原生与Hessian互操作，基于http协议
+
+  缺点：需要Hessian支持 需要额外导入jar，并在短连接时开销低
+
+#### 七  Dubbo中Provider搭建
+
+​	接口和实现类分别创建到不同的项目中；
+
+​	实现类依赖于接口；Consumer也依赖于这个接口
+
+​	1- 将服务提供者注册到注册中心(暴露服务)
+
+			- 引入dobbo依赖
+			- 引入Zookeeper客户端
+			- 配置文件
+
+​	2- 让服务消费者去注册中心订阅服务
+
+
+
+zookeeper 客户端
+
+Zookeeper2.5 使用的是zkclient
+
+Zookeeper2.6 使用的是curator
+
+
+
+Dubbo-Admin
+
+```bash
+# 下载doubbo 运维包的源码
+git clone https://github.com/apache/dubbo.git
+
+# 切换到指定tag版本
+git checkout -b dubbo-2.6.0
+
+cd dubbo-admin
+
+# 构建war包
+mvn  package -Dmaven.skip.test=true
+
+#构建之前 必须配置好 java和 maven的环境变量！！！
+
+# 将dubbo-admin-2.6.0.war上传到tomcat服务器 webapps
+cd /usr/local/tomcat/webapps/
+mv dubbo-admin-2.6.0.war dubbo-admin.war
+
+#启动tomcat
+cd /usr/local/tomcat/bin
+./start.sh
+
+# 
+cd  /usr/local/tomcat/webapps/dubbo-admin-2.6.0/WEB-INF
+vim dubbo.properties
+
+# 检查Zookeeper地址 
+# 如有必要，可以修改root或guest密码 
+# 和zookeeper注册中心<dubbo:registry address="zookeeper://127.0.0.1:2181" />中的保持一致
+dubbo.registry.address=zookeeper://127.0.0.1:2181
+# 用户名
+dubbo.admin.root.password=root
+# 密码
+dubbo.admin.guest.password=guest
+
+# dubbo.properties如有变动 需要重启tomcat
+cd /usr/local/tomcat/bin
+./shutdow.sh
+./start.sh
+
+# 查询端口是否开放
+firewall-cmd --query-port=8080/tcp
+# 开放2181端口
+firewall-cmd --permanent --add-port=8080/tcp
+# 移除端口
+firewall-cmd --permanent --remove-port=2181/tcp
+
+#重启防火墙 生效配置
+firewall-cmd --reload
+
+# 浏览器访问
+http://tomcat-IP:8080/dubbo-admin
+http://192.168.198.128:8080/dubbo-admin
+
+#提示输入用户名密码 
+root/root
+
+```
+
+
 
