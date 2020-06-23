@@ -23,6 +23,7 @@ git pull ssh://git@192.168.1.252:220/gaolongfei/hello-gitlab.git
 # 新建 index.html文件
 touch index.html
 
+# 添加到暂存区
 git add index.html
 git add * 
 
@@ -92,21 +93,20 @@ Git 与 SVN 区别点：
 
 #### git 安装配置
 
-- git安装
-
-  
-
+- git下载安装
+- 官网下载  https://git-scm.com/download/win
+  - 360软件管家一键安装
 - Tortoise git安装
-
-  - 中文包安装
-
+  - Tortoise git 和 Tortoise git中文包安装
+  - 官网下载 https://tortoisegit.org/download/
+  - 360软件管家一键安装
 - 配置
 
 ```bash
 ## git配置用户信息
 ## 配置个人的用户名称和电子邮件地址：
-$ git config --global user.name "runoob"
-$ git config --global user.email test@runoob.com
+$ git config --global user.name "zhangsan"
+$ git config --global user.email 123456@qq.com
 
 
 ## git配置默认的文本编辑器
@@ -372,6 +372,39 @@ git remote rm [别名]
 ```
 
 
+
+#### git 流程管理
+
+​	git 工作流程
+
+> 参考文档 https://blog.csdn.net/slowlifes/article/details/79569084
+
+​	常用的三种工作流程
+
+- Git flow
+- Github flow
+- Gitlab flow
+
+Git flow工作流
+
+![](http://www.ruanyifeng.com/blogimg/asset/2015/bg2015122302.png)
+
+```bash
+
+```
+
+
+
+#### git 常见问题
+
+###### git fetch 和 git pull的区别
+
+`git fetch` 命令从服务器上抓取本地没有的数据时，它并不会修改工作目录中的内容。 它只会获取数据然后让你自己合并。 然而，有一个命令叫作 `git pull` 在大多数情况下它的含义是一个 `git fetch` 紧接着一个 `git merge` 命令。 如果有一个像之前章节中演示的设置好的跟踪分支，不管它是显式地设置还是通过`clone` 或 `checkout` 命令为你创建的，`git pull` 都会查找当前分支所跟踪的服务器与分支， 从服务器上抓取数据然后尝试合并入那个远程分支。
+
+由于 `git pull` 的魔法经常令人困惑所以通常单独显式地使用 `fetch` 与 `merge` 命令会更好一些。
+
+
+
 #### git 常用图形化工具
 
 - sourceTree
@@ -379,6 +412,16 @@ git remote rm [别名]
 - Tortoise git
 
 ####　git 在idea中的使用
+
+##### Idea中常用的方法
+
+- git add
+- git repositry  reet HEAD
+- git commit
+- git commit and push
+- git repositry  branch 
+
+###### Idea中Git 与Svn的使用对比
 
 - **更新代码**
 
@@ -440,51 +483,7 @@ git remote rm [别名]
 
 
 
-#### git 流程管理
-
-​	git 工作流程
-
-> 参考文档 https://blog.csdn.net/slowlifes/article/details/79569084
-
-​	常用的三种工作流程
-
-- Git flow
-- Github flow
-- Gitlab flow
-
-Git flow工作流
-
-![](http://www.ruanyifeng.com/blogimg/asset/2015/bg2015122302.png)
-
-```bash
-
-```
 
 
-
-#### git 常见问题
-
-###### git fetch 和 git pull的区别
-
-`git fetch` 命令从服务器上抓取本地没有的数据时，它并不会修改工作目录中的内容。 它只会获取数据然后让你自己合并。 然而，有一个命令叫作 `git pull` 在大多数情况下它的含义是一个 `git fetch` 紧接着一个 `git merge` 命令。 如果有一个像之前章节中演示的设置好的跟踪分支，不管它是显式地设置还是通过`clone` 或 `checkout` 命令为你创建的，`git pull` 都会查找当前分支所跟踪的服务器与分支， 从服务器上抓取数据然后尝试合并入那个远程分支。
-
-由于 `git pull` 的魔法经常令人困惑所以通常单独显式地使用 `fetch` 与 `merge` 命令会更好一些。
-
-
-
-## Idea中使用Git
-
-git add
-
-git repositry  reet HEAD
-
-git commit
-
-git commit and push
-
-git repositry  branch 
-
-
-
-## TortoiseGit
+## 
 
