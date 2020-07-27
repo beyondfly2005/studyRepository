@@ -1,3 +1,5 @@
+>视频地址 ：https://www.bilibili.com/video/BV185411477k
+
 ### 课程内容
 
 Spring IOC工厂
@@ -32,7 +34,11 @@ MVC框架集成
 
 《J2EE Development Without EJB》 提出轻量级JEE开发解决方案Spring
 
-#### EJB框架的缺陷
+## 第一章 引言
+
+### 1. EJB存在的问题
+
+##### EJB框架的缺陷
 
 Enterprise Java Bean 企业级JavaBean
 
@@ -55,7 +61,7 @@ EJB
 - 移植性差  基于WebLogic中的代码无法运行在WebLogic中运行
 - 重量级框架
 
-什么是Spring
+### 2. 什么是Spring
 
 ```
 Spring是一个轻量级的JavaEE解决方案，整合众多优秀的设计
@@ -91,7 +97,7 @@ Spring		Service
 4、策略设计模式
 ```
 
-###   3、 设计模式
+###   3. 设计模式
 
 ```
 1、广义概念
@@ -101,7 +107,7 @@ GOF 4人帮定义的23种设计模式：
 工厂 适配器 装饰器 门面 带哦你 模板.....
 ```
 
-### 4、工厂设计模式
+### 4. 工厂设计模式
 
 ```
 1、概念：通过工厂类，创建对象
@@ -402,5 +408,52 @@ public void test3(){
     System.out.println("person="+person);
 }
 
+```
+
+### 5 细节分析
+
+- 名词解释
+
+```
+Spring工厂创建的对象 叫bean 或者组件componet
+```
+
+- Spring工厂的一些相关方法
+
+```java
+@Test
+public void test3(){
+    //1 获得Spring的工厂
+    ApplicationContext ctx = new ClassPathXmlApplicationContext("/applicationContext.xml");
+    //2 通过工厂类获得对象
+    Person person = (Person)ctx.getBean("person");
+    
+    //通过这种方式获得队形，就不需要强制类型转换
+    Person person = ctx.getBean("person",Person.class);	
+    
+    //当前spring配置文件 有且只能有一个bean标签是Person类型
+    Person person = ctx.getBean(Person.class);	
+    //soutv 快捷键
+    System.out.println("person="+person);
+    
+    //获取的是Spring工厂配置文件中的所有bean标签的id值 person person1
+    String[] beanDefinitonNames = ctx.getBeanDefinitionNames();
+    for(){
+        
+    }
+   	//根据类型获得spring配置文件中的id值
+    String[] beanDefinitonNames = ctx.getBeanNamesForType(Person.class)
+    for(){
+        
+    }
+    
+    //用于判断是否存在指定id的bean
+    boolean flag = ctx.containsBeanDefinition();
+    System.out.println(flag);
+	
+    //用于判断是否存在指定id的bean
+    boolean flag = ctx.containsBean();
+    System.out.println(flag);
+}
 ```
 
