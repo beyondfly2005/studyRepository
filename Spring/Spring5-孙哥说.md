@@ -457,3 +457,197 @@ public void test3(){
 }
 ```
 
+- 配置文件中需要注意的细节
+
+```markdown
+1、只配置class属性
+<bean class=""/>
+
+A> 上述这种配置有没有id值? Spring会不会自动给生成默认值
+	会 命名规则 com.beyondsoft.basic.Persion#0
+B> 应用场景是什么？
+	如果这个bean只需要使用一次，那么久可以省略id值
+	如果这个bean会被使用多次，或者被其他bean引用则需要设置id值
+2、name属性
+作用：用于在Spring的配置文件中，为bean对象定义别名(小名)
+<bean id="pserson" name="p" class="com.beyondsoft.basic.Persion"/>
+
+```
+
+```java
+@Test
+public void test5(){
+    AppliationContex ctx = new ClassPathXmlApplicationContext("/applicationContext.xml");
+    String
+}
+```
+
+### 6. Spring工厂的底层实现原理（简易版）
+
+```
+1、Spring框架
+通过ClassPathXmlApplicationContext工厂读取配置文件applicationContext.xml
+2、Spring框架
+获取bean标签的相爱难改观信息
+通过发射创建对象
+Class<?> clazz = Class.forName(class的值);
+id的值=  clazz.newInstance();
+等效于new 创建对象
+Account account= new Account();
+```
+
+通过反射创建对象是否调用构造方法？如何来证明
+
+会调用构造方法，并且调用的是无参构造
+
+可以通过创建一个对象，在对象中的无参构造方法中 输出打印语句，来测试
+
+- ```java
+  public class Person(){
+      public Person(){
+          System.out.println("Person.person");
+      }
+  }
+  
+  @Test
+  public void test6(){
+      AppliationContex ctx = new ClassPathXmlApplicationContext("/applicationContext.xml");
+      Person p = (Person)ctx.getBean("person");
+      System.out.println("p = "+p);
+  }
+  
+  // Ctl+Alt+F10 执行
+  如果没有无参构造，只有有参构造怎么办？
+  如果无参构造是私有的，Spring能否调用这个构造方法
+  public class Person(){
+      private Person(){
+          System.out.println("Person.person");
+      }
+  }    
+  使用反射可以调用对象的私有的构造方法创建对象    
+  ```
+
+**Spring工厂是可以调用 私有的方法创建对象 **
+
+
+
+### 7. 思考
+
+```
+问题：未来在开发中，是不是所有的对象，都会交给Spring工厂来创建呢？
+回答：理论上 是的，但是有特例：实体对象（Entity）
+	实体封装数据库中表的数据，这些数据 通常由持久层框架来创建。
+	例如：mybatis JPA JDBC Hibernate等
+```
+
+
+
+## 第三章、Spring5.x与日志框架的整合
+
+```
+Spring与日志框架进行整合，日志框架就可以在控制太重，输出Spring框架运行过程中的一些重要信息；
+好处：方便了解Spring框架的运行过程，有利于程序的调试
+```
+
+- Spring如何整合日志框架
+
+```
+# 默认
+Spring 1 .2 .3 早起都是与commons-logging.jar 进行整合
+Spring5.x默认整合的日志框架logback log4j2
+
+Spring 5.x整合log4j
+1、引入loj4j jar包
+2、引入log4j.properties
+
+```
+
+  - pom
+
+```
+<dependency>
+	<groupId>org.sl4j</groupId>
+	<artofactOd>slf4j-log4j12<artifactId>
+	<version>1.7.25</version>
+</dependency>
+<dependency>
+	<groupId>log4j</groupId>
+	<artofactOd>log4<artifactId>
+	<version>1.2.17</version>
+</dependency>
+```
+
+- log4j.properties
+
+```properties
+#resources文件夹根目录
+### 配置根
+log4j.rootLogger= debug,console
+
+### 日志输出到控制台显示
+log4j.appender.console=org.apache.log4j.ConsoleAppender
+log4j.appender.console.Target=System.out
+log4j.appender.console.layout=org.apache.log4j.PatternLayout
+log4j.appender.console.layoutConversionPattern=%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n
+```
+
+
+
+## 第四章、注入（injection）
+
+### 1. 什么是注入
+
+```
+
+```
+
+#### 1.1 为什么需要注入
+
+**通过编码的方式，为成员变量赋值，存在耦合**
+
+```java
+@Test
+public void test7(){
+    AppliationContex ctx = new ClassPathXmlApplicationContext("/applicationContext.xml");
+    Person p = (Person)ctx.getBean("person");
+}
+```
+
+#### 1.2 如何进行注入[开发步骤]
+
+- 类的成员变量提供set get方法
+
+- 配置spring的配置文件
+
+  ```
+  <bean id="Person">
+  	<property name="id">
+  		<value>10</value>
+  	</property>
+  		<property name="name">
+  		<value>xiaojr</value>
+  	</property>
+  </bean>	
+  ```
+
+  
+
+#### 1.3 注入的好处
+
+```
+解耦合
+```
+
+
+
+### 2. Spring注入元分析（简易版）
+
+**Spring会通过底层调用对象属性的set方法，完成成员变量的赋值，这种方式我们也称之为set注入**
+
+```
+Spring注入的工作原理
+1、解析bean标签 使用反射创建对象
+2、property标签 调用属性的set方法 进行赋值
+```
+
+## 第五章、Set注入详解
