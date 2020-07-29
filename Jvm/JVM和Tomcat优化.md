@@ -8,7 +8,10 @@
 03--Tomcat 	https://www.bilibili.com/video/BV1Cb41167c4
 04--Tomcat	https://www.bilibili.com/video/BV1kb41167hR
 05--Tocat	https://www.bilibili.com/video/BV1Cb41167Az
-06--
+06--Tocat	https://www.bilibili.com/video/BV1Ub411z7xN
+07--Tocat	https://www.bilibili.com/video/BV1Ub411z7pN
+08--压测	   https://www.bilibili.com/video/BV1Ub411z7HE
+09-APR		https://www.bilibili.com/video/BV1Ub411z7xN
 ```
 
 ​	
@@ -316,10 +319,57 @@ enableLookups="false"	是否允许使用DNS查询，通常情况下设置为fals
 	如果希望忽略DNS查询 仅仅返回IP地址 设置为false 这样设置提高了性能
 	缺省情况下，DNS查询是key使用的
 	一句话：是否反查域名，取值为：true或false 为了提高处理能力，一般设置为false
+
+disableUploadTimeout="true"	
+	
+connectionTimeout:网络连接超时
+
+acceptCount 是当线程数达到maxThread后，后续请求会被放入一个等待队列，这个acceptCount是这个队列  就直接refuse connection
+
+maxThreads 最大线程数 默认200 配置600  保守推荐600-900
+
+minProcessors
+maxProcessors 最小线程数 最小的处理线程数，及时没有任何http请求，Tomcat也至少保持至少这么多的线程等待处理
+	Accept Count
+减少一些url的不必要的url检查从而减小开销
+
+compression 压缩 是否开启GZip压缩  on
+compressionMinSize	压缩 2048
+compressionableMimeType 压缩类型 text/html/
+
+
 ```
 
+- 坑爹情况
+
+只装1个JDK，至少每个盘只装1个JDK 不要多个放同一个盘
+
+catalina.sh脚本
+
+指定Java_home
+
+set JAVA_OPTS=
+
+set JAVA_HOME=D:\Program Files\Java\jdk1.7-64\jdk1,7,0_67_x64
 
 
+
+- linux下修改catalina.sh
+
+export  JAVA_OPTS=xxxx
+
+- windows 下修改catalina.bat
+
+export 改为set
+
+set JAVA_OPTS=xxxx
+
+- session-timeout 默认30分钟
+```xml
+<session-config>
+    <session-timeout>30</sesssion>
+</session-config>    
+```
 ### 网络传输优化
 
 
