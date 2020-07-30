@@ -284,10 +284,18 @@ To区被填满，填满后放到老年代中
 
 #### Tomcat之并发优化
 
-```bash
+##### 位置
 
+```bash
 cd /tomcat7/conf/server.xml
 cp server.xml server.xml.bak
+```
+
+
+
+##### 优化
+
+```bash
 
 # 默认协议
 protocol="HTTP/1.1"
@@ -301,11 +309,27 @@ acceptCount="700"
 
 - 复杂版
 
-```bash
-
+```xml
+<Connector port="8080"
+    proctocol="org.apache.coyote.http11.Http11NioProtocol"
+    URIEncoding="UTF-8"
+    minSpareThreads="25"
+    maxSpareThreads="75"
+    enableLookups="false"
+    disableUploadTimeout="true"
+    connectionTimeout="20000"
+    acceptCount="300"
+    maxThreads="300"
+    maxProcessors="1000"
+    minProcessors="5"
+    useURIValidationHack="false"
+    compression="on"
+    commpressionSize="2048"
+    compressableMinType="text/html,text/xml,text/JavaScript,Text/css,text/plain"
+    redirectPort="8443"/>
 ```
 
-- 参数逐项说明
+##### 参数逐项说明
 
 ```
 minSpareThreads="100"	最小备用线程数
@@ -333,9 +357,9 @@ maxProcessors 最小线程数 最小的处理线程数，及时没有任何http�
 	Accept Count
 减少一些url的不必要的url检查从而减小开销
 
-compression 压缩 是否开启GZip压缩  on
-compressionMinSize	压缩 2048
-compressionableMimeType 压缩类型 text/html/
+compression="on" 压缩 是否开启GZip压缩 建议开启 设置为 on
+compressionMinSize="2048"	压缩 2kb
+compressionableMimeType="text/html,text/xml,text/JavaScript,text/css,text/plain" 压缩类型 
 
 
 ```
@@ -364,12 +388,124 @@ export 改为set
 
 set JAVA_OPTS=xxxx
 
+##### 超时控制
+
+修改conf/web.xml配置文件设置session-timeout的值（单位：分钟）
+
 - session-timeout 默认30分钟
 ```xml
 <session-config>
     <session-timeout>30</sesssion>
 </session-config>    
 ```
+#### Tomcat之内存优化
+
+##### 查看日志是否有内存溢出
+
+查看%TOMCAT_HOME%\logs文件夹下，日志文件是否有内存溢出错
+
+##### Java heap space
+
+错误提示：java.lang,OutOfMemortError: Java heap space
+
+- 导致原因
+- Tomcat默认可以使用的内存为128M，在较大型的应用项目中，这点内存是不够的，有可能导致系统无法运行，常见的问题是包Tomcat内存溢出错误，Out Of Memory(系统内存不足)的异常，从而导致客户端显示500错误。
+
+  异步调整Tomcat的使用内存即可解决此问题。
+
+  public static void main(String[] args){
+
+  ​	System.out.println(Runtime.getRuntime().maxMemory()/1024/1024+"M")
+
+  ​	byte[] byteArreay = new byte[1*1024*1024*650];	//创建了一个大对象 测试是否溢出
+
+     System.out.println("#######3");
+
+  }
+  
+- windows环境下的修改
+```properties
+# 修改%TOMCAT_HOME%\bin\catalina.bat 文件，在文件开头增加如下设置
+set JAVA_OPTS=-Dfile.encoding=UTF-8 -sever -Xms1024m -Xmx=2048m -XX:NewSize=512M -XX:MaxNewSize=1024m -XX:PermSize=256m -XX:MaxPermSize=256m -XXP:MaxTenuringThreshold=10 -XX:NewRatio=2 -XX:+DisableExplicitGC
+
+```
+- linux环境下的修改
+测试jvm最大能配置多大内存
+
+```bash
+java -version
+java -Xmx2048m -version  
+java -Xmx3096m -version
+```
+
+配置内存
+
+```properties
+# 修改%TOMCAT_HOME%/bin/catalina.sh 文件
+exprot JAVA_OPTS=-Xms2048m -Xmx2048m
+```
+
+##### PermGen space
+
+错误提示：java.lang.OutOfMemoryEoor:Permgen space
+
+- 导致原因
+
+  Permgen space 全称是Permanent Generation space，是指内存的永久保留区域，这块内存主要是被JVM存放Class和Meta信息的，Class再被Loader时，就会被放到PermGen Space中，它和存放类实例（Instance）的Heap区域不同，GC（Garbage Collection）不会再主程序运行期对PermGen Space进行清理，索引如果你的应用中有很多CLASS的话，就很可能出现PermGen space错误，这种错误常见在web服务队JSP进行pre-commpile的时候，如果你的WEB APP下引用了大量的第三方jar，其大小超过了jvm默认的大小（4M）那么就会产生此错误信息。
+
+  
+
+- windows环境下的修改
+
+```properties
+# 修改%TOMCAT_HOME%\bin\catalina.bat 文件，在文件开头增加如下设置
+set JAVA_OPTS=-Xms256m -xmx256m -XX:MaxNewSize=256M -XX:PermSize=128M -XX:MaxPermSize=256m
+```
+
+
+
+- linux环境下的修改
+
+```bash
+# 修改%TOMCAT_HOME%/bin/catalina.sh 文件
+exprot JAVA_OPTS=-Xms256m -Xmx256m -XX:MaxNewSize=256m -XX:PermSize=128m -XX:MaxPermSize=256m
+```
+
+
+
+#### apache的ab压力测试
+
+###### Apache服务器安装
+
+```bash
+# 下载地址： http://archive.apache.org/dist/httpd/
+wget http://archive.apache.org/dist/httpd/httpd-2.2.29.tar.gz
+
+# /opt下解压 httpd-2.2.29.tar.gz
+cd /opt
+tar -zxvf httpd-2.2.29.tar.gz
+
+mkdir -p /user/local/ewb/apache
+
+cd /opt/httpd-2.2.29
+
+gcc -v
+
+./configure --prefix=/usr/local/web/apache --enable-shared=max --enable-module=rewirte --enable-module=so
+
+make 
+make install
+
+cd /usr/local/web/apache/bin
+ls
+
+ab -n1000 -c100 http://localhost:8080/
+	-n=number 1000人 
+	-c 并发 每100人一组 分10组 每次一组100人
+```
+
+
+
 ### 网络传输优化
 
 
