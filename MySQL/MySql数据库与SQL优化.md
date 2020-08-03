@@ -1,3 +1,9 @@
+> 参考视频
+>
+> https://www.bilibili.com/video/BV1Ab41127Yq?from=search&seid=12198849306641399699
+
+
+
 ### 一  MySQL数据库 - SQL优化
 
 #### 1 结构图
@@ -184,9 +190,11 @@ create index index_name
 
 6.2.2 查看索引
 ```sql
+
 ```
 6.2.3 删除索引
 ```sql
+
 ```
 #### 6.2 唯一索引
 与普通索引类似，不同的就是：索引
@@ -206,6 +214,7 @@ create fulltext index
 
 6.4.1创建索引
 ```sql
+
 ```
 ### 二 MySQL+ MyCat分库分表
 
