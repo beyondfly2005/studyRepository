@@ -31,9 +31,16 @@ logging:
 
 #### Spring整合Thymetleaf
 
+##### Thymeleaf
+
+Thymeleaf 是一个类似Freemaker的模板引擎技术
+
+```html
+<span th:text="${username}">ZhangSan </span>
+```
+
 Thymeleaf是一个模板引擎 可以完全替代JSP，相较于其他末班引擎有如下三个极吸引人的特点
 Thymeleaf在有网络和无网络的环境下皆可运行 既可以在有
-
 
 .jsp
 	${user.name}
