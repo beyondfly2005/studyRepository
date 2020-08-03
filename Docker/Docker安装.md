@@ -2,13 +2,13 @@
 > https://blog.csdn.net/AkiraNicky/article/details/85775076
 
 ### 1、Docker安装
-###### 查看是否已经安装docker
+##### 查看是否已经安装docker
 
 ```bash
 $ docker version
 ```
 
-###### Docker在 CentOS7上的安装
+##### Docker在 CentOS7上的安装
 
 
 ###### ①  检查内核版本
@@ -81,7 +81,7 @@ systemctl enable docker
 docker version
 ```
 
-#### 2、配置Docker镜像加速	
+### 2、Docker配置镜像加速
 
 > 加速配置参考
 > ​https://www.jianshu.com/p/a024dc5ade92
@@ -108,7 +108,7 @@ $ sudo systemctl daemon-reload
 $ sudo systemctl restart docker
 ```
 
-#### 3、Docker下载镜像文件
+### 3、Docker下载镜像文件
 
 ###### 	① 搜索镜像 
 
@@ -144,7 +144,7 @@ docker images
 	11 运行 hello-world 映像来验证是否正确安装了 Docker Engine-Community 
 	sudo docker run hello-world
 
-4. Docker常用命令
+### 4、Docker常用命令
 
 ```
 docker images  查看本地镜像文件
@@ -169,28 +169,32 @@ docker stop 容器name  停止容器
 
 ```
 
-​	
+### 5、常用的服务安装
 
-5、常用的服务安装
-	
-	Docker安装Tomcat
-	
-	方法一、docker pull tomcat
-	docker pull tomcat	#安装最新版本的tomcat
-	docker search tomcat	#在镜像库中搜索tomcat可用版本
-	
-	--本地镜像列表里查找tomcat
-	docker images|grep tomcat
-	
-	方法二、通过 Dockerfile 构建
-	mkdir -p ~/tomcat/webapps ~/tomcat/logs ~/tomcat/conf
-	webapps 目录将映射为 tomcat 容器配置的应用程序目录。
-	logs 目录将映射为 tomcat 容器的日志目录。
-	conf 目录里的配置文件将映射为 tomcat 容器的配置文件。
-	
-	进入创建的 tomcat 目录，创建 Dockerfile。
-	FROM openjdk:8-jre
 ```bash
+Docker安装Tomcat
+
+## 方法一、docker pull tomcat
+docker pull tomcat	#安装最新版本的tomcat
+docker search tomcat	#在镜像库中搜索tomcat可用版本
+
+## 本地镜像列表里查找tomcat
+docker images|grep tomcat
+
+## 方法二、通过 Dockerfile 构建
+mkdir -p ~/tomcat/webapps ~/tomcat/logs ~/tomcat/conf
+webapps 目录将映射为 tomcat 容器配置的应用程序目录。
+logs 目录将映射为 tomcat 容器的日志目录。
+conf 目录里的配置文件将映射为 tomcat 容器的配置文件。
+
+##进入创建的 tomcat 目录，创建 Dockerfile。
+cd tomcat
+touch Dockerfile
+vim Dockerfile
+```
+```dockerfile	
+FROM openjdk:8-jre
+​```bash
 ENV CATALINA_HOME /usr/local/tomcat
 ENV PATH $CATALINA_HOME/bin:$PATH
 RUN mkdir -p "$CATALINA_HOME"
@@ -361,7 +365,7 @@ CMD ["catalina.sh", "run"]
 runoob@runoob:~/tomcat$ docker images|grep tomcat
 	
 # 使用 tomcat 镜像
-运行容器
+# 运行容器
 ~/tomcat$ docker run --name tomcat -p 8080:8080 -v $PWD/test:/usr/local/tomcat/webapps/test -d tomcat  
 	
 # 查看容器启动情况
