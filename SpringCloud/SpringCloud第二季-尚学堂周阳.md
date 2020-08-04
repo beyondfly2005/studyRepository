@@ -724,8 +724,497 @@ public class PaymentHystrixMain8001 {
 
 ##### 故障现象和导致原因
 
-
+zX
 
 #### Hystrix工作流程
 
 #### 服务监控HystrixDashboard
+
+
+
+
+
+#### Zuul
+
+#### Gateway
+
+##### 概述简介
+
+###### 什么是Gateway
+
+###### Gateway的能做什么
+
+- 反向代理
+- 鉴权
+- 流量控制
+- 熔断
+- 日志监控
+
+
+
+###### 微服务架构中网关在哪里
+
+![](https://ss3.bdstatic.com/70cFv8Sh_Q1YnxGkpoWK1HF6hhy/it/u=527452945,2036534054&fm=11&gp=0.jpg)
+
+
+
+###### 为什么选择Gateway 替代Zuul
+
+- **netflix 公司的zuul 2.0迟迟没有发布**
+
+  zuul1.0进入了维护阶段 而且Gateway是Spring团队研发的 值得信赖
+
+  很多功能zuul没有用起来，Gateway也比zuul更加简单便捷
+
+  Gatway是基于异步非阻塞模型开发的，性能方面更强；虽然Netflix早就发布了Zuul 2.x，但是Spring Cloud貌似没有整合计划，而且Netflix相关组件进入维护期，前景堪忧
+
+  多方面综合考量，Geteway是目前最理想的网关选择。
+
+- **SpringCloud Gatewany具有如下特性：**
+
+  基于Spring Framework5.0  Project Reactor 和Spring Boot2.0进行构建；
+
+  动态路由：能够匹配任何请求属性；
+
+  可以对路由指定 Predicate (断言) 绝Filter（过滤器）
+
+  基础Hystrix的断路器功能；
+
+  集成Spring Cloud服务发现功能
+
+  易于编写Predicate (断言) 绝Filter（过滤器）
+
+  请求限流功能；
+
+  支持路径重写。
+
+- **SpringCloud Gateway与Zuul的区别**
+
+  在SpringCloud Fincheley正式版之前，Spring Cloud退佃的网关是Netflix提供的Zuul:
+
+  1、Zuul1.x 是一个基于阻塞I/O的API Gateway
+
+  2、Zuul1.x基于Servlet2.5使用阻塞架构 它不支持任何长连接（如：WebSocket），zu的设计和Nginx较像，每次I/O都是从工作线程中选择一个执行，请求线程被阻塞到工作线程完成，但是差别是Nginx是C++实现的，Zuul是Java实现的，JVM本身会有第一次加载较慢的情况，是的Zuul的性能相对较差。
+
+  3、Zuul2.x理念更先进，想基于Netty非阻塞和支持长连接，但是SpringCloud目前还没有整合，Zuul 2.x的性能较Zuul 1.x有加大提升，在性能方面，根据官方提供的基准测试，Spring Cloud Gateway的RPS（每秒请求数）是Zuul的1.6倍。
+
+  4、Spring Cloud Gateway建立在Spring Framework5 、Project 和Spring Boot2.0之上，使用非阻塞API。
+
+  5、Spring Cloud Gateway还支持WebSocket，并且与Sping紧密集成，拥用更好的开发体验。
+
+###### Zuul 1.0模型
+
+Spring Cloud 中所集成的Zuul版本，采用的是Tomcat容器，使用的是传统的Servlet IO处理模型。
+Servlet 的生命周期是由servlet container进行生命周期管理。
+container 启动时构造servlet对象并调用servlet init（）进行初始化
+container运行时接受请求，并为每个请求分配一个县城（一般从线程池中获取空闲线程）然后调用service（）
+container关闭时调用servlet destory（）销毁servlet
+
+![](https://img-blog.csdnimg.cn/202006041304137.png)
+
+上述模式的缺点：
+servler是一个简单的网络IO模型，当请求进入servlet container时，servlet container 就会为其绑定一个线程，在并发不高的场景下这种模型是使用的，但是一旦 高并发（比如使用jemeter压测）线程数量就会上涨，而线程资源代价是昂贵的（上下文切换，内存消耗大）严重影响请求的处理时间，在一些简单业务场景下，不希望为每个request分配一个线程，只需要1个或几个线程就能应对极大并发的请求，这种业务场景下servlet模型没有优势
+
+所以Zuul 1.x是基于servlet之上的一个阻塞式处理模型，即spring实现了处理所有request请求的一个servlet（DispatcherServlet）并由该servlet阻塞式处理处理，所以Spring Cloud Zuul无法摆脱Servlet模型的弊端。
+
+###### Geteway模型
+
+WebFlux是什么？
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/2020060413103775.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQxMjMxMzE4,size_16,color_FFFFFF,t_70)
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200604131044545.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQxMjMxMzE4,size_16,color_FFFFFF,t_70)
+
+传统的Web框架，比如说：Struts2、SpringMVC等都是基于Servlet API与Servlet容器基础之上运行的。但是，在Servler3.1之后有了异步非阻塞的支持。而WebFlux是一个典型非阻塞异步的框架，它的核心是基于Reactor的相关API实现的。相对于传统的Web框架来说，他可以运行在诸如Netty、Undertow及支持Servlet3.1的容器上。非阻塞时+函数式编程（Spring5必须让你使用java8）
+
+Spring WebFlux是Spring 5.0 引入的新的响应式框架，区别于Springmvc ，它不需要依赖Servlet API，它是完全异步非阻塞的，并基于Reactor来实现响应式流规范。
+
+##### 三大核心概念
+
+**Route(路由)：**
+路由是构建网关的基本模块，它由ID，目标URI，一系列的断言和过滤器组成，如果断言为true则匹配该路由
+
+**Predicate（断言）：**
+参考的是java8的java.util.function.Predicate开发人员可以匹配HTTP请求中的所有内容（例如请求头或请求参数），如果请求与断言相匹配则进行路由
+
+**Filter(过滤)：**
+指的是Spring框架中GatewayFilter的实例，使用过滤器，可以在请求被路由前或者之后对请求进行修改。
+
+总体：
+![在这里插入图片描述](https://img-blog.csdnimg.cn/2020060413151794.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQxMjMxMzE4,size_16,color_FFFFFF,t_70)
+
+##### Gateway工作流程
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200604131558140.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQxMjMxMzE4,size_16,color_FFFFFF,t_70)
+客户端向Spring Cloud Gateway发出请求。然后在Gateway Handler Mapping 中找到与请求相匹配的路由，将其发送到Gateway Web Handler。
+
+Handler再通过制定的Filter过滤器链来将请求发送到我们实际的服务执行业务逻辑，然后返回
+
+过滤器之前用虚线分开是因为过滤器可能会在发送代理请求之前“pre”或之后“post” 执行业务逻辑
+
+Filter在“pre类型的过滤器可以做参数校验、权限校验、流量控制、日志输出、协议转换等。
+
+在“post”类型的过滤器中可以做响应内容、响应头的修改、日志的输出、流量监控等有着非常重要的作用”
+
+###### 核心逻辑：
+
+路由转发+执行过滤器链
+
+##### 入门配置网关
+
+###### 新建项目：
+
+cloud-gateway-gateway9527
+
+###### pom文件：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>cloud</artifactId>
+        <groupId>com.liang.springcloud</groupId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>cloud-gateway-gateway9527</artifactId>
+    <dependencies>
+        <!--新增gateway-->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-gateway</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.atguigu.springcloud</groupId>
+            <artifactId>cloud-api-commons</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-hystrix</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>
+```
+
+###### yml：
+
+```yml
+server:
+  port: 9527
+spring:
+  application:
+    name: cloud-gateway
+  cloud:
+    gateway:
+      routes:
+      - id: payment_routh #路由的ID，没有固定规则但要求唯一，建议配合服务名
+        uri: http://localhost:8001   #匹配后提供服务的路由地址
+        predicates:
+          - Path=/payment/get/**   #断言,路径相匹配的进行路由
+
+      - id: payment_routh2
+        uri: http://localhost:8001
+        predicates:
+          - Path=/payment/lb/**   #断言,路径相匹配的进行路由
+
+eureka:
+  instance:
+    hostname: cloud-gateway-service
+  client:
+    service-url:
+      register-with-eureka: true
+      fetch-registry: true
+      defaultZone: http://eureka7001.com:7001/eureka
+
+
+eureka:
+  instance:
+    hostname: cloud-gateway-service
+  client:
+    service-url:
+      register-with-eureka: true
+      fetch-registry: true
+      defaultZone: http://eureka7001.com:7001/eureka
+ 
+```
+
+###### 启动类：
+
+```java
+package com.liang.cloud;
+
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
+
+@SpringBootApplication
+@EnableEurekaClient
+public class GateWayMain9527 {
+    public static void main(String[] args) {
+        SpringApplication.run( GateWayMain9527.class,args);
+    }
+}
+```
+
+
+
+###### 9527网关如何做路由映射？
+
+cloud-provider-payment8001看看controller的访问地址
+get 接口
+
+lb接口
+
+我们目前不想暴露8001端口，希望在8001外面套一层9527
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200604132946916.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQxMjMxMzE4,size_16,color_FFFFFF,t_70)
+
+填坑：
+
+Gateway模块 不需要依赖web和actuator，在pom文件中移除。
+
+测试：
+
+启动7001
+
+启动8001
+
+启动9527网关
+
+
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200604133322417.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQxMjMxMzE4,size_16,color_FFFFFF,t_70)
+
+添加网关前
+http://localhost:8001/payment/get/31
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200604133332783.png)
+添加网关后
+http://localhost:9527/payment/get/31
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200604133340794.png)
+访问说明：
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200604133148169.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQxMjMxMzE4,size_16,color_FFFFFF,t_70)
+
+
+
+##### YML配置说明
+
+###### Gateway网关路由有两种配置方式
+
+- 在配置文件yml中配置
+
+- 代码中注入RouteLocator的Bean:
+
+
+
+通过9527网关访问到外网的百度新闻网址
+新建配置类：
+GateWayConfig ：
+
+```java
+package com.liang.cloud.config;
+
+import org.springframework.cloud.gateway.route.RouteLocator;
+import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class GateWayConfig {
+
+    @Bean
+    public RouteLocator toBaiduRouteLocator(RouteLocatorBuilder routeLocatorBuilder) {
+        RouteLocatorBuilder.Builder routes = routeLocatorBuilder.routes();
+        routes.route("to_baidu_guonei", 
+                     r -> r.path("/guonei").uri("http://news.baidu.com/guonei")).build();
+        return routes.build();
+    }
+
+    @Bean
+    public RouteLocator toQQRouteLocator(RouteLocatorBuilder routeLocatorBuilder) {
+        RouteLocatorBuilder.Builder routes = routeLocatorBuilder.routes();
+        routes.route("to_qq", r -> 
+                     r.path("/d/bj").uri("https://new.qq.com/d/bj")).build();
+        return routes.build();
+    }
+}
+```
+
+访问
+http://localhost:9527/guonei
+![在这里插入图片描述](https://img-blog.csdnimg.cn/2020060413383353.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQxMjMxMzE4,size_16,color_FFFFFF,t_70)
+http://localhost:9527/d/bj
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200604133905285.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQxMjMxMzE4,size_16,color_FFFFFF,t_70)
+
+
+
+##### 通过微服务名实现动态路由
+
+默认情况下Gateway会根据注册中心的服务列表，以注册中心上微服务名为路径创建动态路由进行转发，从而实现动态路由的功能
+
+**启动服务**
+
+​	Eureka7001、微服务提供者8001、8002
+
+**POM文件**
+
+**YML文件**
+
+```yaml
+sping:
+  cloud:
+    gateway:
+      discovery:
+        locatior:
+          enable:true # 开启从注册中心动态创建路由功能，利用微服务名进行路由
+
+```
+
+需要注意的是uri的协议为lb，表示启用Gateway的负载均衡功能。
+
+lb://serviceName是spring cloud gateway在微服务中自动为我们创建的负载均衡uri
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200604134050792.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQxMjMxMzE4,size_16,color_FFFFFF,t_70)
+
+测试：
+
+http://localhost:9527/payment/lb/
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200604134513118.png)
+报错，因为我这里![在这里插入图片描述](https://img-blog.csdnimg.cn/20200604134530905.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQxMjMxMzE4,size_16,color_FFFFFF,t_70)
+![在这里插入图片描述](https://img-blog.csdnimg.cn/2020060413453722.png)
+访问路径为payment/payment/lb
+
+修改yml：
+\- Path=/payment/payment/lb/** #断言,路径相匹配的进行路由
+
+访问：
+http://localhost:9527/payment/payment/lb
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200604134618535.png)
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200604134624580.png)
+8001/8002两个端口切换
+
+
+
+##### Predicate的使用
+
+###### Predicate是什么
+
+
+
+###### Route Predicate factories是什么
+
+
+
+###### 常用的Route Predicate
+
+- After Route Predicate
+
+  ```
+  
+  ```
+
+- Before Route Predicate
+
+  ```
+  
+  ```
+
+- Between Rout
+
+  ```
+  
+  ```
+
+- Cookie Route Predicate
+
+  ```
+  
+  ```
+
+- Header Route Predicate
+
+  ```
+  H
+  ```
+
+- Host Route Predicate
+
+  ```
+  -Host=**.baidu.com
+  ```
+
+- Method Route Predicate
+
+  ```
+  Method=GET
+  ```
+
+  
+
+- Path Route Predicate
+
+- Query  Route Predicate
+
+测试发送web请求
+
+```
+jmeter
+postman
+curl
+```
+
+curl 
+
+
+
+
+
+##### Filter的使用
+
+###### 什么是Gateway Filter 
+
+Gateway Filter Factories 路由过滤器可用于修改进入HTTP请求和返回的HTTP响应，路由过滤器只能指定路由进行使用
+
+Spring Cloud Gateway 内置了多种过滤器，他们都由GatewayFilter的工厂类来产生
+
+###### Spring Cloud Gateway的Fliter
+
+生命周期：pre之前 post之后
+
+种类：GatewayFilter GlobalFilter全局的
+
+###### 常用的Gateway Filter
+
+
+
+###### 自定义过滤器
+
