@@ -6,7 +6,7 @@ https://www.bilibili.com/video/BV18E411x7eT?p=73
 
 https://www.cnblogs.com/h--d/category/1047453.html
 
-`SpringCloud中文文档
+SpringCloud中文文档
 
 官方文档
 
@@ -15,6 +15,14 @@ https://cloud.spring.io/spring-cloud-static/Hoxton.SR1/reference/htmlsingle/
 中文文档
 
 http://www.bookstack.cn/read/spring-cloud-docs/docs-index.md
+
+## 1. SpringCloud微服务架构简介
+
+## 2. Boot和Cloud版本选型
+
+## 3. 关于Cloud各组件的停更/升级/替换
+
+## 4. 微服务架构编码构建
 
 ### 项目工程搭建
 
@@ -72,7 +80,7 @@ maven 命令 mvn clean install
 
 ```
 
-### Eureka
+## 5. Eureka服务注册与发现
 
 #### Eureka基础知识
 
@@ -113,7 +121,7 @@ Eureka（Discontinued） 停更
 http://github.com/Netflix/eureka/wiki
 ```
 
-### Zookeeper
+## 6. Zookeeper服务注册与发现
 
 #### Zookpe代替Eureka
 
@@ -182,7 +190,7 @@ zookeeper使用的是临时节点，检测不到服务心跳信号，就会删�
 
   
 
-### Consul
+## 7. Consul服务注册与发现
 
 官网 http://consul.io
 
@@ -259,7 +267,7 @@ systemctl stop firewalld
 
 
 
-### Ribbon 客户端负载均衡工具
+## 8. Ribbon 客户端负载均衡工具
 
 Ribbon目前进入维护状态
 
@@ -431,7 +439,7 @@ public class MyLb implements LoadBalancer{
 }
 ```
 
-### Feign和OpenFeign
+## 9. Feign和OpenFeign服务接口调用
 
 #### 概述
 
@@ -598,7 +606,7 @@ logging:
   
 ```
 
-### 10 Hystrix断路器
+## 10. Hystrix断路器
 
 #### Hystrix概述
 
@@ -742,9 +750,9 @@ zX
 
 
 
-#### Zuul
+## 11. Zuul路由网关
 
-#### Gateway
+## 12. Gateway新一代网关
 
 ##### 概述简介
 
@@ -1252,9 +1260,119 @@ https://cloud.spring.io/spring-cloud-static/spring-cloud-gateway/2.2.2.RELEASE/r
 
 **Global Gateway Filer用法**
 
+当请求与路由匹配时，过滤Web处理程序会将的所有实例GlobalFilter和所有特定GatewayFilter于路由的实例添加到过滤器链中。该组合的过滤器链按org.springframework.core.Ordered接口排序，您可以通过实现该getOrder()方法进行设置。
+
+　　由于Spring Cloud Gateway区分了执行过滤器逻辑的“前”阶段和“后”阶段，因此优先级最高的过滤器是“前”阶段的第一个，而“后”阶段的最后一个。
+
 ###### 常用的Gateway Filter
 
 
 
 ###### 自定义过滤器
 
+```java
+@Component
+@Slf4j
+public class MyLogGateWayFilter implements GlobalFilter, Ordered {
+    @Override
+    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        log.info("=========Come in MyLogGateWayFilter: " + new Date() + "==========");
+        String uname = exchange.getRequest().getQueryParams().getFirst("uname");
+        if(uname == null) {
+            log.info("=========用户名为null，非法用户========");
+            exchange.getResponse().setComplete();
+        }
+        // 成功
+        return chain.filter(exchange);
+    }
+
+    @Override
+    public int getOrder() {
+        return 0;
+    }
+}
+```
+
+
+
+## 13. Spring Cloud Config 分布式配置中心
+
+### 概述
+
+#### 分布式系统面临的问题
+
+微服务意味着要将单体应用中的业务拆分成一个个子服务，每个服务的粒度相对较小，因此系统中出现了大量的服务，由于每个服务都需要必要的配置信息才能运行，所以一套集中式的、动态的配置管理设置是必不可少的。
+
+SpringCloud提供了ConfigServer来解决这个问题，我们每个微服务自己都带着一个application.yml，上百个配置文件管理... ...
+
+#### Spring Cloud Config是什么
+
+Spring Cloud Config为分布式架构中的微服务提供集中化的外部配置支持。配置服务器为各个不同微服务应用的所有环境提供了一个中心化的的外部配置
+
+#### Spring Cloud Config 能做什么
+
+- 集中管理配置文件
+- 不同环境不同配置，动态化的配置更新，分环境部署比如dev/test/prod/beta/release
+- 运行期间动态调整配置，不再需要在每个服务部署的机器上编写配置文件，服务会想配置中心统一拉取配置自己的信息
+- 当配置发送变化是，服务不需要重启即可感知到配置的变化并应用新的配置
+- 将配置信息已REST接口的形式暴露
+
+#### 与GitHub整合配置
+
+SpringCloudConfig默认使用Git来存储配置文件，（也有其他方式，比如支持SVN和本地文件），但最推荐的还是Git，而且使用的身世http/https的访问方式。
+
+#### 官网
+
+http://cloud.spring.io/spring-cloud-static/spring-cloud-config/2.2.1.RELEASE/reference/html
+
+1、配置读取规则：
+
+```
+/{application}/{profile}[/{label}]
+/{application}-{profile}.yml
+/{label}/{application}-{profile}.yml
+/{application}-{profile}.properties
+/{label}/{application}-{profile}.properties
+```
+
+　　　　比如可以访问地址：
+
+　　　　a、查看test分支上的config-dev.yml文件信息：http://localhost:8888/config/dev/test
+
+　　　　b、获取默认（master）分支上的config-dev.yml文件：http://localhost:8888/config-dev.yml
+
+　　　　c、获取dev分支上的config-dev.yml文件：http://localhost:8888/dev/config-dev.yml
+
+　　2、项目application.yml中配置的git属性（searchPaths）
+
+　　　　查找路径，默认在根路径下，以下写法表示在更目录下以及folder目录下查找文件
+
+　　　　可以在更目录下建一个folder文件夹，然后在folder文件夹建一个config-test.yml文件
+
+　　　　访问地址：http://localhost:8888/master/config-test.yml，查看文件事，自动到根路径和folder目录下查找
+
+　　3、本地仓库目录设置：
+
+　　　　spring.cloud.config.server.git.basedir = /Users/h__d/Documents/git-repository/springcloud-config
+
+　　4、本地模式-设置本地目录作为文件读取目录，编辑配置文件，配置（删除其中git仓库配置）如下：
+
+[![复制代码](https://common.cnblogs.com/images/copycode.gif)](javascript:void(0);)
+
+```yaml
+spring:
+  application:
+    name: cloud-config-conter
+  profiles:
+    # 告诉服务,我现在要启用本地配置(优先考虑采用工程目录resources下配置)
+    active: native
+  cloud:
+    config:
+      server:
+        native:
+          # 搜索配置文件的位置。默认与Spring Boot应用相同，
+          # [classpath：/，classpath：/ config /，file：./，file：./ config /]。
+          search-locations: /Users/h__d/Documents/git-repository/springcloud-config2
+```
+
+[![复制代码](https://common.cnblogs.com/images/copycode.gif)](javascript:void(0);)
