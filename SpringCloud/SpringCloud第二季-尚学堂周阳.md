@@ -1,3 +1,11 @@
+> 视频  
+
+https://www.bilibili.com/video/BV18E411x7eT?p=73
+
+> 文档
+
+https://www.cnblogs.com/h--d/category/1047453.html
+
 `SpringCloud中文文档
 
 官方文档
@@ -1138,14 +1146,32 @@ http://localhost:9527/payment/payment/lb
 
 - After Route Predicate
 
+  ```yml
+   spring:
+     cloud:
+       gateway:
+         routes:
+           - id: after_route
+             uri: http://localhost:80017           
+             predicates:
+               - After=2020-04-20T23:57:57.308+08:00[Asia/Shanghai]
   ```
+
+  测试请求命令：curl http://localhost:9527/payment/get/1
+
   
-  ```
 
 - Before Route Predicate
 
-  ```
-  
+  ```yaml
+  spring:
+    cloud:
+      gateway:
+        routes:
+          - id: before_route
+            uri: http://localhost:80017           
+            predicates:
+               - Before=2020-04-21T23:57:57.308+08:00[Asia/Shanghai]
   ```
 
 - Between Rout
@@ -1208,9 +1234,23 @@ Spring Cloud Gateway 内置了多种过滤器，他们都由GatewayFilter的工�
 
 ###### Spring Cloud Gateway的Fliter
 
-生命周期：pre之前 post之后
+**生命周期：pre之前 post之后**
 
-种类：GatewayFilter GlobalFilter全局的
+Filter，在“pre”类型的过滤器可以做参数校验、权限校验、流量监控、日志输出、协议转换等，在“post”类型的过滤器中可以做响应内容、响应头的修改，日志的输出、流量监控等，有非常重要的作用
+
+**种类：GatewayFilter单一的 GlobalFilter全局的**
+
+Spring Cloud Gateway中，Filter从作用范围可分为另外两种，一种是针对于单个路由的Gateway Filter，它在配置文件中的写法同predict类似；另外一种是针对于所有路由的Global Gateway Filer。现在从作用范围划分的维度来讲解这两种Filer。
+
+**单个路由的Gateway Filter用法**
+
+参考官网
+
+https://cloud.spring.io/spring-cloud-static/spring-cloud-gateway/2.2.1.RELEASE/reference/html/#the-addrequestparameter-gatewayfilter-factory
+
+https://cloud.spring.io/spring-cloud-static/spring-cloud-gateway/2.2.2.RELEASE/reference/html/#gatewayfilter-factories
+
+**Global Gateway Filer用法**
 
 ###### 常用的Gateway Filter
 
