@@ -85,30 +85,69 @@ maven 命令 mvn clean install
 #### Eureka基础知识
 
 ```bash
+常用的
 Eureka
 Zookeeper
 Consul
 Nacos
+```
+##### 什么是Eureka
+Eureka是一项基于REST（代表性状态转移）的服务，主要在AWS云中用于定位服务，以实现负载均衡和中间层服务器的故障转移。我们称此服务为Eureka Server。Eureka还带有一个基于Java的客户端组件Eureka Client，它使与服务的交互更加容易。客户端还具有一个内置的负载均衡器，可以执行基本的循环负载均衡。在Netflix，更复杂的负载均衡器将Eureka包装起来，以基于流量，资源使用，错误条件等多种因素提供加权负载均衡，以提供出色的弹性。
+
+Git地址：https://github.com/Netflix/eureka
 
 服务注册中心
-服务注册于发现
-1- Eureka 基础知识
-什么是服务质量SpringCloud封装了NetFlix公司开发的Eureka模块来实现服务治理
-在传统的RPC远程调用框架中，管理每个服务于服务之间的依赖关系比较复杂，，所以需要使用服务治理，用于管理服务之间的依赖关系，可以实现服务调用、负载均衡、容错等，实现服务注册于发现
+服务注册与发现
 
-2-什么是服务注册
+##### 1- 什么是服务治理
+
+SpringCloud封装了NetFlix公司开发的Eureka模块来实现服务治理
+在传统的RPC远程调用框架中，管理每个服务于服务之间的依赖关系比较复杂，，所以需要使用服务治理，用于管理服务之间的依赖关系，可以实现服务调用、负载均衡、容错等，实现服务注册与发现
+
+##### 2- 什么是服务注册
+
 Eureka采用了CS的设计架构，EurekaServer作为服务注册功能的服务器，它是服务注册中心
-而系统中的其他微服务，使用Eureka的客户端连接到Eureka Server并
+而系统中的其他微服务，使用Eureka的客户端连接到Eureka Server并维持心跳连接，这样系统的维护人员就可以通过Eureka来监控系统中各个微服务是否正常运行。
 
-3-Eureka的两个组件：Eureka Server和EurekaCliend
-Eureka Server提供注册服务
-Eureak Client 用于连接到服务
+在服务注册于发现中， 有一个注册中心，当服务器启动的时候，会把当前自己服务器的信息，比如服务器地址通讯地址以别名方式注册到中心上，另一方（消费者|服务提供者）以改别名方式去注册中心上获取到时间的服务通讯地址，然后再实现本地RPC调用。RPC远程调用框架核心设计思想：在于注册中心，因为使用注册中心管理每个服务与服务直接的一个依赖关系（服务治理概念）。在任何RPC远程框架中，都会有一个注册中心（存放服务地址相关信息（接口地地址））
+
+**Eureka架构图**
+
+![](https://img2020.cnblogs.com/blog/851491/202004/851491-20200405113917606-952855327.png)
+
+**Dubbo的架构图**
+
+![](https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1596628442753&di=f17edc77dccaa201ce620a784edc8d51&imgtype=0&src=http%3A%2F%2Fimages3.10qianwan.com%2F10qianwan%2F20180710%2Fb_0_201807101923179783.jpg)
+
+##### 3- Eureka的两大组件
+
+Eureka的两个组件：Eureka Server和EurekaCliend
+
+###### Eureka Server提供注册服务
+
+Eureka Server提供服务注册服务，各个微服务节点通过配置启动后，会在EurekaServer中进行注册，这样EurekaServer中的服务注册表中将会存储所有可用服务节点的信息，服务节点的信息可以在界面中直观看到。
+
+###### Eureak Client 用于连接到服务
+
+Eureka Client通过注册中心进行访问是一个Java客户端，用于简化Eureka Server的交互，客户端同时也具备一个内置的、使用轮询（round-robin）负载算法的负载均衡器。在应用启动后，将会向Eureka Server发送心跳（默认周期为30秒）。如果Eureka Server在多个心跳周期内没有接收到某个节点的心跳。Eureka Server将会从服务注册表中把这个服务节点移除（默认90秒）
 
 4-
 
+#### 单机Eureka构建步骤
 
+###### 搭建Eureka注册中心
 
+###### 搭建支付模块、服务提供者
 
+###### 搭建订单模块、服务消费
+
+#### 集群Eureka构建步骤
+
+#### Actuator微服务信息完善
+
+#### 服务发现Discoverry
+
+#### Eureka自我保护
 
 
 ```
@@ -117,7 +156,7 @@ Eureak Client 用于连接到服务
 
 Eureka（Discontinued） 停更
 
-```bash
+​```bash
 http://github.com/Netflix/eureka/wiki
 ```
 
@@ -262,7 +301,6 @@ http://92.168.198.128:8500
 # 一定要停止防火墙 停止防火墙
 systemctl stop firewalld
 
-
 ```
 
 
@@ -293,13 +331,14 @@ Ribbon是一个软负载均衡组件
 
 netflix-eureka-client 集成了ribbon 可以不用在pom文件 添加
 
+```xml
 <dependency>
-
-​	<groupId>org.springframework.cloud</groupId>
-
-​    <artifactId> spring-cloud-starter-netflix-ribbon</artifactId>
-
+	<groupId>org.springframework.cloud</groupId>
+    <artifactId> spring-cloud-starter-netflix-ribbon</artifactId>
 </dependency>
+```
+
+
 
 #### Ribbon核心组件IRule
 
@@ -1357,7 +1396,6 @@ http://cloud.spring.io/spring-cloud-static/spring-cloud-config/2.2.1.RELEASE/ref
 
 　　4、本地模式-设置本地目录作为文件读取目录，编辑配置文件，配置（删除其中git仓库配置）如下：
 
-[![复制代码](https://common.cnblogs.com/images/copycode.gif)](javascript:void(0);)
 
 ```yaml
 spring:
@@ -1375,4 +1413,99 @@ spring:
           search-locations: /Users/h__d/Documents/git-repository/springcloud-config2
 ```
 
-[![复制代码](https://common.cnblogs.com/images/copycode.gif)](javascript:void(0);)
+
+
+#### Config客户端配置
+
+##### 分布式配置动态刷新
+
+ConfigClient 
+
+
+
+###### 3355监控
+
+###### 暴露监控端口
+
+###### @RefresScope配置类上
+
+
+
+## 14 SpringCloud bus 消息总线
+
+## 15 SpringCloud Stream 消息驱动
+
+##### 消息驱动概述
+
+###### 什么是Spring Cloud Stream
+
+
+
+设计思想
+
+Spring Cloud Steam标准流套路
+
+编码API和常用注解
+
+##### 案例说明
+
+##### 消息驱动之生产者
+
+##### 消息驱动之消费者
+
+##### 分支消费与持久化
+
+
+
+## 16 Spring Cloud Sleuth分布式请求链路跟踪
+
+
+
+## 17 Spring Cloud Alibaba
+
+## 18. Spring Clound Alibaba Necos 服务注册和配置中心
+
+#### Necos简介
+
+为什么叫Necos
+
+##### Necos是什么
+
+一个更易于构建
+
+Nacos是注册中心+配置中心组和
+
+Eureka+Config+BUS
+
+##### Nacos能做什么
+
+替代Eureka做服务注册中心
+
+##### 下载地址
+
+**github**
+
+
+
+**官网**
+
+http://
+
+#### 安装并允许Nacos
+
+http://localhost8848/necos
+
+
+
+https://spring.io/projects/spring-cloud-alibaba#learn
+
+#### Nacos作为服务注册中心
+
+
+
+#### Nacos作为服务配置中心
+
+
+
+#### Nacos集群和持久化配置
+
