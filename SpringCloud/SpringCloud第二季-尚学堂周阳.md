@@ -1509,3 +1509,35 @@ https://spring.io/projects/spring-cloud-alibaba#learn
 
 #### Nacos集群和持久化配置
 
+
+
+## 19. Spring Cloud Alibaba  Sentinel实现熔断与限流
+
+## 20. Spring Cloud Alibaba  Seata处理分布式事务
+
+##### 分布式事务的问题
+
+分布式数据库之前 单机单库
+
+多数据源多库
+
+分布式式之后
+
+单体应用被拆分为微服务应用，原来三个模型被拆分为三个独立的应用，
+
+异常业务操作需要跨多个库  全局数据一致性问题
+
+##### Seata简介
+
+###### Seata是什么
+
+官网 http://seata.io
+
+
+
+##### Seata-Server安装
+
+
+
+
+
