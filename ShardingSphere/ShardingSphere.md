@@ -18,6 +18,8 @@ https://www.bilibili.com/video/BV1LK411s7RX?seid=7779810564468416958
 
 官网：http://shardingsphere.apache.org
 
+中文手册：http://shardingsphere.apache.org/index_zh.html
+
 1、是一套开源的分布式的关系型数据库中间件解决方案
 
 2、由三款产品：Sharding-JDBC、Sharding-Proxy
@@ -160,3 +162,109 @@ show master status;
 ```
 
 ##### 	第四步 
+
+
+
+#### Sharding-JDBC 简介
+
+1、开源的轻量级java框架，是增强版JDBC驱动
+
+2、Sharding-JDBC
+
+(1) 并不是做分库分表
+
+(2) 主要有两个功能，数据分片和读写分离
+
+(3) 主要目的是：简化对分库分表之后的数据库相关操作
+
+#### Sharding-JDBC 实现水平分表
+
+##### 1、搭建环境
+
+(1) SpringBoot+MyBatisPlus+Sharding-JDBC+Druid
+
+(2) 创建SpringBoot工程，名称为sharding-JDBC
+
+(3) 修改工程springboot版本为2.2.1
+
+(4) 引入相关依赖
+
+```xml
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid-spring-boot-starter</artifactId>
+            <version>1.1.20</version>
+        </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <!--<version>6.0.6</version>-->
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.shardingsphere</groupId>
+            <artifactId>sharding-jdbc-spring-boot-starter</artifactId>
+            <version>4.1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-boot-starter</artifactId>
+            <version>3.0.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <!--<version></version>-->
+        </dependency>
+```
+
+
+
+##### 2、按照水平分表的方式，创建数据库和数据库表
+
+(1) 创建数据库course_db
+
+(2) 在数据库创建两张表course_1 和 course_2
+
+(3) 约定规则：如果添加的课程id是偶数，把数据添加到course_1，如果是奇数把数据添加到course_2
+
+```sql
+create table course_1(
+	cid bigint(20) primary key,
+    cname varchar(50) not null,
+    user_id bigint(20) not null,
+    cstatus varchar(10) not null
+);
+
+create table course_2(
+	cid bigint(20) primary key,
+    cname varchar(50) not null,
+    user_id bigint(20) not null,
+    cstatus varchar(10) not null
+)
+```
+
+##### 3、编写代码实现对分库分表
+
+(1) 创建实体类，mapper
+
+```yaml
+spring.
+```
+
+##### 4、配置Sharding-JDBC分片策略
+
+(1) 在项目application.yml中进行配置
+
+##### 5、编写测试代码
+
