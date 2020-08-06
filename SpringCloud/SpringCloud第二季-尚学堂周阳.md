@@ -1435,25 +1435,107 @@ ConfigClient
 
 ## 15 SpringCloud Stream 消息驱动
 
-##### 消息驱动概述
+#### 消息驱动概述
 
-###### 什么是Spring Cloud Stream
+##### Spring Cloud Stream是什么
+
+Spring Cloud Stream，官方定义Spring Cloud Stream是一个构建消息驱动微服务的框架
+
+应用程序通过 inputs 或者 outputs 来与 Spring Cloud Stream 中的binder对象交互，通过配置binding（绑定），而 Spring Cloud Stream 的binder对象负载与消息中间件交互，所以，我们只需要高清楚如何与 Spring Cloud Stream 交互就可以方便使用消息驱动的方式，通过使用Spring Integration 来连接消息代理中间件以实现消息事件驱动。
+
+Spring Cloud Stream 为一些供应商的消息中间件产品提供了个性化的自动化配置实现，引用了发布-订阅、消费组、分区的三个核心概念
+
+目前仅支持RabbitMQ、Kafka
+
+###### **一句话总结：**
+
+屏蔽底层消息中间件的差异，降低切换成本，统一消息的编程模型
+
+###### **官网**
+
+大纲：[https://spring.io/projects/spring-cloud-stream](https://spring.io/projects/spring-cloud-stream#overview)
+
+API：https://cloud.spring.io/spring-cloud-static/spring-cloud-stream/3.0.0.RELEASE/reference/html/
+
+中文手册：https://www.springcloud.cc/spring-cloud-greenwich.html#spring-cloud-stream-overview-introducing
+
+中文手册：https://m.wang1314.com/doc/webapp/topic/20971999.html
+
+##### 设计思想
+
+###### 标准MQ
+
+生产者/消费者之间靠消息媒介传递信息内容（Message）
+
+消息必须走特定的消息通道：消息通道MessageChannel
+
+消息通道里的消息如何被消息呢谁负责收发处理
+
+消息通道MessageChannel的子接口SubscribableChannel，由MessageHandle消息处理器所订阅
+
+###### 为什用Cloud Steam
+
+stream凭什么可以统一底层差异
+
+在没有绑定器这个概念的情况下，我们的SpringBoot应用要直接与消息中间件进行信息交互的时候
+
+由于各消息中间件构成的初衷不同，他们的实现细节上有较大差异性
+
+通过定义帮顶起作为中间层，完美实现了应用程序与消息中间件细节之间的隔离
+
+通过向应用程序暴露同意的Channel通道，使得应用程序不需要再考虑各种不同的消息中间件的落地实现
+
+通过定义绑定器Binder作为中间层，实现了应用程序与消息中年级细节之间的解耦和隔离。
 
 
 
-设计思想
+Binder 定义了INPUT对应于消费者，OUTPUT对应于生产者
 
-Spring Cloud Steam标准流套路
+Stream中的消息通讯方式遵循了发布-订阅模式
 
-编码API和常用注解
+使用Topic主题进行广播，在RabbitMQ就是ExChange，在Kafka中就是Topic
 
-##### 案例说明
 
-##### 消息驱动之生产者
 
-##### 消息驱动之消费者
+###### Spring Cloud Steam标准流套路
 
-##### 分支消费与持久化
+![](https://img2020.cnblogs.com/blog/851491/202005/851491-20200507001726623-839914513.png)
+
+Binder绑定器，很方便的连接中间件，屏蔽差异
+
+Channel通道 是队列Queue的一种抽象，在消息通讯系统中就是实现存储和转发的媒介，通过Channel对队列进行配置
+
+Source和Sink 可以简单理解为参照对象是SpringCloud Stream自身，从Stream发布消息就是输出，接受消息就是输入
+
+###### 编码API和常用注解
+
+@Input 注解标识输入通道，通过该输入通道接收道德消息进入应用程序
+
+@OutPut 注解表示输出通道，发布的消息将通过该通过离开应用程序
+
+@StreamListener监听队列，用于消费者的队列的消息接收
+
+@EnableBinding 指信道channel和exchange绑定在一起
+
+#### 案例说明
+
+建立RabbitMQ环境，并且测试OK
+
+新建三个子模块
+
+cloud-stream-rabbitmq-provider8801
+
+cloud-stream-rabbitmq-consumer8802
+
+cloud-stream-rabbitmq-consumer8803
+
+
+
+#### 消息驱动之生产者
+
+#### 消息驱动之消费者
+
+#### 分支消费与持久化
 
 
 
