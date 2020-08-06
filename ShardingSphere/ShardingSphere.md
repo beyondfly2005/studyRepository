@@ -165,6 +165,10 @@ show master status;
 
 
 
+#### 分库分表应用和问题
+
+
+
 #### Sharding-JDBC 简介
 
 1、开源的轻量级java框架，是增强版JDBC驱动
@@ -254,17 +258,373 @@ create table course_2(
 )
 ```
 
-##### 3、编写代码实现对分库分表
+##### 3、编写代码实现对分库分表后的数据操作
 
 (1) 创建实体类，mapper
 
-```yaml
-spring.
+```java
+@Data
+public class Course {
+    private Long cid;
+    private String cname;
+    private Long userId;
+    private String cstatus;
+}
 ```
+
+```java
+@Repository
+public interface CourseMapper extends BaseMapper<Course> {
+
+}
+```
+
+
 
 ##### 4、配置Sharding-JDBC分片策略
 
 (1) 在项目application.yml中进行配置
 
+```yaml
+#需要加入下面的配值允许重载bean名称，主要用于后面sql对表的操作，MybatisPlus是根据类名作为表名的
+spring.main.allow-bean-definition-overriding=true
+
+spring.shardingsphere.datasource.names=m1
+
+#配置数据源内容
+spring.shardingsphere.datasource.m1.type=com.alibaba.druid.pool.DruidDataSource
+spring.shardingsphere.datasource.m1.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.shardingsphere.datasource.m1.url=jdbc:mysql://localhost:3306/course_db?serverTimezone=GMT%2B8
+spring.shardingsphere.datasource.m1.username=root
+spring.shardingsphere.datasource.m1.password=123456
+
+#spring.shardingsphere.sharding.tables.course.actual-data-nodes=m1.course_$->{0..1}
+# 表的名称m1.course_1,m1.course_2
+spring.shardingsphere.sharding.tables.course.actual-data-nodes=m1.course_$->{1..2}
+
+#指定course表里的主键生成策略  SNOWFLAKE是雪花算法
+spring.shardingsphere.sharding.tables.course.key-generator.column=cid
+spring.shardingsphere.sharding.tables.course.key-generator.type=SNOWFLAKE
+
+# 指定分片策略 cid偶数添加到course_1表
+spring.shardingsphere.sharding.tables.course.table-strategy.inline.sharding-column=cid
+spring.shardingsphere.sharding.tables.course.table-strategy.inline.algorithm-expression=course_$->{cid % 2 +1}
+
+#打开sql输出日志
+spring.shardingsphere.props.sql.show=true
+
+#配置mybatis-plus驼峰
+mybatis-plus.configuration.map-underscore-to-camel-case=true
+```
+
+
+
 ##### 5、编写测试代码
+
+```java
+
+@RunWith(SpringRunner.class)
+@SpringBootTest
+public class StudyShardingApplicationTests {
+
+    @Autowired
+    private CourseMapper courseMapper;
+
+    //添加课程的方法
+    @Test
+    public void addCourse() {
+        Course course = new Course();
+        course.setCname("Java");
+        course.setUserId(100L);
+        course.setCstatus("Normal");
+        courseMapper.insert(course);
+    }
+
+    //批量添加课程
+    @Test
+    public void batchAddCourse() {
+        for (int i = 0; i <10 ; i++) {
+            Course course = new Course();
+            course.setCname("Java"+i);
+            course.setUserId(100L);
+            course.setCstatus("Normal"+i);
+            courseMapper.insert(course);
+        }
+    }
+
+    //查询课程的方法
+    @Test
+    public void findCourse(){
+        QueryWrapper<Course> wrapper = new QueryWrapper<>();
+        wrapper.eq("cid",498260737236402177L);
+        Course course = courseMapper.selectOne(wrapper);
+        System.out.println(course.toString());
+    }
+}
+```
+
+(1) 测试代码执行报错
+
+```pr
+Consider renaming one of the beans or enabling overriding by setting spring.main.allow-bean-definition-overriding=true
+```
+
+(2) 解决方案
+
+```
+spring.main.allow-bean-definition-overriding=true 
+#当遇到同样名字的时候，是否允许覆盖注册
+```
+
+
+
+#### Sharding-JDBC 实现水平分库
+
+##### 1、需求分析
+
+![](https://img-blog.csdnimg.cn/20200723104453173.png)
+
+##### 2、 创建数据库和表
+
+​	创建数据库：edu_db_1 和 edu_db_2
+
+​	两个哭上同时创建表course_1 和 course_2
+
+
+
+##### 3、在SpringBoot配置文件配置数据库分片规则
+
+```yaml
+#需要加入下面的配值允许重载bean名称，主要用于后面sql对表的操作，MybatisPlus是根据类名作为表名的
+spring.main.allow-bean-definition-overriding=true
+
+# 水平分库，配置两个数据源
+spring.shardingsphere.datasource.names=m1,m2
+
+#配置第1数据源内容
+spring.shardingsphere.datasource.m1.type=com.alibaba.druid.pool.DruidDataSource
+spring.shardingsphere.datasource.m1.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.shardingsphere.datasource.m1.url=jdbc:mysql://localhost:3306/edu_db_1?serverTimezone=GMT%2B8
+spring.shardingsphere.datasource.m1.username=root
+spring.shardingsphere.datasource.m1.password=123456
+
+#配置第2数据源内容
+spring.shardingsphere.datasource.m2.type=com.alibaba.druid.pool.DruidDataSource
+spring.shardingsphere.datasource.m2.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.shardingsphere.datasource.m2.url=jdbc:mysql://localhost:3306/edu_db_2?serverTimezone=GMT%2B8
+spring.shardingsphere.datasource.m2.username=root
+spring.shardingsphere.datasource.m2.password=123456
+
+
+#指定数据库表的粉笔情况 表的名称m1.course_1,m1.course_2
+spring.shardingsphere.sharding.tables.course.actual-data-nodes=m${1..2}.course_$->{1..2}
+
+
+#指定course表里的主键生成策略  SNOWFLAKE是雪花算法
+spring.shardingsphere.sharding.tables.course.key-generator.column=cid
+spring.shardingsphere.sharding.tables.course.key-generator.type=SNOWFLAKE
+
+# 指定分片策略 cid偶数添加到course_1表
+spring.shardingsphere.sharding.tables.course.table-strategy.inline.sharding-column=cid
+spring.shardingsphere.sharding.tables.course.table-strategy.inline.algorithm-expression=course_$->{cid % 2 + 1}
+
+#指定数据库分片侧列 越多user_id 是偶数添加到m1 奇数添加到m2  default-database 默认所有表规则
+#spring.shardingsphere.sharding.default-database-strategy.inline.sharding-column=user_id
+#spring.shardingsphere.sharding.default-database-strategy.inline.algorithm-expression=m$->{user_id % 2 + 1}
+
+spring.shardingsphere.sharding.tables.course.database-strategy.inline.sharding-column=user_id
+spring.shardingsphere.sharding.tables.course.database-strategy.inline.algorithm-expression=m$->{user_id % 2 + 1}
+
+
+#打开sql输出日志
+spring.shardingsphere.props.sql.show=true
+
+#配置mybatis-plus驼峰
+mybatis-plus.configuration.map-underscore-to-camel-case=true
+```
+
+
+
+##### 4、编写测试方法
+
+```java
+ //===============================测试水平分库===================================
+    @Test
+    public void addCourseDb() {
+        Course course = new Course();
+        course.setCname("Java");
+        course.setUserId(100L);
+        course.setCstatus("Normal");
+        courseMapper.insert(course);
+    }
+    @Test
+    public void addCourseDb1() {
+        Course course = new Course();
+        course.setCname("Java");
+        course.setUserId(101L);
+        course.setCstatus("Normal");
+        courseMapper.insert(course);
+    }
+
+    //查询课程的方法
+    @Test
+    public void findCourseDb(){
+        QueryWrapper<Course> wrapper = new QueryWrapper<>();
+        wrapper.eq("user_id",100L);
+        wrapper.eq("cid",498276104004435969L);
+        Course course = courseMapper.selectOne(wrapper);
+        System.out.println(course.toString());
+    }
+```
+
+#### Sharding-JDBC 实现垂直分库
+
+##### 1、需求分析
+
+![](https://img2020.cnblogs.com/blog/1365514/202007/1365514-20200719233547730-1662781093.png)
+
+##### 2、创建数据库和表
+
+​	创建数据库user_db
+
+```sql
+create table t_user (
+	user_id bigint(20) primary key,
+	user_name varchar(100) not null,
+	ustatus varchar(50) not null
+)
+```
+
+##### 3、编写操作代码
+
+(1) 创建User实体类和UserMapper接口类
+
+(2) 配置垂直分库策略
+
+```yaml
+spring.main.allow-bean-definition-overriding=true
+spring.shardingsphere.datasource.names=m1,m2,m0
+
+#配置USER_DB数据源内容
+spring.shardingsphere.datasource.m0.type=com.alibaba.druid.pool.DruidDataSource
+spring.shardingsphere.datasource.m0.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.shardingsphere.datasource.m0.url=jdbc:mysql://localhost:3306/user_db?serverTimezone=GMT%2B8
+spring.shardingsphere.datasource.m0.username=root
+spring.shardingsphere.datasource.m0.password=123456
+
+#配置user_db 数据库里的t_uesr表改为专库专表
+spring.shardingsphere.sharding.tables.t_user.actual-data-nodes=m$->{0}.t_user
+
+#指定t_user表里的主键生成策略  SNOWFLAKE是雪花算法
+spring.shardingsphere.sharding.tables.t_user.key-generator.column=user_id
+spring.shardingsphere.sharding.tables.t_user.key-generator.type=SNOWFLAKE
+
+# 指定分片策略 user_id偶数添加到t_user表
+spring.shardingsphere.sharding.tables.t_user.table-strategy.inline.sharding-column=user_id
+spring.shardingsphere.sharding.tables.t_user.table-strategy.inline.algorithm-expression=t_user
+
+```
+
+(3) 编写测试代码
+
+```java
+    //===============================测试垂直分库==================================
+    @Test
+    public void addUserDb(){
+        User user = new User();
+        user.setUserName("zhangsan");
+        user.setUstatus("Normal");
+        userMapper.insert(user);
+    }
+
+    @Test
+    public void findUserDb(){
+        QueryWrapper<User> wrapper = new QueryWrapper<>();
+        wrapper.eq("user_id",498286821667504129L);
+        User user = userMapper.selectOne(wrapper);
+        System.out.println(user.toString());
+    }
+```
+
+
+
+测试报错
+
+```
+SQL: INSERT INTO user  ( user_name, ustatus )  VALUES  ( ?, ? )
+Cause: java.lang.IllegalStateException: Missing the data source name: 'null'
+```
+
+实体类名为User 数据库表名为t_use，无法自动对应
+
+User实体类增加@TableName注解
+
+```
+@TableName(value = "t_user")
+```
+
+
+
+#### Sharding-JDBC 操作公共表
+
+###### 1、公共表
+
+  字典表
+
+（1）存储固定数据的表，表数据很少发生变化，查询时经常进行关联的表
+
+（2）在每个数据库中创建出相同结果的公共表，对一个实体类进行操作，会关联到所有的表中
+
+###### 2、在多个数据库中创建相同结构的公共表
+
+​	在user_db、edu_db1、edu_db_2三个数据库上创建公共表
+
+```sql
+create table t_udict(
+	dictid bigint(20) primary key,
+    ustatus varchar(100) not null,
+    uvalue varchar(100) not null
+)
+```
+
+##### 3、在项目配置文件application.properties中进行公共表的配置
+
+```yaml
+#配置公共表
+spring.shardingsphere.sharding.broadcast-tables= t_udict
+#指定 t_udict 表中主键的生成策略  SNOWFLAKE:雪花算法
+spring.shardingsphere.sharding.tables.t_udict.key-generator.column = dictid
+spring.shardingsphere.sharding.tables.t_udict.key-generator.type =SNOWFLAKE
+```
+
+##### 4、编写测试代码
+
+​	三个数据库公共表的数据同时增加 或者同时删除
+
+(1) 创建新的实体类和mapper
+
+(2) 编写添加和删除方法
+
+```java
+    @Autowired
+    private DictMapper dictMapper;
+
+    //==============================测试公共表====================================
+    @Test
+    public void addDict(){
+        Dict dict = new Dict();
+        dict.setUstatus("a");
+        dict.setUvalue("已启用");
+        dictMapper.insert(dict);
+    }
+
+    @Test
+    public void deleteDict(){
+        QueryWrapper<Dict> wrapper = new QueryWrapper<>();
+        wrapper.eq("dictid",498292244155990017L);
+        dictMapper.delete(wrapper);
+    }
+```
+
+
 
