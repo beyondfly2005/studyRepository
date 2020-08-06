@@ -628,3 +628,14 @@ spring.shardingsphere.sharding.tables.t_udict.key-generator.type =SNOWFLAKE
 
 
 
+#### Shrding-JDBC 实现读写分离
+
+##### 1、读写分离的概念
+
+
+
+##### 2、MySQL配置读写分离
+
+
+
+##### 3、Sharding-JDBC操作
