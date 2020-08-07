@@ -54,120 +54,7 @@ https://www.bilibili.com/video/BV1LK411s7RX?seid=7779810564468416958
 
 
 
-
-
-##### 使用Sharding-JDBC实现读写分离
-
-1、读写分离的概念
-
-为了保证数据库产品的稳定性，很多数据库拥有双机热备功能，也就是，第一台数据库服务，是对外提供增删改业务的生产服务器，第二台数据库服务器主要进行读（查询）操作。
-
-原理：让主数据库（master）处理事务性增删改操作，而从数据库（Slaver）处理查询Select操作
-
-一主一从、一主多从、多主多从
-
-###### 读写分离的原理
-
-当主服务器有写入的时候，binlog日志 记录增删改查操作
-
-从服务实时监控主服务器的binglog从
-
-Sharding-JDBC通过SQL语义分析，实现读写分离；并不会实现数据同步，数据同步由MySQL数据库实现
-
-2、Mysql配置读写分离
-
-
-
-3、Sharding-JDBC操作
-
-
-
-##### MySQL配置读写分离过程
-
-（1）创建两个MySQL数据库服务，并且启动两个MySQL服务
-
-​		复制MySQL5.5 目录 改名为MySQL-Slaver-01
-
-（2）复制目录	
-
-修改配置文件my.ini文件
-
-​		修改端口号3306 改为3307
-
-​		数据基本路径basedir=
-
-​		复制数据目录并改名
-
-​		数据目录改为datadir=
-
-（3）修改后的数据库在windows安装为服务
-
-​	第一步
-
-​	使用命令	mysqld install mysql-slaver --default-file="D:\mysql-Slaver\my.ini"
-
-​	进入windows服务窗口刷新
-
-​	命令：sc delete 服务  删掉服务，重新配置
-
-###### 	第二步  配置MySQL主从服务器
-
-​	（1）在主服务器配置文件中配置
-
-```properties
-[mysqld]
-#开启日志
-log-bin=mysql-bin	#binlgo文件名
-binlog_format=ROW	#选择ROW模式
-server_id=1			#mysql实例id，不能喝slaverId重复
-#设置需要同步的数据库
-binlog-do-db=user_db
-#屏蔽系统库同步
-binlog-ingore-db=mysql
-binlog-ingore-db=information_schema
-binlog-ingore-db=performance_schema
-```
-
-
-
-​	（2）在从服务器配置文件中配置
-
-```properties
-[mysqld]
-#开启日志
-log-bin=mysql-bin	#binlgo文件名
-binlog_format=ROW	#选择ROW模式
-server_id=2			#mysql实例id，不能喝slaverId重复
-#设置需要同步的数据库
-binlog-do-db=user_db
-#屏蔽系统库同步
-binlog-ingore-db=mysql
-binlog-ingore-db=information_schema
-binlog-ingore-db=performance_schema
-```
-
-​	（3）重启主、从服务器
-
-###### 	第三步 创建用于主从复制的账号
-
-```properties
-#切换至主库bin目录，登录主库
-mysql -h localhost -uroot -p
-#授权主从复制专用账号
-GRANT REPLICATION SLAVE ON *.* TO 'db_sync'@'%' IDENTIFIED BY 'db-sync';
-#刷新权限
-FLUSH PRIVILEGES；
-#确认位点  记录下文件名已经位点
-show master status;
-```
-
-##### 	第四步 
-
-
-
 #### 分库分表应用和问题
-
-
 
 #### Sharding-JDBC 简介
 
@@ -567,7 +454,7 @@ User实体类增加@TableName注解
 
 #### Sharding-JDBC 操作公共表
 
-###### 1、公共表
+##### 1、公共表
 
   字典表
 
@@ -575,7 +462,7 @@ User实体类增加@TableName注解
 
 （2）在每个数据库中创建出相同结果的公共表，对一个实体类进行操作，会关联到所有的表中
 
-###### 2、在多个数据库中创建相同结构的公共表
+##### 2、在多个数据库中创建相同结构的公共表
 
 ​	在user_db、edu_db1、edu_db_2三个数据库上创建公共表
 
@@ -628,14 +515,325 @@ spring.shardingsphere.sharding.tables.t_udict.key-generator.type =SNOWFLAKE
 
 
 
-#### Shrding-JDBC 实现读写分离
+#### Sharding-JDBC 实现读写分离
 
 ##### 1、读写分离的概念
+
+为了保证数据库产品的稳定性，很多数据库拥有双机热备功能，也就是，第一台数据库服务，是对外提供增删改业务的生产服务器，第二台数据库服务器主要进行读（查询）操作。
+
+原理：让主数据库（master）处理事务性增删改操作，而从数据库（Slaver）处理查询Select操作
+
+一主一从、一主多从、多主多从
+
+###### 读写分离的原理
+
+当主服务器有写入的时候，binlog日志 记录增删改查操作
+
+从服务实时监控主服务器的binglog从
+
+Sharding-JDBC通过SQL语义分析，实现读写分离过程；并不会实现数据同步，数据同步由MySQL数据库实现
 
 
 
 ##### 2、MySQL配置读写分离
 
+###### 第一步 创建两个MySQL数据库服务，并且启动MySQL服务
+
+(1) 复制MySQL5.5 目录 ，并改名为MySQL-Slaver-01
+
+(2) 修改复制之后的配置文件
+
+​		修改配置文件my.ini文件
+
+​		修改端口号3306 改为3307
+
+​		数据基本路径basedir=
+
+​		复制数据目录并改名
+
+​		数据目录改为datadir=
+
+(3) 修改后的从数据库在windows安装为服务
+
+​	使用命令	mysqld install mysql-slaver --default-file="D:\mysql-Slaver\my.ini"
+
+​	进入bin目录执行
+
+​	进入windows服务窗口刷新
+
+​	命令：sc delete 服务  删掉服务，重新配置
+
+###### 	第二步  配置MySQL主从服务器
+
+(1)  在主服务器配置文件中配置
+
+```properties
+[mysqld]
+#开启日志
+log-bin=mysql-bin	#binlgo文件名
+binlog_format=ROW	#选择ROW模式
+server_id=1			#mysql实例id，不能和slaverId重复
+#设置需要同步的数据库
+binlog-do-db=user_db
+#屏蔽系统库同步
+binlog-ingore-db=mysql
+binlog-ingore-db=information_schema
+binlog-ingore-db=performance_schema
+```
+
+(2) 在从服务器配置文件中配置
+
+```properties
+[mysqld]
+#开启日志
+log-bin=mysql-bin	#binlgo文件名
+binlog_format=ROW	#选择ROW模式
+server_id=2			#mysql实例id，不能喝slaverId重复
+#设置需要同步的数据库
+binlog-do-db=user_db
+#屏蔽系统库同步
+binlog-ingore-db=mysql
+binlog-ingore-db=information_schema
+binlog-ingore-db=performance_schema
+```
+
+(3) 重启主、从服务器
+
+###### 	第三步 创建用于主从复制的账号
+
+```properties
+#切换至主库bin目录，登录主库
+mysql -h localhost -uroot -p
+#授权主从复制专用账号
+GRANT REPLICATION SLAVE ON *.* TO 'db_sync'@'%' IDENTIFIED BY 'db-sync';
+#刷新权限
+FLUSH PRIVILEGES；
+#确认位点  记录下文件名及位点
+show master status;
+```
+
+###### 	第四步  注册数据同步设计
+
+设置从库向主库同步数据
+
+```properties
+# 切换至从库bin目录，登录从库
+mysql -h localhost -P3307 -uroot -p
+#先停止同步
+STOP SLAVE;
+# 修改从库指向到主库，使用 上一次记录的文件名以及位点
+CHANGE MASTER TO
+MASTER_HOST='localhost'
+MASTER_USER='db_sync'
+MASTER_PASSWORD='db_sync'
+MASTER_LOG_FILE='mysql-bin.000002'	#需要修改为实际的文件及位置（参见上一步的值）	
+MASTER_LOG_POS=154					#需要修改为实际的文件及位置（参见上一步的值）
+
+# 启动同步
+START SLAVE;
+
+#查看从库装Slave_IO_Runing和Slave_SQL_Runing都是Yes说明同步成，如果不为Yes，请检查error_log 然后排查相关异常
+SHOW SLAVE STATUS
+
+#注意 如果之前次从库已经有主库指向，需要先执行以下命令清空
+STOP SLAVE IO_THREAD FOR CHANNEL '';
+reset slave all;
+```
+
 
 
 ##### 3、Sharding-JDBC操作
+
+Sharding-JDBC 并不做主从数据复制同步，根据语义分析
+
+(1)  配置读写分离策略
+
+```properties
+#主从配置 m0主 s0从
+spring.shardingsphere.datasource.names=m1,m2,m0,s0
+
+#USERDB 主服务器3306
+spring.shardingsphere.datasource.m0.type=com.alibaba.druid.pool.DruidDataSource
+spring.shardingsphere.datasource.m0.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.shardingsphere.datasource.m0.url=jdbc:mysql://localhost:3306/user_db?serverTimezone=GMT%2B8
+spring.shardingsphere.datasource.m0.username=root
+spring.shardingsphere.datasource.m0.password=123456
+
+#配置第四个数据源内容USER_DB
+#USERDB 主服务器3307
+spring.shardingsphere.datasource.s0.type=com.alibaba.druid.pool.DruidDataSource
+spring.shardingsphere.datasource.s0.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.shardingsphere.datasource.s0.url=jdbc:mysql://localhost:3307/user_db?serverTimezone=GMT%2B8
+spring.shardingsphere.datasource.s0.username=root
+spring.shardingsphere.datasource.s0.password=123456
+
+# 主从库逻辑数据源定义 ds0位user_db m0为主 s0为从
+spring.shardingsphere.sharding.master-slave-rules.ds0.master-data-source-name=m0
+spring.shardingsphere.sharding.master-slave-rules.ds0.slave-data-source-names=s0
+
+#配置数据库和表分布规则
+
+#配置user_db 数据库里的t_uesr表改为专库专表
+#spring.shardingsphere.sharding.tables.t_user.actual-data-nodes=m$->{0}.t_user
+#改为ds0组里的t_user
+spring.shardingsphere.sharding.tables.t_user.actual-data-nodes=ds0.t_user
+```
+
+
+
+#### Sharding-Proxy简介
+
+###### 1、定位为透明的数据库代理端，分库分表的数据库当做一个数据库来操作
+
+###### 2、Sharding-Proxy独立应用，使用安装服务，进行分库分表或者读写分离配置，启动使用
+
+###### 3、Sharding-Proxy安装
+
+(1) 下载安装软件
+
+(2) 把选择后的压缩文件解压，启动bin目录下的start.bat
+
+(3) lib目录下的后面几个jar包没有扩展名，或扩展名不全，需要修改补全
+
+
+
+#### Sharding-Proxy 配置
+
+###### 1、进入conf目录，修改文件server,yaml文件
+
+将最后两段代码取消注释
+
+```yaml
+authentication:
+  users:
+    root:
+      password: root
+    sharding:
+      password: sharding 
+      authorizedSchemas: sharding_db
+
+props:
+  max.connections.size.per.query: 1
+  acceptor.size: 16  # The default value is available processors count * 2.
+  executor.size: 16  # Infinite by default.
+  proxy.frontend.flush.threshold: 128  # The default value is 128.
+    # LOCAL: Proxy will run with LOCAL transaction.
+    # XA: Proxy will run with XA transaction.
+    # BASE: Proxy will run with B.A.S.E transaction.
+  proxy.transaction.type: LOCAL
+  proxy.opentracing.enabled: false
+  proxy.hint.enabled: false
+  query.with.cipher.column: true
+  sql.show: false
+  allow.range.query.with.inline.sharding: false
+```
+
+###### 2、config.sharding-sharding.yaml
+
+(1) 复制mysql驱动jar包到lib目录
+
+(2)  配置分库分表规则，修改文件config.sharding-sharding.yaml 
+
+将mysql一段注释去掉 并按实际环境进行配置
+
+```yaml
+schemaName: sharding_db
+
+dataSources:
+  ds_0:
+    url: jdbc:mysql://127.0.0.1:3306/demo_ds_0?serverTimezone=UTC&useSSL=false
+    username: root
+    password:
+    connectionTimeoutMilliseconds: 30000
+    idleTimeoutMilliseconds: 60000
+    maxLifetimeMilliseconds: 1800000
+    maxPoolSize: 50
+  ds_1:
+    url: jdbc:mysql://127.0.0.1:3306/demo_ds_1?serverTimezone=UTC&useSSL=false
+    username: root
+    password:
+    connectionTimeoutMilliseconds: 30000
+    idleTimeoutMilliseconds: 60000
+    maxLifetimeMilliseconds: 1800000
+    maxPoolSize: 50
+
+shardingRule:
+  tables:
+    t_order:
+      actualDataNodes: ds_${0..1}.t_order_${0..1}
+      tableStrategy:
+        inline:
+          shardingColumn: order_id
+          algorithmExpression: t_order_${order_id % 2}
+      keyGenerator:
+        type: SNOWFLAKE
+        column: order_id
+    t_order_item:
+      actualDataNodes: ds_${0..1}.t_order_item_${0..1}
+      tableStrategy:
+        inline:
+          shardingColumn: order_id
+          algorithmExpression: t_order_item_${order_id % 2}
+      keyGenerator:
+        type: SNOWFLAKE
+        column: order_item_id
+  bindingTables:
+    - t_order,t_order_item
+  defaultDatabaseStrategy:
+    inline:
+      shardingColumn: user_id
+      algorithmExpression: ds_${user_id % 2}
+  defaultTableStrategy:
+    none:
+```
+
+###### 3、启动Sharding-Proxy服务
+
+(1)  Sharding-Proxy 默认端口号3307，控制台 ACTIVE 表示成功
+
+###### 4、通过Sharding-Proxy启动端口进行连接
+
+​	由于版本原因navicat Sqlyung 一些版本可能与Sharding-Proxy不兼容，可以使用mysql客户端进行连接Sharding-Proxy
+
+(1) 打开cmd窗口 mysql =P3307 -uroot -proot
+
+(2) 进行sql命令操作
+
+```sql
+	show databases;
+	show tables;
+	select * from t_order;
+```
+
+(3) 在Sharding-Proxy创建表
+
+```sql
+create table t_order (
+	order_id bigint primary key,
+    user_id bigint not null,
+    status varchar(20)
+)
+```
+
+(4) 向表中添加一条记录
+
+```sql
+insert into t_order (order_id,user_id,status) values(11,1,'init');
+```
+
+###### 5、回到本地3306端口数据库中，可以看到proxy创建好的表和数据
+
+
+
+##### Sharding-Proxy配置（分库分表）
+
+###### 1、创建两个数据库
+
+```properties
+edu_db_1
+edu_db_2
+```
+
+
+
+##### Sharding-Proxy配置（读写分离）
