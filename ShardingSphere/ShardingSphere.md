@@ -825,7 +825,7 @@ insert into t_order (order_id,user_id,status) values(11,1,'init');
 
 
 
-##### Sharding-Proxy配置（分库分表）
+#### Sharding-Proxy配置（分库分表）
 
 ###### 1、创建两个数据库
 
@@ -834,6 +834,8 @@ edu_db_1
 edu_db_2
 ```
 
+(1) 创建数据库表，向表中添加记录
 
+(2) 
 
-##### Sharding-Proxy配置（读写分离）
+#### Sharding-Proxy配置（读写分离）
