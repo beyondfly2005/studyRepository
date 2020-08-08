@@ -23,6 +23,7 @@ mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.backup
 4、执行更换yum源的命令
 
 ```bash
+rm -f  /etc/yum.repos.d/CentOS-Base.repo
 wget -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
 wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
 wget -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-6.repo
@@ -33,8 +34,43 @@ rm -rf Centos-7.repo
 
 ```bash
 yum clean all
+yum clean all
 yum makecache
 yum makecache 
+```
+
+错误处理
+
+```
+File contains no section headers.
+file: file:///etc/yum.repos.d/CentOS-Base.repo, line: 1
+'--2020-08-08 17:25:05--  http://mirrors.aliyun.com/repo/Centos-7.repo\n
+```
+
+处理方法
+
+```bash
+# 先删除原有的文件
+rm -f  /etc/yum.repos.d/CentOS-Base.repo
+# 然后重新下载阿里的
+wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
+
+#清理缓存
+yum clean all
+
+ps:如果上述方法没有解决，尝试下面 
+
+## 删除yum.repos.d目录下所有文件
+rm -f /etc/yum.repos.d/*
+
+##然后重新下载阿里的
+wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
+
+## 清理缓存
+yum clean all
+
+##测试下载安装
+yum install gcc
 ```
 
 
