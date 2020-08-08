@@ -1,8 +1,12 @@
-https://www.bilibili.com/video/BV1Wa4y1v7uA?from=search&seid=8006137873669384588
+## MySQL5.7的安装
+
+> 视频地址
+
+https://www.bilibili.com/video/BV1Wa4y1v7uA?seid=8006137873669384588
+
+https://www.bilibili.com/video/BV1Wa4y1v7uA?t=956
 
 
-
-MySQL5.7的安装
 
 #### 0、更换yum源
 
@@ -19,8 +23,10 @@ mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.backup
 4、执行更换yum源的命令
 
 ```bash
-weget -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
-weget -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-6.repo
+wget -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
+wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
+wget -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-6.repo
+rm -rf Centos-7.repo
 ```
 
 5、更新本地缓存
@@ -28,6 +34,7 @@ weget -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos
 ```bash
 yum clean all
 yum makecache
+yum makecache 
 ```
 
 
@@ -73,6 +80,12 @@ mysql-community-source.repo
 #### 7、修改mysql-community.repo文件
 
 将5.6版本的enable=0  将5.7版本的enable=1
+
+```bash
+vim mysql-community.repo
+```
+
+
 
 ```properties
 [mysql56-community]
@@ -150,13 +163,51 @@ chkconfig mysqld on
 #### 10 、获取MySQL的临时密码
 
 ```properties
-
-grep "password"
-
+grep "password" /var/log/mysqld.log
 
 ```
 
+#### 11、使用临时密码登录
 
+```bash
+mysql -uroot -p
+```
+
+#### 12、修改密码
+
+```sql
+set global validate_password_policy=0;
+set global validate_password_length=1;
+alter USER 'root'@'localhost' IDENTIFIED by '123456';
+
+```
+
+#### 13、修改远程访问权限
+
+```sql
+grant all privileges on *.* to 'root'@'%' identified by '123456' with grant option;
+flush privileges;
+```
+
+#### 14、设置字符集为utf-8
+
+```bash
+vim /etc/my.cnf
+```
+
+```
+#在[mysqld]部分添加：
+character-set-server=utf8
+#在文件末尾新增[client]段，并在[client]段增加；
+[client]
+default-character-set=utf8
+
+```
+
+```bash
+#修改完后需要重启mysql服务
+service mysqld restart
+```
 
 
 
