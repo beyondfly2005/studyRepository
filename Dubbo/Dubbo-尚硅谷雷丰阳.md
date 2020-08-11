@@ -1,6 +1,6 @@
 > 地址： https://www.bilibili.com/video/BV1Gb411T7Ha
 
-# 基础知识
+# 一、基础知识
 
 ## 1.  分布式基础理论
 
@@ -14,46 +14,124 @@
 
 ### 1.2 发展演变
 
-- 单一应用架构
+![](https://ss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=4130954518,1824593826&fm=15&gp=0.jpg)
+
+- **单一应用架构**
 
   可以用多个服务器部署多套 nginx做负载均衡
 
-- 垂直应用架构
+- **垂直应用架构**
 
   界面与业务逻辑分离
 
   应用不可能完全独立，应用之间需要交互
 
-- 分布式架构
+- **分布式架构**
+
+  按业务进行拆分，
+
+  本地进程内通讯  -> RPC远程过程调用
+
+- **流动计算架构**
+
+  随着微服务的越来越多，服务器节点随之增多，如果将更多的服务器资源分配给压力更大的业务业务服务系统
 
 ### 1.3 RPC
 
+![](https://ss3.bdstatic.com/70cFv8Sh_Q1YnxGkpoWK1HF6hhy/it/u=962964185,1176401230&fm=11&gp=0.jpg)
+
 - 什么是RPC
 
-  
+- RPC的两个核心模块：通讯、序列化
+
+- RPC框架有哪些
+
+  阿里dubbo、谷歌gRPC、HSF(Heigh Speed Service Framework)
 
 ## 2.  Dubbo核心概念
 
-### 2.1 
+### 2.1 简介
 
-特性
+##### Dubbo的发展历史
+
+​	阿里巴巴开源的
+
+​	11年 开源到github
+
+​	14年10月 2.4.11版本
+
+​	停更
+
+​	当当网 dubboX
+
+​	网易考拉dubbokey
+
+​	17年 
+
+​	18年dubbox与dubbo合并 并发布了2.6
+
+​	18年2月15日 dubbo开源贡献给Apache组织
+
+
+
+##### **Dubbo的优良特性**
 
 - 面向接口代理的高性能RPC调用
-- 只能负载均衡
-- 服务自动注册于发现
+
+- 智能负载均衡
+
+- 服务自动注册与发现
+
 - 高度可扩展能力
+
 - 运行期流量调度
-- 
+
+  通过配置路由规则，轻松实现灰度发布
+
+- 可视化的服务治理与运维
 
 ### 2.2 设计架构
 
 ## 3.  Dubbo 环境搭建
 
-### 2.3 搭建Zookeeper
+![](https://ss1.bdstatic.com/70cFuXSh_Q1YnxGkpoWK1HF6hhy/it/u=2070965499,2376100404&fm=26&gp=0.jpg)
 
-### 2.4 监控中心
+### 3.1 windows安装Zookeeper
+
+复制conf/zoo_example.cfg 并命名为 zoo.cfg
+
+zkServer.cmd
+
+测试zkClient.cmd
+
+```
+get /
+create -e /atguigu
+ls /
+get /atguigu
+```
+
+
+
+### 3.2 windows安装监控中心
+
+安装监控台
+
+application.
+
+```
+mvn clean package
+```
+
+localhost:7001
 
 Dubbo OPS
+
+### 3.3 Linux安装Zookeeper
+
+### 3.4 Linux安装监控中心
+
+
 
 ## 4. Dubbo-helloword
 
@@ -74,6 +152,8 @@ Dubbo OPS
 
 ## 5. 监控中心
 
+5 监控中心
+
 ### 5.1 dubbo-admin
 
 ​	图形化的服务管理页面，安装时需要制定注册中心地址，接口从注册中心中获取到所有的提供者/消费者进行配置管理
@@ -90,7 +170,9 @@ mva package 打包
 
 消费者和提供者 的配置文件：
 
+```xml
 <dubbo:monitor protpcal="registry"></dubbo:monitor>
+```
 
 
 
@@ -111,7 +193,7 @@ mva package 打包
 - XML文件配置：dubbo.xml
 - Properties属性配置：dubbo.properties
 
-## Dubbo配置
+# 二、Dubbo配置
 
 	- 启动时检查
  - 超时检查
@@ -162,7 +244,7 @@ mva package 打包
   }
 ```
 
-## Dubbo高可用
+# 三、Dubbo高可用
 
 #### Zookeeper宕机与Dubbo直连
 
@@ -181,4 +263,8 @@ mva package 打包
 ### Dubbo服务降级
 
 ### 服务容错
+
+
+
+# 四、DUbbo原理
 
