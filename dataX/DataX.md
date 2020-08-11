@@ -12,9 +12,6 @@ https://blog.csdn.net/inthat/article/details/84146346
 
 
 
-
-# DataX
-
 ## dataX概述
 
 DataX是一个异构数据源离线同步/迁移工具，致力于关系型数据库MySQL Oracle等各种异构数据库直接稳定高效的数据迁移
@@ -62,7 +59,7 @@ mvn -v
 #### 3、解压安装包
 
 ```bash
-tar -zxvf datax.tar.gz  -C /opt/datax/
+tar -zxvf datax.tar.gz  -C /opt/
 cd /opt/datax
 chmod -R 755 datax
 ```
@@ -77,7 +74,7 @@ cd /home/datax
 cd /usr/local/datax
 python ./datax/bin/datax.py ./datax/job/job.json
 python /home/datax/datax/bin/datax.py  /home/datax/datax/job/job.json
-python /opt/datax/datax/bin/datax.py  /opt/datax/datax/job/job.json
+python /opt/datax/bin/datax.py  /opt/datax/job/job.json
 
 
 cd datax/bin
@@ -196,4 +193,125 @@ ln -sf /usr/local/python/bin/python2.6 /usr/bin/python2.6
 ```
 
 
+
+## DataX 同步数据
+
+### 从stream流读取数据并打印到控制台
+
+```
+python bin/datax.py -r streamreader -w streamwriter
+```
+
+
+
+### 从MySQL读数据MySQL
+
+```
+python ./bin/datax.py -r mysqlreader -w mysqlwriter
+```
+
+```json
+{
+    "job": {
+        "content": [
+            {
+                "reader": {
+                    "name": "mysqlreader", 
+                    "parameter": {
+                        "column": ["*"], 
+                        "connection": [
+                            {
+                                "jdbcUrl": ["jdbc:mysql://192.168.0.107:3306/world?serverTimezone=GMT%2B8"], 
+                                "table": ["*"]
+                            }
+                        ], 
+                        "password": "root", 
+                        "username": "123456", 
+                        "where": ""
+                    }
+                }, 
+                "writer": {
+                    "name": "mysqlwriter", 
+                    "parameter": {
+                        "column": ["*"], 
+                        "connection": [
+                            {
+                                "jdbcUrl": "jdbc:mysql://192.168.0.107:3306/test?serverTimezone=GMT%2B8", 
+                                "table": ["*"]
+                            }
+                        ], 
+                        "password": "123456",                 
+                        "username": "root"
+                    }
+                }
+            }
+        ], 
+        "setting": {
+            "speed": {
+                "channel": ""
+            }
+        }
+    }
+}
+```
+
+
+
+```bash
+cd job
+touch mysql2mysql.json
+vim mysql2mysql.json
+
+## 写入上面的json数据
+:wq # 保存退出
+./bin/datax.py job/mysql2mysql.json
+```
+
+**提示连接数据库失败**
+
+```
+异常Msg:[DataX无法连接对应的数据库，可能原因是：1) 配置的ip/port/database/jdbc错误，无法连接。2) 配置的username/password错误，鉴权失败。请和DBA确认该数据库的连接信息是否正确。]
+```
+
+**测试是否允许IP地址进行连接mysql**
+
+```sql
+-- 将mysql修改为远程电脑可连接
+use mysql;
+show tables;
+select host from user;
+update user set host ='%' where user ='root';
+```
+
+**查看mysql版本**
+
+```sql
+ select version();
+ 8.0.19
+```
+
+**替换mysql驱动为8.0以上版本**
+
+**reader writer 下的libs里的jar包都需要替换**
+
+```bash
+ll /opt/datax/plugin/reader/mysqlreader/libs
+```
+
+**导入之前需要提前创建表结构**
+
+否则报错：
+
+```bash
+具体错误信息为：java.sql.SQLSyntaxErrorException: Table 'test.city_new' doesn't exist
+```
+
+**表名不能为["*"] **
+
+否则报错：
+
+```
+
+执行的SQL为: select * from * where 1=2 具体错误信息为：java.sql.SQLSyntaxErrorException: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '* where 1=2' at line 1
+```
 
