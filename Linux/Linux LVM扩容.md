@@ -19,8 +19,32 @@ m 帮助
 p 打印分区表
 n 新建分区
 w 保存退出
+q 不保存退出
 # No free sectors available
 
+#输入m 查看帮助
+m
+
+# 1- 输入n 创建一个分区
+n
+
+# 2- Partition type 选择分区类型:
+#   p   primary (2 primary, 0 extended, 2 free)
+#   e   extended
+# 输入p 创建主分区
+p
+
+# 3- 输入分区号 按默认即可
+
+# 4- 设置分区大小 默认将剩余全部分配给新分区
+
+# 5- 输入t 改变主分区类型  change a partition's system id
+t
+
+# 6- 输入8e 改为分区修改为linux LVM 分区类型
+8e
+
+# 7- 输入w保存退出
 
 #强制重读分区表
 $ partprobe 
@@ -45,14 +69,15 @@ $ vgdisplay
 
 
 # 创建lV
-$ lv
-$ create -L 2G -n lv1 vg0
+$ lvcreate -L 2G -n lv1 vg0
 # 命令解析：
 # -L  指定大小
 # -n  指定名称
 # vg0 从哪个卷组创建
+$ lvcreate --name centos7new -l 100%FREE vg1
+# 将vg1卷组剩余的100%空间都创建为lv 并且命名为centos7new
 
-# 将磁盘/dev/vdc 加入到卷组 前提 /dev/vdc 已经创建为pv
+# 将磁盘/dev/vdc 加入到卷组；前提是：/dev/vdc 已经创建为pv
 $ vgextend VolGroup01 /dev/vdc 
 
 # 查询卷组
@@ -79,6 +104,9 @@ $ lvextend -L +1G /dev/centos/var
 ##### 1、将剩余空间 进行分区
 
 ```bash
+#查看磁盘分区
+ls /dev/
+#
 fdisk -l
 # 磁盘名称 /dev/nvme0n1
 fdisk /dev/nvme0n1
@@ -86,6 +114,7 @@ m        # help
 p        # 打印分区表
 n        # 创建新分区
 w        # write table to disk and exit 保存退出
+q		 # quit without saving changes 退出不进行保存
 #强制重读分区表
 partprobe 
 ```
