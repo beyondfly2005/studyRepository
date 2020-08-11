@@ -100,13 +100,20 @@
 
 复制conf/zoo_example.cfg 并命名为 zoo.cfg
 
+创建目录data ，并修改zoo.cfg文件中的 dataDir=../data
+
+启动Zookeeper:
+
+```bash
 zkServer.cmd
+```
 
 测试zkClient.cmd
 
 ```
 get /
-create -e /atguigu
+ls /
+create -e /atguigu 123456
 ls /
 get /atguigu
 ```
@@ -115,19 +122,54 @@ get /atguigu
 
 ### 3.2 windows安装监控中心
 
-安装监控台
+Dubbo OPS Dubbo运维 (dubbo-adming管理控制台 、 dubbo-monitor监控中心)
 
-application.
+###### 安装管理控制台
+
+##### 1、git下载源码
+
+```bash
+git clone https://github.com/apache/dubbo-admin.git
+cd dubbo-admin
 
 ```
+
+##### 2、修改配置文件zk注册中心地址
+
+修改src/main/resources/application.properties文件
+
+```properties
+dubbo.registry.address=zookeeper://127.0.0.1:2181
+# 将zk注册中心地址修改为实际地址
+```
+
+##### 3、Maven编译项目
+
+```bash
+cd dubbo-ops\dubbo\dubbo-admin
 mvn clean package
+cd dubbo-admin/target
+
 ```
 
-localhost:7001
+##### 4、运行jar包启动管理控制台
 
-Dubbo OPS
+```bash
+java -jar dubbo-admin-0.1.jar
+```
+
+##### 5、打开管理控制台 测试
+
+```
+浏览器打开
+localhost:7001
+```
+
+
 
 ### 3.3 Linux安装Zookeeper
+
+
 
 ### 3.4 Linux安装监控中心
 
@@ -137,10 +179,52 @@ Dubbo OPS
 
 ### 4.1 需求提出
 
+某个电商系统，订单服务需要调用用户服务获取某个用户的所有地址；
+
+我们现在 需要创建两个服务模块进行测试
+
+| 模块            | 功能       |
+| --------------- | ---------- |
+| 订单服务web模块   | 创建订单等 |
+| 用户服务service模块| 查询用户地址等|
+
+测试预期结果：
+
+订单服务web模块在A服务器，用户服务模块在B服务器，A可以远程调用B的功能。
+
+1、创建用户服务模块user-service-provider
+
+2、创建订单服务模块order-service-consumer
+
+3、抽取API接口层
+
+​	service、bean(entity、domain、model)
 
 
 
 ### 4.2 工程架构
+
+根据《dubbo服务化最佳实践》
+
+http://dubbo.apache.org/zh-cn/docs/user/best-practice.html
+
+###### 1、分包
+
+建议将服务接口、服务模型、服务异常等均放在 API 包中，因为服务模型和异常也是 API 的一部分，这样做也符合分包原则：重用发布等价原则(REP)，共同重用原则(CRP)。
+
+###### 2、粒度
+
+服务接口尽可能大粒度，每个服务方法应代表一个功能，而不是某功能的一个步骤，否则将面临分布式事务问题，Dubbo 暂未提供分布式事务支持。
+
+###### 3、版本
+
+每个接口都应定义版本号，为后续不兼容升级提供可能，如： `<dubbo:service interface="com.xxx.XxxService" version="1.0" />`。
+
+建议使用两位版本号，因为第三位版本号通常表示兼容升级，只有不兼容时才需要变更服务版本。
+
+当不兼容时，先升级一半提供者为新版本，再将消费者全部升为新版本，然后将剩下的一半提供者升为新版本。
+
+4、
 
 ### 4.3 使用Dubbo改造
 
