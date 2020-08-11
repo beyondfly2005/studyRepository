@@ -1597,7 +1597,7 @@ https://spring.io/projects/spring-cloud-alibaba#learn
 
 ## 20. Spring Cloud Alibaba  Seata处理分布式事务
 
-##### 分布式事务的问题
+#### 分布式事务的问题
 
 分布式数据库之前 单机单库
 
@@ -1609,17 +1609,343 @@ https://spring.io/projects/spring-cloud-alibaba#learn
 
 异常业务操作需要跨多个库  全局数据一致性问题
 
-##### Seata简介
+#### Seata简介
 
 ###### Seata是什么
 
-官网 http://seata.io
+Seta是一款开源的额分布式事务解决方案。致力于在微服务架构下提供高性能和简单易用的分布式事务服务。
+
+官网 http://seata.io/zh-cn
+
+###### Seata能做什么
+
+一个典型的分布式事务过程
+
+分布式试过处理过程：一个ID+三个组件模型
+
+**Transaction ID** 
+
+​		XID 全局唯一ID
+
+**TM-事务协调器**
+
+​	
+
+**TC-事务管理器**
+
+​		控制全局事务的边界
+
+**RM资源管理**
+
+​		控制分支事务
+
+###### Seata下载
+
+http://seata.io/zh-cn/blog/download.html
+
+推荐使用1.0.0GA版本
+
+###### Seata使用
+
+```properties
+#本地
+@Transactional
+#全局
+@GlobalTransactional
+```
 
 
 
-##### Seata-Server安装
+#### Seata-Server安装
 
 
 
+###### 6、配置registry.conf
+
+​	修改seta-server-1.0.0\seta\conf目录下的registry.conf配置文件 指明注册中心为nacos 以及修改nacos连接信息
+
+```json
+registry{
+    # file nacose rureka redis zk consul etcd3 sofa
+    type="nacos"
+    
+    nacos{
+    	serverAddr="localhost:8848"	
+    	namespace=""
+	    cluster="default"
+	}
+}
+```
+
+###### 7、先启动nacos
+
+###### 8、再启动seata-server
+
+#### 订单/库存/账户业务数据库准备
+
+##### 需要先启动Nacos后启动Seata 确保连个服务都正常
+
+Seata没启动会报错：no available server to connect
+
+##### 分布式事务业务说明
+
+创建三个微服务：订单微服务、库存微服务、账户微服务
+
+##### 创建业务数据库
+
+seata_order： 存储订单数据库
+
+seata_storage：存储库存的数据库
+
+seata_account：存储账户信息的数据库
+
+```sql
+create database seata_order;
+create database seata_storage;
+create database seata_account;
+```
 
 
+
+##### 创建业务表
+
+```sql
+create table t_order (
+	id, bingint(11) not null auto_increment primary key,
+	user_id bigint default null comment '用户id',
+	product_id bigint default null comment '产品id',
+	count int(11) default null comment '数量',
+	money decimal(11,0) default null comment '金额'
+	status int(1) default null comment '订单状态 0：创建中；1：已完结'
+) engine=INNODB auto_INCREment=7 default charset=utf8;
+```
+
+
+
+##### 创建回滚日志表
+
+订单、库存、账户三个数据库都需要建立各自的回滚日志表
+
+
+
+#### 代码实现
+
+#### 业务需求
+
+下订单->减库存->扣余额->修改订单状态
+
+#### 新建订单Order-Module
+
+##### 0-模块seata-order-service2001
+
+##### 1- 修改POM
+
+```xml
+ <dependencies>
+        <!--nacos-->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+        </dependency>
+        <!--seata-->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-seata</artifactId>
+            <exclusions>
+                <exclusion>
+                    <artifactId>seata-all</artifactId>
+                    <groupId>io.seata</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>io.seata</groupId>
+            <artifactId>seata-all</artifactId>
+            <version>0.9.0</version>
+        </dependency>
+        <!--feign-->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+            <version>2.2.0.RELEASE</version>
+        </dependency>
+        <!--web-actuator-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <!--mysql-druid-->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.37</version>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid-spring-boot-starter</artifactId>
+            <version>1.1.10</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
+            <version>2.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+```
+
+
+
+##### 2-修改YML
+
+```yaml
+server:
+  port: 2001
+ 
+spring:
+  application:
+    name: seata-order-service
+  cloud:
+    alibaba:
+      seata:
+      	#自定义事务组名称需要与seata-server中的对应
+        tx-service-group: fsp_tx_group
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/seata_order
+    username: root
+    password: root
+ 
+feign:
+  hystrix:
+    enabled: false
+ 
+logging:
+  level:
+    io:
+      seata: info
+ 
+mybatis:
+  mapperLocations: classpath:mapper/*.xml
+```
+
+
+
+##### 3-修改file.conf
+
+​	**把seata的conf目录中的file.conf文件和registry.conf文件copy到项目的resources目录下**
+
+```
+transport {
+  # tcp udt unix-domain-socket
+  type = "TCP"
+  #NIO NATIVE
+  server = "NIO"
+  #enable heartbeat
+  heartbeat = true
+  #thread factory for netty
+  thread-factory {
+    boss-thread-prefix = "NettyBoss"
+    worker-thread-prefix = "NettyServerNIOWorker"
+    server-executor-thread-prefix = "NettyServerBizHandler"
+    share-boss-worker = false
+    client-selector-thread-prefix = "NettyClientSelector"
+    client-selector-thread-size = 1
+    client-worker-thread-prefix = "NettyClientWorkerThread"
+    # netty boss thread size,will not be used for UDT
+    boss-thread-size = 1
+    #auto default pin or 8
+    worker-thread-size = 8
+  }
+  shutdown {
+    # when destroy server, wait seconds
+    wait = 3
+  }
+  serialization = "seata"
+  compressor = "none"
+}
+
+service {
+  #transaction service group mapping
+  vgroup_mapping.fsp_tx_group = "default"	#修改自定义事务组名称
+  #only support when registry.type=file, please don't set multiple addresses
+  default.grouplist = "127.0.0.1:8091"
+  #degrade, current not support
+  enableDegrade = false
+  #disable seata
+  disableGlobalTransaction = false
+}
+client {
+  async.commit.buffer.limit = 10000
+  lock {
+    retry.internal = 10
+    retry.times = 30
+  }
+  report.retry.count = 5
+  tm.commit.retry.count = 1
+  tm.rollback.retry.count = 1
+}
+## transaction log store, only used in seata-server
+store {
+  ## store mode: file、db
+  mode = "file"
+
+  ## file store property
+  file {
+    ## store location dir
+    dir = "sessionStore"
+  }
+
+  ## database store property
+  db {
+    ## the implement of javax.sql.DataSource, such as DruidDataSource(druid)/BasicDataSource(dbcp) etc.
+    datasource = "dbcp"
+    ## mysql/oracle/h2/oceanbase etc.
+    db-type = "mysql"
+    driver-class-name = "com.mysql.jdbc.Driver"
+    url = "jdbc:mysql://127.0.0.1:3306/seata"
+    user = "mysql"
+    password = "mysql"
+  }
+}
+```
+
+
+
+##### 4-修改registry.conf
+
+##### 5-domain
+
+##### 6-Dao接口及实现
+
+##### 7-Service接口及实现
+
+##### 8-Controller层
+
+##### 9-Config配置
+
+##### 10-主启动类
+
+
+
+##### 新建库存Storage-Module
+
+##### 新建转换Account-Module
+
+#### 事务测试
