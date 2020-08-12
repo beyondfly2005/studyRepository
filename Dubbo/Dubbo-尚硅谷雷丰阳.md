@@ -764,29 +764,167 @@ public class MyDobboConfig {
 }
 ```
 
+- 指定Dubbo的Service扫描路径
+  - @DubboComponentScan 在主启动类上
+  - 跟@EnableDubboConfig 注解是一样的 用哪个都可以
+  - 示例：@DubboComponentScan(scanBasePackages=“com.beyondsoft.gmall”)
+- 使用@Service暴露服务
+- 使用@Reference引用服务
+
 # 三、Dubbo高可用
 
-#### Zookeeper宕机与Dubbo直连
+### 1、Zookeeper宕机与Dubbo直连
+
+zookeeper注册中心宕机后，消费方仍可以使用dubbo暴露的服务
+
+原因有本地缓存，记录着服务方的地址和端口
+
+##### dubbo直连
+
+使用 @Reference(url="127.0.0.1:20882") 绕过注册中心
 
 ```java
-@Reference(url="127.0.0.1:20882")
+public class OrderServiceImpl implements OrderService{}
+	@Reference(url="127.0.0.1:20882")
+	private UserService userService;
+
+	public List<UserAddress> initOrder(String userId){
+        ...
+    }
+}
 ```
 
-#### Dubbo集群下 负载均衡策略
+### 2、集群下Dubbo 负载均衡配置
 
-- Random LoadBalance 随机
-- RoundRobin 轮询
-- LeastActive最小活跃数
-- 一致性哈希
-- 
+#### 2.1 四种负载均衡机制
 
-### Dubbo服务降级
+​	在集群复杂均衡是，Dubbo提供了多种负载均衡策略，缺省为随机方式调用
 
-### 服务容错
+- ##### Random LoadBalance 随机
+
+  按权重设置随机概率 ，可以设置权重 weight=100
+
+- ##### RoundRobin LoadBalance 轮询
+
+  轮询，按公约后的权重设置循环比例
+
+- ##### LeastActive LoadBalance 最小活跃数
+
+- ##### ConsitenHash LoadBalance 一致性哈希
 
 
+
+#### 	2.2 修改默认的负载均衡机制
+
+​	服务端 设置负载均衡
+
+```xml
+<dubbo:service interface="..."  loadbalance="roundrobin" />
+```
+
+​	服务消费方 客户端设置负载均衡算法
+
+```xml
+<dubbo:reference interface="..."  loadbalance="roundrobin" />
+```
+
+​	服务方法 设置负载均衡算法
+
+```xml
+<dubbo:service interface="..." >
+    <dubbo:method name="..." loadbalance="roundrobin" />
+</dubbo:service>
+```
+
+#### 2.3 dobbo-admin 调整权重
+
+使用dobbo-admin 可以动态调整权重
+
+倍权
+
+半权
+
+
+
+### 3、Dubbo服务降级
+
+当服务器压力剧增的情况下，根据实际业务情况以及流量，对一些服务和页面有策略的不处理或者换种简单的处理方式，从而释放服务器资源以保证核心交易正常云南做或高效运行。
+
+可以通过服务降级功能临时屏蔽某个出错的非关键服务，并定于降级后的返回策略。
+
+向注册中心希尔动态配置覆盖规则：
+
+dubbo支持两种服务降级：
+
+- mock=force:return+null 强制返回为null
+- mock=fail:return+null 调用失败后返回为null
+
+如何设置？
+
+​	利用dubbo管理控制台dubbo-admin，在消费者侧，进行屏蔽
+
+​	容错： 在调用失败后，返回为空，在dubbo-admin 消费者侧 点击 容错按钮
+
+### 4、集群容错
+
+#### 4.1 Dubbo支持的集群容错
+
+- ##### Failover Cluster 失败自动切换
+
+- ##### Failfast Cluster 快速失败
+
+  只发起异常调用，失败立即报错，通常用于非幂等性的写操作，比如新增记录
+
+- ##### Fallback Cluster 失败自动恢复
+
+- ##### Forking Cluster 并行调用多个服务器
+
+  并行调用多个服务器，只要有一个成功即返回，通常用于实时性要求较高的读操作，但是需要浪费更多服务器资源，可以通过forks="2" 来设置最大并行数
+
+- ##### Broadcast Cluster 广播调用所有提供者
+
+  逐个调用
+
+#### 4.2 集群模式配置
+
+可以在服务提供方和服务消费方配置集群模式
+
+```xml
+<dubbo:server cluster="failsafe" />
+或者
+<dubbo:reference cluster="failsafe"/>
+```
+
+
+
+
+### 5、整合Hystrix服务容错
+
+##### 1、配置spring-cloud-starter-netflix-hystrix
+
+```xml
+<dependency>
+	<groupId>org.springframework.cloud</groupId>
+    <artifictId>spring-cloud-starter-netflix-hystrix</artifictId>
+    <version>1.4.4.RELEASE</version>
+</dependency>
+```
+
+##### 2、主启动类增加@EnableHystrix启动Hystrix starter
+
+```java
+@SpringBootApplication
+@EnableHystrix
+public class ProviderApplication{
+	...
+}
+```
+
+3、配置Provider端
 
 # 四、DUbbo原理
 
+
+```
 
 ```
