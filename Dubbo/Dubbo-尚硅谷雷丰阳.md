@@ -483,22 +483,29 @@ mva package 打包
 
 ## 6. 整合SpringBoot
 
-创建模块
+##### 1、创建模块
 
-导入依赖
+##### 2、导入依赖
 
 - dubbo-starter
 - dubbo 其他不需要
 
-	        <dependency>
-	            <groupId>com.alibaba.boot</groupId>
-	            <artifactId>dubbo-spring-boot-starter</artifactId>
-	            <version>0.2.1.RELEASE</version>
-	        </dependency>
+```xml
+	<dependency>
+	    <groupId>com.alibaba.boot</groupId>
+	    <artifactId>dubbo-spring-boot-starter</artifactId>
+	    <version>0.2.1.RELEASE</version>
+	</dependency>
+```
 
-主程序中 开启dubbo
 
-属性覆盖策略
+##### 3、主程序中启动
+
+​		开启dubbo
+
+##### 4、配置映射规则
+
+##### 5、属性覆盖策略
 
 - 虚拟机参数配置： -Dubbo.protocol.port=20880
 - XML文件配置：dubbo.xml
@@ -506,53 +513,255 @@ mva package 打包
 
 # 二、Dubbo配置
 
-	- 启动时检查
- - 超时检查
-   - 默认1000毫秒 
-   - 
-	- 重置次数
-	- 多版本
-	- 本地存根
-	- 
+### 1、启动时检查
 
-### SpringBoot与dubbo整合的三种方式
+#### 通过spring配置文件配置
 
-- 导入dubbo-starter; 在application.properties中
+关闭某个消费者启动时检查
 
-- 保留dubbo配置文件，不在在application.properties中配置任何相关的的东西；在启动类中增加注解：@ReportResource(location="class:provider.xml")
+```
+<dubbo:reference interface="xx" check="false"></dubbo:reference>
+```
 
-- 使用注解API方式 配置使用配置类
+关闭所有消费者的启动时检查(统一规则)
+
+```
+<dubbo:consumer check="false"></dubbo:consumer>
+```
+
+关闭注册中心启动时检查
+
+```
+<dubbo:registry check="false" />
+```
+
+#### 通过dubbo.properties配置
+
+```
+dubbo.refenence.com.xx.XXService.check=false
+dubbo.reference.check=false
+dubbo.consumer.check=false
+dubbo.registry.check=false
+```
+
+#### 通过虚拟机-D参数进行配置
+
+```
+java -Dubbo.dubbo.refenence.com.xx.XXService.check=false
+java -Dubbo.reference.check=false
+java -Dubbo.consumer.check=false
+java -Dubbo.registry.check=false
+```
+
+
+
+### 2、超时检查
+
+接口上设置超时时间
+
+```
+<dubbo:reference interface="xx" timeout=3000 ></dubbo:reference>
+```
+
+消费者统一设置
+
+```
+<dubbo:consumer timeout=3000 > </dubbo:consumer>
+```
+
+提供者统一设置
+
+```
+<dubbo:consumer timeout="300"><dubbo:consumer>
+```
+
+方法上配置超时时间
+
+```
+<dubbo:methord timeout="1000">
+```
+
+**覆盖策略：方法及有限，接口级次之，全局配置再次之**
+
+**消费方有限，提供方次之**
+
+- 单位：毫秒
+- 默认1000毫秒 
+- 可以在方法上进行设置
+- 重置次数
+- 多版本
+- 本地存根
+
+### 3、重试次数
+
+重试次数 不包含第一次调用
+
+```
+<dubbo:reference retries="3" timeout="3000">
+```
+
+多个服务提供商 自动重试同名的其他服务
+
+幂等操作（在幂等操作上尝试尝试次数：查询、删除、修改） 非幂等操作（新增操作）
+
+幂等操作：多次操作，效果一致
+
+非幂等：retries=0 不重试
+
+### 4、多版本
+
+一个接口  有两个或者两个以上版本的实现版本
+
+```xml
+<dubbo:service interface="XXService" ref="XXService01" version="1.0.0" ref="XXImpl01"></dubbo:service>
+<bean id="XXImpl01" class="XXServiceImpl"></bean>
+
+<dubbo:service interface="XXervice" ref="XXService02" version="2.0.0" ref="XXImpl02"></dubbo:service>
+<bean id="XXImpl02" class="XXServiceImpl"></bean>
+```
+
+调用时
+
+```xml
+<dubbo:reference interface="XXService" version="1.0.0">
+<dubbo:reference interface="XXService" version="2.0.0">
+<dubbo:reference interface="XXService" version="*">  #同时上线
+```
+
+### 5、本地存根
+
+在服务消费方，写一个远程接口的本地接口实现（存根实现）
+
+必要要有一个有参构造器，有参构造器的参数是远程接口的代理实现
+
+UserserviceStub.java
+
+##### 实现一个存根
+
+```java
+public class UserServiceStub implements UserService {
+
+    private final UserService userService;
+
+    //传入的是 远程代理对象
+    public UserServiceStub(UserService userService) {
+        this.userService = userService;
+    }
+
+    @Override
+    public List<UserAddress> getUserAddressList(String userId) {
+        if(StringUtils.isEmpty(userId)){
+            return userService.getUserAddressList(userId);
+        }
+        return null;
+    }
+}
+```
+
+##### 配置存根
+
+可以在服务提供方配置
+
+```xml
+<dubbo:service interface="com.xx.XXService" stub="true"/>
+```
+
+或者
+
+```xml
+<dubbo:service interface="com.xx.XXService" stub="com.xx.XXServiceStub"/>
+```
+
+也可以在服务消费方配置
+
+```xml
+<dubbo:reference interface="xx" stub="com.xx.XXServiceStub" />
+```
+
+
+
+### 6、SpringBoot方式配置
+
+```java
+@Service(timeout="3000" retries="3")
+```
+
+```java
+@reference(version = "1.0.0",check = true)
+```
+
+
+
+### 7、SpringBoot与dubbo整合的三种方式
+
+#### 方式一
+
+- 导入dubbo-starter;
+-  在application.properties中配置dubbo属性；
+- 使用@Service暴露服务；
+- 使用@Reference引用服务；
+- 需要在主启动类添加@EnableDubbo注解开启dubbo
+  - 是为了指定包扫描规则
+  - 也可以在application.properties中配置包扫描规则
+  - dubbo.base-packages="com.xx.service" 就可以不用再主启动类配置注解@EnableDubbo
+#### 方式二
+
+​	如果想保留方法级别的精确配置
+
+- 导入dubbo-starter;
+
+- 保留dubbo配置文件（provider.xml consumer.xml），
+- 不用在application.properties中配置任何dubbo相关的的东西；
+- 在启动类中增加注解：@ImportResource(locations="classpath:provider.xml")
+- 暴露Service不用注解
+#### 方式三
+
+- 使用注解API方式 
+
+- 使用配置类来进行配置
 
   将每一个组件创建到容器中
 ```java
+package com.beyondsoft.gmall.config;
 
-  config.MyDobboConfig{
+@Configuration
+public class MyDobboConfig {
 
-      public ApplicationConfig applicationConfig(){
-
-  			ApplicationConfig application =new ApplicationConfig();
-
-  			application.setName("boot-user-service-provider");
-
-  			return applicationConfig;
-
-  	}
-
-  	
-
-  	public RegistryConfig registryConfig(){
-  		RegistryConfig registry 
-  	}
+      public ApplicationConfig applicationConfig(){        
+      		ApplicationConfig application =new ApplicationConfig();
+      		application.setName("boot-user-service-provider");
+      		return applicationConfig;
+      }
+        
+      public RegistryConfig registryConfig(){
+          RegistryConfig registry = new RegistryConfig();
+          registry.setProtocol("zookeeper");
+          retistry.setAddress("127.0.0.1:2181");
+          return registry;
+      }
 
    	public ProtocolConfig protoConfig(){
-  		ProtoConfig
+  		ProtocolConfig protocolConfig = new ProtocolConfig();
+        protocolConfig.setName("dubbo");
+        protocolConfig.setPort(20880);
+        return protocolConfig;
   	}
 
   	public ServerConfig<UserService> userServiceConfig(UserService userService){
+        ServiceConfig<UserService> serviceConfig = new ServiceConfig<>();
+        serviceConfig.setInterface(UserService.class);
+        serviceConfig.setRef(userService);
+        serviceConfig.setVersion("1.0.1");
         
+        MethodConfig methodConfig = new MethodConfig();
+        methodConfig.setName("getUserAddressList");
+        methodConfig.setTimeout();
+        
+        List<MethodConfig> listMethodConfig = new ArrayList<MethodConfig>();
+        listMethodConfig.set(methodConfig);
+        serviceConfig.setMethods(listMethodConfig);
     }
-
-  }
+}
 ```
 
 # 三、Dubbo高可用
@@ -579,3 +788,5 @@ mva package 打包
 
 # 四、DUbbo原理
 
+
+```
