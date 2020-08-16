@@ -75,7 +75,7 @@
 	- 物理外键带来的坏处是：性能问，每次你对数据的操作都要做检查 
  - 建立逻辑外键来解决正确性的问
    	- 通过程序的手段来实现
-   	- 录入商品，选择商品分类
+      	- 录入商品，选择商品分类
 
 **字段的选择上，尽量考虑合适即可**
 
@@ -182,3 +182,194 @@ dubbo-mall
 
 
 ## P20 实现entity+mapper层
+
+
+
+
+
+## P61 SpringBoot整合FreeMaker
+
+Apache
+
+使用FreeMaker生成html页面
+
+
+
+```html
+<#if (age>40)>
+	大叔级
+	<#elesif (age>30)>
+	老腊肉
+	<#else>
+	小鲜肉
+<#if>	
+```
+
+
+
+```
+<${msg}
+```
+
+
+
+
+
+## P67 RabbitMQ Server安装
+
+##### 主流MQ产品：
+
+RocketMQ 阿里 贡献给Apache
+
+ActiveMQ ApacheJMS java消息服务
+
+RabbitMQ（AMQP 高级消息协议）
+
+Kafka 大数据
+
+
+
+#### 安装RabbitMQ服务器
+
+##### 1、安装erlang语言环境
+
+- 设置安装源
+
+  ```bash
+  vim /etc/yum.repos.d/rabbitmq-erlang.repo
+  vim /etc/yum.repos.d/rabbitmq-erlang.repo
+  ```
+
+  
+
+- 输入如下内容
+
+  基于centos6安装
+
+  ```properties
+  [rabbitmq-erlang]
+  name=rabbitmq-erlang
+  baseurl=https://dl.bintray.com/rabbitmq/rpm/erlang/19/el/6
+  gpgcheck=1
+  gpgkey=https://dl.bintray.com/rabbitmq/Keys/rabbitmq-release-signing-key.asc
+  repo_gpgcheck=0
+  enabled=1
+  ```
+
+  基于centos7安装
+
+  ```properties
+  [rabbitmq-erlang]
+  name=rabbitmq-erlang
+  baseurl=https://dl.bintray.com/rabbitmq/rpm/erlang/20/el/7
+  gpgcheck=1
+  gpgkey=https://dl.bintray.com/rabbitmq/Keys/rabbitmq-release-signing-key.asc
+  repo_gpgcheck=0
+  enabled=1
+  ```
+
+  
+
+- 执行安装
+
+  yum -y install erlang
+  
+- 另一种方式安装Erlang  
+  
+   安装erlang	
+
+```
+rpm -Uvh https://mirrors.tuna.tsinghua.edu.cn/epel/7/x86_64/Packages/e/epel-release-7-12.noarch.rpm
+
+$ wget https://dl.bintray.com/rabbitmq-erlang/rpm/erlang/19/el/7/x86_64/erlang-19.3.6.13-1.el7.centos.x86_64.rpm
+
+yum install erlang
+```
+
+
+
+##### 2、安装RabbitMQ-Server
+
+	- 上传准备好的安装包
+	- 采用rpm -ivh 命令镜像安装即可
+
+```bash
+$ wget https://dl.bintray.com/rabbitmq/all/rabbitmq-server/3.7.7/rabbitmq-server-3.7.7-1.el7.noarch.rpm
+
+$ rpm -ivh rabbitmq-server-3.7.7-1.el7.noarch.rpm
+```
+
+- 错误
+
+```
+错误：依赖检测失败：
+	erlang >= 19.3 被 rabbitmq-server-3.7.7-1.el7.noarch 需要
+	socat 被 rabbitmq-server-3.7.7-1.el7.noarch 需要
+```
+
+
+
+```
+rpm -ivh --nodeps rabbitmq-server-3.7.7-1.el7.noarch.rpm
+```
+
+
+
+##### 3、启动RabbitMQ服务
+
+查看状态
+
+```
+$ rabbitmqctl status 
+```
+
+停止RabbitMQ
+
+```
+$rabbitmqctl stop
+```
+
+设置开机启动
+
+```
+$ systemctl enable rabbitmq-server 
+```
+
+启动RabbitMQ
+
+```
+$ systemctl start rabbitmq-server
+```
+
+##### 4、配置运行远程访问
+
+
+
+#### 提供了哪些具体的交互队列
+
+
+
+#### SpringBoot整合RabbitMQ
+
+1、引入依赖
+
+```
+        <dependency>
+            <groupId>com.rabbitmq</groupId>
+            <artifactId>amqp-client</artifactId>
+            <version>4.0.2</version>
+        </dependency>
+```
+
+
+
+#### 使用RabbitMQ改造系统
+
+
+
+
+
+
+
+
+

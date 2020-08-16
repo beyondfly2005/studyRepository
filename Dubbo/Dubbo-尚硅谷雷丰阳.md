@@ -848,22 +848,24 @@ public class OrderServiceImpl implements OrderService{}
 
 ### 3、Dubbo服务降级
 
+#### 什么是服务降级
+
 当服务器压力剧增的情况下，根据实际业务情况以及流量，对一些服务和页面有策略的不处理或者换种简单的处理方式，从而释放服务器资源以保证核心交易正常云南做或高效运行。
 
 可以通过服务降级功能临时屏蔽某个出错的非关键服务，并定于降级后的返回策略。
 
 向注册中心希尔动态配置覆盖规则：
 
-dubbo支持两种服务降级：
+**dubbo支持两种服务降级：**
 
 - mock=force:return+null 强制返回为null
 - mock=fail:return+null 调用失败后返回为null
 
 如何设置？
 
-​	利用dubbo管理控制台dubbo-admin，在消费者侧，进行屏蔽
+​	屏蔽：利用dubbo管理控制台dubbo-admin，在消费者侧，进行屏蔽
 
-​	容错： 在调用失败后，返回为空，在dubbo-admin 消费者侧 点击 容错按钮
+​	容错：在调用失败后，返回为空，在dubbo-admin 消费者侧 点击 容错按钮
 
 ### 4、集群容错
 
@@ -920,11 +922,102 @@ public class ProviderApplication{
 }
 ```
 
-3、配置Provider端
+##### 3、配置Provider端
+
+在Dubbo的Provider上增加@HystrixCommond配置，这样调用会经过Hystrix代理
+
+```java
+@HystrixCommond
+```
+
+##### 4、配置Consumer消费者端
+
+```
+@Reference
+UserService userService;
+
+@HystrixCommand(fallbackMethod="initOrderFallback")
+public List<UserAddress> initOrder(String userId){
+	List<UserAddress> addressList = userService.getUserAddressList(userId);
+	return addressList;
+}
+//出错时调用
+public List<UserAddress> initOrderFallback(String userId){
+	//return null;
+	//或者
+	return Arrays.asList(new UserAddress(10,"测试地址")，“1”，“测试”,“测试”,"Y");
+}
+```
+
+
 
 # 四、DUbbo原理
 
+#### 1、RPC原理
+
+![](https://images2015.cnblogs.com/blog/522490/201510/522490-20151003120412386-363334260.png)
+
+一次完整的RPC调用流程（同步调用）如下：
+
+1）服务消费方（client）的调用是以本地调用方式调用服务；
+
+2）client stub（代理）接收到调用后负责将方法、参数等组装成能够进行网络传输的消息体；
+
+3）client stub找到服务地址，并将消息发送到服务端；
+
+4）server stub收到消息后进行解码；
+
+5）server stub根据解码结果调用本地的服务；
+
+6）本地服务执行并将结果返回给server stub；
+
+7）server stub将返回结果打包成消息并发送至消费方；
+
+8）client stub接收到消息，并进行解码；
+
+9）服务消费方得到最终结果。
+
+#### 2、Netty通信原理
+
+Netty是一个异步事件驱动的网络应用程序框架，用于快速开发可维护的高性能协议服务器和客户端，它极大地简化并简化了TCP和UDP套接字服务等网络编程。
+
+**BIO（Blocking IO阻塞式IO）**
+
+![](https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1597461509341&di=84f3e293b22a4ef1ac4a45efeb9b1bb4&imgtype=0&src=http%3A%2F%2Fimg2020.cnblogs.com%2Fblog%2F292888%2F202007%2F292888-20200701091344790-1141479678.png)
+
+**NIO（Non-Blocking IO非阻塞式IO）**
+
+多路复用模型
+
+![](http://dl2.iteye.com/upload/attachment/0095/0309/21c0d590-0547-386e-ab24-ce1cf7bf3283.png)
+
 
 ```
-
+Selector 一般称为选择器 也可以翻译为 多路复用器
+监听状态：Connect连接、Accept接手就绪、Read读就绪、Write写就绪
 ```
+
+**Netty基本原理**
+
+
+
+
+
+#### 3、Dubbo原理
+
+##### 3.1 Dubbo原理 -框架设计
+
+![](http://dubbo.apache.org/docs/zh-cn/dev/sources/images/dubbo-framework.jpg)
+
+##### 3.2 Dubbo原理-启动解析、加载配置
+
+
+
+##### 3.3 Dubbo原理-服务暴露
+
+##### 3.4 Dubbo原理-服务引用
+
+##### 3.5 Dubbo原理-服务调用
+
+
+
