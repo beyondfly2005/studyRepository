@@ -203,7 +203,7 @@ RabbitMQ 提供了一个易用的用户界面，使得用户可以监控和管�
 
 #### 1.3.1 下载
 
-###### 1、下载Erlang的rpm包
+##### 1、下载Erlang的rpm包
 
 ​	RabbitMQ是Erlang语言编写，索引Erlang幻想必须要有
 
@@ -295,6 +295,7 @@ docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-manag
 
 ```bash
 rabbitmq-plugins enable rabbitmq_management
+rabbitmq-plugins enable rabbitmq_management
 ```
 
 ##### 3、启动RabbitMQ
@@ -334,10 +335,11 @@ ps -ef|grep rabbitmq
 
 - 在web浏览器中输入地址
 
-  http://虚拟机ip:15627
+  http://虚拟机ip:15672
 
   ```bash
-  http://192.168.0.110:15627
+  http://localhost:15672
+  http://192.168.0.110:15672
   ```
 
   管理控制台端口15672 
@@ -375,7 +377,7 @@ ps -ef|grep rabbitmq
 - 查看用户列表
 
   ```
-  rabbotmqctl list_users
+  rabbitmqctl list_users
   ```
 
 - 使用新账号登录
@@ -398,7 +400,7 @@ ps -ef|grep rabbitmq
 
 - 端口：
 
-  - 5267： RabbitMQ 的编程运用客户端连接端口 ：如使用java连接rabbitmq
+  - 5672： RabbitMQ 的编程运用客户端连接端口 ：如使用java连接rabbitmq
   - 15672 ：RabbitMQ 管理界面端口
   - 25672：RabbitMQ 集群的端口
 
@@ -417,17 +419,50 @@ rpm -e rabbitmq-server
 
 ##### 1.4.2 创建Virtual Hosts虚拟主机
 
+		- Name名称  /mymq  以 / 开始
+		- Description描述 
+		- Tags分类标签：administrator 角色名称 ，具有该角色的用户可以使用这个虚拟主机
+
 ##### 1.4.3 设置权限
 
-
+​	设置哪些用户可以使用虚拟主机 zhangsan .* 
 
 ## 2、五种消息模型
 
+RabbitMQ提供了6种消息模型，但是第6种其实是RPC，并不是MQ，因此不予学习。那么也就剩下5种。1、2这两张种属于点对点模型；其实3、4、5这三种都属于订阅模型，只不过进行路由的方式不同。
 
+![](https://img2018.cnblogs.com/blog/1580998/201912/1580998-20191211155132224-1828995492.png)
 
+### 2.1 基本消息模型
 
+RabbitMQ是一个消息代理：它接收和转发消息。 你可以把它想象成一个邮局：当你把邮件放在邮箱里时，你可以确定邮差先生最终会把邮件发送给你的收件人。 
 
+在这个比喻中，RabbitMQ是邮政信箱，邮局和邮递员。
 
+RabbitMQ与邮局的主要区别是它不处理纸张，而是接受，存储和转发数据消息的二进制数据块。
+
+![](https://img2018.cnblogs.com/blog/1580998/201912/1580998-20191211155748265-1636413027.png)
+
+```
+P（producer/ publisher）：生产者，一个发送消息的用户应用程序。
+C（consumer）：消费者，消费和接收有类似的意思，消费者是一个主要用来等待接收消息的用户应用程序
+```
+
+队列（红色区域）：rabbitmq内部类似于邮箱的一个概念。虽然消息流经rabbitmq和你的应用程序，但是它们只能存储在队列中。队列只受主机的内存和磁盘限制，实质上是一个大的消息缓冲区。许多生产者可以发送消息到一个队列，许多消费者可以尝试从一个队列接收数据。
+
+总之：
+
+生产者将消息发送到队列，消费者从队列中获取消息，队列是存储消息的缓冲区。
+
+我们将用Java编写两个程序;发送单个消息的生产者，以及接收消息并将其打印出来的消费者。我们将详细介绍Java API中的一些细节，这是一个消息传递的“Hello World”。
+
+我们将调用我们的消息发布者（发送者）Send和我们的消息消费者（接收者）Recv。发布者将连接到RabbitMQ，发送一条消息，然后退出。
+
+#### 2.1.1 生产者发送消息
+
+```java
+
+```
 
 
 
