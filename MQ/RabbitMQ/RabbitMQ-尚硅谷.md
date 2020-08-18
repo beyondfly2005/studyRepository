@@ -467,3 +467,67 @@ C（consumer）：消费者，消费和接收有类似的意思，消费者是�
 
 
 ## 3、Spring AMQP
+
+#### 3.1 简介
+
+Spring AMQP 官网：http://spring.io/projects/spring-amqp
+
+Spring-AMQP 是对AMQP协议的抽象实现，而spring-rabbit是对协议的具体实现，也是目前的唯一实现，底层使用RabbitMQ
+
+#### 3.2 依赖和配置
+
+添加amqp的starter
+
+```xml
+<dependenncy>
+	<groupId>org.springframework.boot</groupId>
+    <artifctId>spring-boot-starter-amqp</artifctId>
+</dependenncy>
+```
+
+在application.yml文件中添加RabbitMQ地址
+
+```yaml
+spring:
+  rabbitmq:
+    host: 192.168.0.110
+    username: admin
+    password: admin
+    virtual-host: /myqp
+    port: 5672
+```
+
+#### 3.3 监听者
+
+在springAMQP中，对消息的消费者进行了封装和抽象，一个普通的JavaBean中的普通方法，只要通过简单的注解，就可以成为一个消费者
+
+```java
+@Component
+public class Listener{  //消费者
+  	@RabbitListener(bindings=@QueueBinding(
+        value=@Queue(value="spring.test.queue",durable="true"),
+        exchange=@Exchange(
+        	value="spring.test.exchange",
+            ignoreDeclarationException="true",
+            type=ExchangeTypes.TOPIC
+        ),
+        key={"#.#"}
+    ))
+    public void listen(String msg){  //处理消息
+        System.out.println("接收到消息："+msg);
+    }
+}
+```
+
+#### 3.4 AnqpTemplate 消费者
+
+```java
+convertAndSend(Object message);
+convertAndSend(String routingKey,Object message);
+convertAndSend(String exchange,String routingKey,Object message);
+convertAndSend(Object message , MessagePostProcessor messagePostProcessor);
+convertAndSend(String routingKey,Object message,MessagePostProcessor messagePostProcessor);
+convertAndSend(String exchange,String routingKey,Object message,MessagePostProcessor messagePostProcessor);
+```
+
+3.5 
