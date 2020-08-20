@@ -696,3 +696,17 @@ public class JedisTest{
 
 
 ## P94 Redis字符串类型操作
+
+Redis的类型仅指的是 Value的类型，key的类型都是String
+
+Key-------------------------Value
+
+String----------------------String
+
+String-----------------------Hash
+
+String-----------------------List
+
+String-----------------------Set
+
+String-----------------------Zset
