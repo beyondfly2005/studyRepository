@@ -373,3 +373,326 @@ $ systemctl start rabbitmq-server
 
 
 
+## P93 Redis概述
+
+谈谈你对Redise的认识
+
+1、技术解决了什么问题，技术有什么特点，在解决这些问题的时候，它是怎么解决的？
+
+2、面试紧张，问一个具体点的问题
+
+
+
+Redis解决了什么问题？
+
+**一、缓存**
+
+对比Hibernate Mybatis缓存；
+
+缓存解决了什么问题？减少了对数据库的交换
+
+什么样的数据适合缓存？变化频率不高的数据+访问频率高的数据
+
+2、Hibernate三级缓存
+
+session级别缓存，自动开启，线程级的缓存
+
+sessionFactory级别，需要配置，配置为第三方的缓存ecache，进程级的缓存
+
+查询缓存，依赖二级缓存，HQL 设置需要缓存 配置bean
+
+3、Mybatis缓存
+
+一级缓存，sqkSession 线程级的缓存 每个session
+
+二级缓存 SQLSessionFactory 进程级的，整个应用缓存
+
+4、Hibernate 和Mybatis都是本地缓存，无法进行分布式缓存。
+
+Redis服务器 用以做分布式缓存更容易
+
+**二、存储信息**
+
+共享Session  session.setAttribute() ,将session 存储到redis 解决了session共享问题，替代原来的
+
+
+
+**三、数据类型丰富、解决开发问题**
+
+文章点赞： 数据库表建立一个字段 点击加1，
+
+可以存入Redis内存
+
+**四、热点事件排行**
+
+如对点击量排行
+
+**五、Redis做消息队列**
+
+
+
+##### 学习路线
+
+3.1 Redis基础知识 （数据类型+内存管理机制+持久化机制+流水线）
+
+3.2Redis高可用架构+哨兵机制
+
+3.3Redis高性能架构-RedisCluster
+
+3.4 Java操作Redis(Spring SpringBoot)
+
+3.5Redis缓存更新策略
+
+3.6 热点key的重建策略
+
+3.7 应对缓存穿透工具
+
+3.8 应对缓存雪崩的问题
+
+3.9 Redis的分布式锁
+
+## P94 Redis安装及服务启动
+
+### 1、Redis 简介
+
+Redis是一种鉴于键值对的NOSQL数据库，与很多键值对数据库不同的是，Redis中的值可以是String、Hash、List、Set集合、Zset有序集合等多种数据结构。
+
+##### Redis VS Memcached
+
+redis 数据类型更丰富
+
+redis支持持久化
+
+##### Redis的特点
+
+###### 高性能：
+
+Redis将所有数据都存储在内存中，所有它的读写性能非常之高，官方的数据时可以达到10万次/秒
+
+###### 可靠性：
+
+Redis还将内存中的数据利用快照和日志的信息保存到硬盘中，这样可以避免发生断电或机器故障，内存数据丢失问题。
+
+###### 数据类型丰富
+
+字符串、hash、list、set、zset
+
+### 2、Redis应用场景
+
+##### 缓存
+
+##### 计数器应用
+
+##### 保存用户凭证
+
+实现多系统之间的单端登录凭证
+
+##### 消息队列功能
+
+Redis提供了发布订阅功能和阻塞队列功能
+
+总结：
+
+1、前期数据的压力、将经常被访问、但更新不频繁的数据，保存在缓存中、这样可以减少对数据库的操作
+
+2、代替数据的存储功能，保存赞和踩，保存手机验证码、保存用户凭证
+
+### 3、Redis环境搭建
+
+首先将redis的安装包上传到服务器 将其放到usr/local中
+
+第一步：安装gcc环境
+
+```bash
+yum -y install gcc-c++
+```
+
+第二步：解压redis源码包
+
+```bash
+tar -zxvf redis-3.2.6.tar.gz
+```
+
+第三步：编译redis源码
+
+```bash
+make
+```
+
+第四步：安装redis
+
+```bash
+make install PREFIX=/usr/local/redis3
+```
+
+### 4、启动服务端
+
+启动redis 分为按默认配置启动和使用配置文件启动（官方建议）
+
+1、默认启动方式（非守护线程启动）
+
+```bash
+cd /usr/local/redis3
+./redis-server
+```
+
+持久化
+
+```
+退出时，自动创建dump.rdb文件 存储redis信息
+```
+
+默认服务端是 启动的
+
+复制配置文件
+
+```
+cd /usr/local/redis/redis-3.2.6/
+cp redis.conf /usr/local/redis3/bin/
+```
+
+修改配置文件
+
+```
+vim redis.conf
+
+将daemonize no 改为 daemonize yes 表示以守护线程启动运行
+```
+
+以守护线程启动
+
+```
+cd /usr/local/redis3
+./redis-server redis.conf
+```
+
+关闭服务器
+
+```
+./redis-cli 
+shutdown
+```
+
+
+
+### 5、启动Redis客户端
+
+```
+cd /usr/local/redis3
+./redis-cli
+```
+
+连接非本地客户端(远程服务器)
+
+```
+./redis-cli -h 127.0.0.1 -p 6379
+```
+
+### 6、解除本地绑定
+
+redis低版本默认没有这事仅限本机访问，而高版本则有默认本机访问的设置，索引需要将高版本的redis配置为可远程访问，即解除本机绑定IP
+
+```
+vim redis.conf
+bind 127.0.0.1 改为
+#bind 127.0.0.1
+```
+
+保存退出后 需要重启redis
+
+```
+./redis-cli
+SHUNTDOWN
+exit 
+
+./redis-server redis.conf
+```
+
+配置重启防护墙
+
+```
+service iptables restart  ##centos6.X
+```
+
+
+
+### 7、安全加固-设置Redis的访问密码
+
+开启远程访问后  java连接redis会保错，由于开启远程访问后，出现了安全问题，这时需要设置密码
+
+```bash
+cd /usr/local/redis3/bin
+vim redis.conf
+/requ  # 查找 以requ开头的文字
+#requirepass foobared 改为
+requirepass 123456  #将密码改为123456
+#保存退出 重启redis-server
+./redis-cli
+SHUTDOWN
+exit
+./redis-server redis.conf
+```
+
+也可通过以下方式重启
+
+```bash
+ps -aux  | grep redis
+kill -9 5835 # 删掉进程
+# 重启进程
+./redis-server redis.conf
+```
+
+再次使用客户端时，需要使用密码才能访问
+
+```bash
+./redis-cli
+get name  # 提示NOAUTH Authentication required
+AUTH 123456 # 认证密码
+get name #认证成功后既可以get 值了
+```
+
+
+
+### 8、Java连接Redis
+
+1、搭建Maven工程，引入依赖
+
+```xml
+<dependency>
+	<groupId>redis.clients</groupId>
+    <artifactId>jedis</artifactId>
+    <version>2.9.0</version>
+</dependency>
+```
+
+2、使用Jedis提供的API操作Redis
+
+```java
+public class JedisTest{
+    @Test
+    public void jedisTest(){
+        Jedis jedis = new Jedis("127.0.0.1",6379);
+        jedis.auth("");	//密码
+        jedis.set("name","刘德华");
+        jedis.set("superStart","刘德华");
+        String superStart = jedis.get(“superStart”);
+        System.out.println(superStart);
+    }
+}
+```
+
+在Redis没有设置密码之前，使用java连接redis 提示 处于保护模式，没有设置绑定的访问地址，也没有设置密码
+
+解决方案
+
+1、禁用保护模式 disable protected mode
+
+2、只有某一台服务允许连接，其他地址都不允许连接
+
+3、仅测试用 重启redis服务器 使用参数 protected-mode no
+
+4、设置一个密码 
+
+
+
+## P94 Redis字符串类型操作
