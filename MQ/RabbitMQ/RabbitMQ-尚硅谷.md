@@ -278,14 +278,20 @@ erlang依赖的socat-1.7.3.2
 ```
 rpm -ivh erlang-19.3.6.13-1.el7.centos.x86_64.rpm
 rpm -ivh socat-1.7.3.2-5.el7.lux.x86_64.rpm
+rpm -ivh rabbitmq-server-3.7.7-1.el7.noarch.rpm
+```
+
+另一版本
+
+```
+rpm -ivh erlang-21.3.8.16-1.el7.x86_64.rpm
+rpm -ivh socat-1.7.3.2-5.el7.lux.x86_64.rpm
 rpm -ivh rabbitmq-server-3.8.6-1.el7.noarch.rpm
 ```
 
-
-
 docker 方式安装
 
-```
+```bash
 docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management
 ```
 

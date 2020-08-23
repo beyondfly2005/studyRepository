@@ -278,12 +278,16 @@ Kafka 大数据
   
    安装erlang	
 
-```
-rpm -Uvh https://mirrors.tuna.tsinghua.edu.cn/epel/7/x86_64/Packages/e/epel-release-7-12.noarch.rpm
-
+```bash
 $ wget https://dl.bintray.com/rabbitmq-erlang/rpm/erlang/19/el/7/x86_64/erlang-19.3.6.13-1.el7.centos.x86_64.rpm
 
-yum install erlang
+rpm -ivh erlang-19.3.6.13-1.el7.centos.x86_64.rpm
+```
+
+- RabbitMQ依赖socat，需要提前安装
+
+```
+rpm -ivh socat-1.7.3.2-5.el7.lux.x86_64.rpm
 ```
 
 
@@ -342,6 +346,46 @@ $ systemctl start rabbitmq-server
 ```
 
 ##### 4、配置运行远程访问
+
+
+
+## P68 管理平台的基本操作
+
+1、 新建工程rabbitmq-java
+
+2、引入rabbitmq-client依赖
+
+```properties
+    <dependency>
+        <groupId>com.rabbitmq</groupId>
+        <artifactId>amqp-client</artifactId>
+        <version>4.0.2</version>
+    </dependency>
+```
+
+
+
+## P69 掌握简单队列模式
+
+
+
+## P70 掌握work模式-限流+手工回复
+
+
+
+## P71 掌握publish模式+交换机+队列绑定
+
+
+
+## P72 掌握路由和通配符的方式+加上标识，按需发送
+
+
+
+## P73 SpringBoot整合RabbitMQ简单的模式
+
+
+
+## P74 SpringBoot整合RabbitMQ发布订阅模式
 
 
 
