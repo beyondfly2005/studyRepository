@@ -355,7 +355,7 @@ $ systemctl start rabbitmq-server
 
 2、引入rabbitmq-client依赖
 
-```properties
+```xml
     <dependency>
         <groupId>com.rabbitmq</groupId>
         <artifactId>amqp-client</artifactId>
@@ -379,11 +379,34 @@ $ systemctl start rabbitmq-server
 
 ## P72 掌握路由和通配符的方式+加上标识，按需发送
 
+\*  表示一个单词
 
+\# 表示一个或多个单词  \#包含*
 
 ## P73 SpringBoot整合RabbitMQ简单的模式
 
+#### SpringBoot整合RabbitMQ
 
+1、引入依赖
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-amqp</artifactId>
+</dependency>
+```
+
+2、配置application.properties
+
+```properties
+spring.rabbitmq.host=192.168.0.108
+spring.rabbitmq.port=5672
+spring.rabbitmq.username=admin
+spring.rabbitmq.password=admin
+spring.rabbitmq.virtual-host=/admin
+```
+
+3、编写RabbitConfig
 
 ## P74 SpringBoot整合RabbitMQ发布订阅模式
 
@@ -392,18 +415,6 @@ $ systemctl start rabbitmq-server
 #### 提供了哪些具体的交互队列
 
 
-
-#### SpringBoot整合RabbitMQ
-
-1、引入依赖
-
-```
-        <dependency>
-            <groupId>com.rabbitmq</groupId>
-            <artifactId>amqp-client</artifactId>
-            <version>4.0.2</version>
-        </dependency>
-```
 
 
 
