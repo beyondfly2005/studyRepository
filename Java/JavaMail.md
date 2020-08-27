@@ -2,12 +2,16 @@
 
 ### SpringBoot 整合JavaMail
 
+
+
 #### 1 使用场景
 
 - 注册验证，激活账号
 - 通过注册邮箱找回密码
 - 系统监控告警
 - 网站营销
+
+
 
 #### 2 邮件发送协议
 
@@ -29,10 +33,13 @@
 
 - JavaMail
 
+
+
 #### 3 配置环境
 
 - 引入依赖
 
+<<<<<<< HEAD
   ```
   <dependency>
               <groupId>org.springframework.boot</groupId>
@@ -45,3 +52,87 @@
 - 配置服务器信息
 
 - 
+=======
+```xml
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-mail</artifactId>
+    </dependency>
+```
+
+
+
+- 配置服务器信息
+
+```yaml
+spring:
+  mail: 
+    host: smtp.163.com
+    username: xx@163.com
+    password:
+    default-encoding: UTF-8
+#自定义邮件发送者    
+mail:
+  fromAddr: 498601485@qq.com
+  
+```
+
+
+
+#### 4 发送普通邮件
+
+```java
+@Service
+private class MailServiceImpl implements IMailService{
+
+	@Autowired
+	private JavaMailSender mailSender;
+	
+	@Value("${mail.fromAddr}")
+	private from;
+	
+	@Override
+	public void sendSimpleMail(String to,String subject, String content){
+		SimpleMailMessage simpleMessage = new SimpleMailMessage();
+        simpleMessage.setFrom(from);
+        simpleMessage.setTo(to);
+        simpleMessage.setSubject(subject);
+		simpleMessage.setContent(content);
+        mailSender.send(simpleMessage);
+	}
+}
+```
+
+
+
+#### 5 发送HTML格式的邮件
+
+```java
+@Autowired
+private JavaMailSender javaMailSender;
+
+@Override
+public void sendHtmleMail(String to,String subject, String content) throws MessagingException {
+    MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+    MimeMessageHelper helper = new MimeMessageHelper(mimeMessage,true);
+    helper.setFrom(from);
+    helper.setTo(to);
+    helper.setSubject(subject);
+	helper.setContent(content,true);
+    javaMailSender.send(mimeMessage);
+}
+```
+
+#### 6 发送带附加的邮件
+
+```
+
+```
+
+#### 7 邮件模板
+
+```
+
+```
+
+>>>>>>> 6a5355b82ec202b1389aa636198bb9d48dc1d0c2
