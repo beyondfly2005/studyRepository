@@ -96,8 +96,8 @@ yum install wget -y
 
 #### 4、给CentOS添加rpm源，并且选择较新的源
 
-```
-wget dev.mysql.com/get/mysql-community-release-el6-5.noarch.rpm
+```bash
+wget http://dev.mysql.com/get/mysql-community-release-el6-5.noarch.rpm
 ```
 
 #### 5、安装下载好的rpm文件

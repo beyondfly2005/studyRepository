@@ -1,3 +1,5 @@
+> 视频地址 https://www.bilibili.com/video/BV1VJ411g7Zq?p=86
+
 ### SpringBoot 整合JavaMail
 
 #### 1 使用场景
@@ -30,5 +32,16 @@
 #### 3 配置环境
 
 - 引入依赖
+
+  ```
+  <dependency>
+              <groupId>org.springframework.boot</groupId>
+              <artifactId>spring-boot-starter-mail</artifactId>
+          </dependency>
+  ```
+
+  
+
 - 配置服务器信息
+
 - 

@@ -20,5 +20,9 @@ nginx的配置文件在/etc/nginx/nginx.conf
 
 日志文件存放在/var/log/nginx/
 
+- access.log
+- error.log
+- nginx.pid
+
 还有一些其他的安装文件都在/etc/nginx
 
