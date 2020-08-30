@@ -160,16 +160,24 @@ wget -c -b https://download.oracle.com/otn/linux/oracle11g/R2/linux.x64_11gR2_da
 
 #### 解压Oracle安装文件
 
-```
+```bash
 unzip linux.x64_11gR2_database_1of2.zip -d /oracle/install
 unzip linux.x64_11gR2_database_2of2.zip -d /oracle/install
 ```
 
+##### 安装upzip
+
+```bash
+yum install -y unzip zip
+```
+
+
+
 #### 解压后删除Oracle安装包
 
 ```
-rm -rf 
-rm -rf 
+rm -rf linux.x64_11gR2_database_1of2.zip
+rm -rf linux.x64_11gR2_database_2of2.zip
 ```
 
 #### 运行Docker-Oracle
@@ -177,9 +185,9 @@ rm -rf
 ```bash
 docker run -d --privileged -p 1521:1521 -v /oracle/install:/install -v /oracle/dpdump:/opt/oracle/dpdump --name=oracle11g jaspeen/oracle-11g
 ```
-
+或者
 ```shell
-docker run --privileged --name oracle11g -p 1521:1521 -v /install/database:/install jaspeen/oracle-11g
+docker run -d --privileged -p 1521:1521 -v /oracle/install:/install jaspeen/oracle-11g --name oracle11g 
 ```
 
 
@@ -188,6 +196,12 @@ docker run --privileged --name oracle11g -p 1521:1521 -v /install/database:/inst
 
 ```shell
 docker ps
+```
+
+#### 如未启动  查看日志
+
+```bash
+docker logs oracle11g
 ```
 
 
@@ -245,7 +259,7 @@ SQL>
 
 
 > 参考文档
->
+
 https://www.cnblogs.com/murry/p/11905355.html
 
 https://www.jianshu.com/p/4ede7dcc1d86
