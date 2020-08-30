@@ -44,7 +44,6 @@ docker search oracle
 #### 拉取docker镜像
 
 ```
---docker pull alexeiled/docker-oracle-xe-11g
 docker pull jaspeen/oracle-11g
 ```
 
@@ -52,6 +51,8 @@ docker pull jaspeen/oracle-11g
 
 ```
 docker image ls
+#或
+docker images
 ```
 
 #### 启动oracle
@@ -74,7 +75,7 @@ sudo systemclt disable docker
 
 
 
-#### 启动报错
+#### 启动报错处理
 
 ```bash
 $ sudo systemctl start docker
@@ -137,12 +138,118 @@ systemctl restart docker.service
 
 ```
 
+#### 创建oracle 安装目录以及数据目录
+
+```bash
+# 用于存放安装文件
+mkdir -p /oracle/install
+# 用于存放
+mkdir -p /oracle/dpdump
+```
+
+#### 下载 oracle 
+
+存放于服务器中 下载地址 https://www.oracle.com/database/technologies/oracle-database-software-downloads.html
+
+也可以使用wget下载；如果下载慢 可以使用迅雷下载后，上传服务器
+
+```
+wget -c -b https://download.oracle.com/otn/linux/oracle11g/R2/linux.x64_11gR2_database_1of2.zip?AuthParam=1561175324_b6f19c00413750b39fbe89d3a7dce441
+wget -c -b https://download.oracle.com/otn/linux/oracle11g/R2/linux.x64_11gR2_database_2of2.zip?AuthParam=1561175324_b6f19c00413750b39fbe89d3a7dce441
+```
+
+#### 解压Oracle安装文件
+
+```
+unzip linux.x64_11gR2_database_1of2.zip -d /oracle/install
+unzip linux.x64_11gR2_database_2of2.zip -d /oracle/install
+```
+
+#### 解压后删除Oracle安装包
+
+```
+rm -rf 
+rm -rf 
+```
+
+#### 运行Docker-Oracle
+
+```bash
+docker run -d --privileged -p 1521:1521 -v /oracle/install:/install -v /oracle/dpdump:/opt/oracle/dpdump --name=oracle11g jaspeen/oracle-11g
+```
+
+```shell
+docker run --privileged --name oracle11g -p 1521:1521 -v /install/database:/install jaspeen/oracle-11g
+```
+
+
+
+#### 查看Oracle 是否运行
+
+```shell
+docker ps
+```
+
+
+
+#### 进入oracle11g容器
+
+```shell
+docker exec -it oracle11g /bin/bash
+```
+
+
+
+#### 切换到image的oracle用户
+
+```shell
+su - oracle
+```
+
+
+
+#### 连接oracle数据库
+
+```csharp
+sqlplus / as sysdba
+```
+
+
+
+#### 解锁scott用户
+
+```sql
+SQL> alter user scott account unlock;
+User altered.
+SQL> commit;
+Commit complete.
+SQL> conn scott/tiger
+ERROR:
+ORA-28001: the password has expired
+Changing password for scott
+New password:
+Retype new password:
+Password changed
+Connected.
+SQL> 
+```
+
+
+
+#### 数据库管理工具连接oracle数据库
+
+如Toad for Oracle、Navcat for Oracle、PL/SQL、**datagrip**
+
+![](https://upload-images.jianshu.io/upload_images/18157369-cd77621affb5666e.jpg?imageMogr2/auto-orient/strip|imageView2/2/w/853/format/webp)
+
 
 
 > 参考文档
+>
+https://www.cnblogs.com/murry/p/11905355.html
+
+https://www.jianshu.com/p/4ede7dcc1d86
 
 https://www.docker.org.cn/book/install/arch-install-docker-36.html
 
 https://www.cnblogs.com/littlesuns/p/11227992.html
-
-https://www.docker.org.cn/book/install/arch-install-docker-36.html
