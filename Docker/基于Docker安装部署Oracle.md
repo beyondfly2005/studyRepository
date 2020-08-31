@@ -10,8 +10,13 @@ apt install docker
 
 ## --centos/red hat/fedora
 yum install docker
+```
 
-## 启动docker
+#### 启动docker
+```bash
+## -- centOS
+sudo systemctl start docker
+
 ## --arch linux
 sudo systemctl start docker
 
@@ -20,10 +25,28 @@ sudo service docker start
 /etc/init.d/docker
 ```
 
+#### 启动docker
+
+```bash
+sudo systemctl start docker
+```
+#### 开机启动 docker
+
+```bash
+sudo systemctl enable docker
+```
+
+#### 禁止开机启动docker
+
+```bash
+sudo systemclt disable docker
+```
+
 #### 切换国内镜像源
 
-```
+```bash
 vim /etc/docker/daemon.json
+写入
 {
   "registry-mirrors": ["http://hub.mirror.c.163.com"]
 }
@@ -31,6 +54,10 @@ vim /etc/docker/daemon.json
 {
   "registry-mirrors": ["https://registry.docker.cn.com"]
 }
+
+# 重新启动服务生效
+$ sudo systemctl daemon-reload
+$ sudo systemctl restart docker
 ```
 
 #### 搜索可用的oracle 镜像
@@ -55,23 +82,7 @@ docker image ls
 docker images
 ```
 
-#### 启动oracle
 
-```bash
-sudo systemctl start docker
-```
-
-#### 开机启动
-
-```bash
-sudo systemctl enable docker
-```
-
-#### 关掉开机启动docker
-
-```bash
-sudo systemclt disable docker
-```
 
 
 
