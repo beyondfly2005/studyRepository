@@ -84,8 +84,6 @@ docker images
 
 
 
-
-
 #### 启动报错处理
 
 ```bash
@@ -198,7 +196,7 @@ docker run -d --privileged -p 1521:1521 -v /oracle/install:/install -v /oracle/d
 ```
 或者
 ```shell
-docker run -d --privileged -p 1521:1521 -v /oracle/install:/install jaspeen/oracle-11g --name oracle11g 
+docker run -d --privileged -p 1521:1521 -v /oracle/install:/install -v /oracle/dpdump:/opt/oracle/dpdump --name oracle11g jaspeen/oracle-11g
 ```
 
 
