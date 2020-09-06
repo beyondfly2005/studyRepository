@@ -210,13 +210,13 @@ JMS本身只定义了一些列的接口规范，是一种与长商无关的API�
 3、解压压缩包
 
 ```
-tar -zxvf apache-activemq-5.14.5-bin.tar.gz
+tar -zxvf apache-activemq-5.16.0-bin.tar.gz
 ```
 
 4、进入解压后的apache-activemq-5.14.5的bin目录
 
 ```
-cd apache-activemq-5.14.5/bin
+cd apache-activemq-5.16.0/bin
 ```
 
 5、启动activemq（执行两次：第一次生成配置信息，第二次启动）
@@ -238,42 +238,894 @@ cd apache-activemq-5.14.5/bin
 ./activemq restart
 ```
 
+8、查看activemq状态
+
+```
+./activemq status
+```
 
 
-##### 测试安装
 
-浏览器访问 http://192.168.0.108:8161/
+#### 2.2 测试安装
 
-请求地址 tcp://ip61616  java代码访问消息中间件
+浏览器访问 http://192.168.0.108:8161/    **默认用户名/密码 admin/admin**
+
+请求地址 tcp://ip:61616  (用于java代码访问消息中间件)
+
+如 无法正常启动，则尝试以下方法：
+
+
+
+#### 2.3 故障处理
+
+##### 停止防火墙
+
+```bash
+systemctl stop firewalld.service           #停止firewall
+systemctl disable firewalld.service        #禁止firewall开机启动
+```
+
+##### 调试模式启动activemq
+
+如果使用命令 ./activemq status 查看状态为 ActiveMQ not running
+
+```bash
+cd apache-activemq-5.16.0/bin
+./activemq console
+```
+
+java.net.BindException: 地址已在使用
+
+```
+Failed to bind to server socket: amqp://0.0.0.0:5672?maximumConnections=1000&wireFormat.maxFrameSize=104857600 due to: java.net.BindException: 地址已在使用 (Bind failed)
+```
+
+
+
+```
+# 1-- lsof -i
+lsof -i:端口号
+lsof -i:5672
+
+# 2-- netstat -tunlp|grep
+netstat -tunlp|grep 端口号
+netstat -tunlp|grep 8161
+netstat -tunlp|grep 61616
+```
+
+如果提示 -bash: lsof: 未找到命令
+
+```
+yum install lsof
+```
+
+##### lsof -i:5672 发现 rabbitmq占用了 5672端口
+
+说明与RabbitMQ端口冲突
+
+修改 apache-activemq-5.15.0\conf\\**activemq.xml**文件，搜索端口号5672，将其改为5673，保存后重新启动activemq即可！
+
+```
+cd conf
+vim activemq.xml
+```
+
+/5672  进行搜索
+
+改为5373 :wq 保存退出
+
+
+
+##### 修改外网访问
+
+./activemq status 查看状态为 ActiveMQ is running (pid '22785')
+
+但是浏览器访问 http://192.168.0.108:8161/ 却无法访问
+
+原因：ActiveMQ运行在Jetty上，Jetty默认设置为本机访问，不允许外网访问
+
+```bash
+cd ../conf
+ll
+vim jetty.xml
+```
+
+
+
+```xml
+<bean id="jettyPort" class="org.apache.activemq.web.WebConsolePort" init-method="start">
+    <!-- the default port number for the web console -->
+    <property name="host" value="127.0.0.1"/>
+    <property name="port" value="8161"/>
+</bean>
+```
+
+改为
+
+```xml
+<bean id="jettyPort" class="org.apache.activemq.web.WebConsolePort" init-method="start">
+    <!-- the default port number for the web console -->
+    <property name="host" value="0.0.0.0"/>
+    <property name="port" value="8161"/>
+</bean>
+```
+
+重启activemq 生效
+
+```bash
+cd ../bin
+./activemq restart
+```
+
+
+
+##### **注意 ：如果在服务上运行 注意网络安全问题；强烈建议修改activemq  jetty的默认密码，**
 
 
 
 ### 03、原生JMS API操作ActiveMQ
 
+#### PTP模式（生产者）
+
+##### (1) 引入pom依赖
+
+```xml
+<dependency>
+	<groupId>org.apache.activemq</groupId>
+    <artifactId>activemq-all</artifactId>
+    <vrsion>5.11.2</vrsion>
+</dependency>
+```
+
+##### (2) 编写生产消息的测试了QueueProducer
+
+##### 步骤：
+
+```properties
+1、创建连接工厂
+2、创建连接
+3、打开连接
+4、创建session
+5、创建目标地址（Queue:点对点消息 ，Topic:发布订阅消息）
+6、创建消息生产者
+7、创建消息
+8、发送消息
+9、释放资源
+```
+
+##### 代码：
+
+```java
+/**
+ * 点对点模式下的--- 生产者
+ */
+public class PTPT_Producer {
+    public static void main(String[] args) throws JMSException {
+
+        //1、创建连接工厂
+        ConnectionFactory factory = new ActiveMQConnectionFactory("tcp://192.168.0.108:61616");
+        //2、创建连接
+        Connection connection = factory.createConnection();
+        //3、打开连接
+        connection.start();
+        //4、创建session
+        //第一个参数 是否开启事务
+        //第二个参数 消息的确认机制  有四个值
+        // 0=SESSION_TRANSACTED
+        // 1=AUTO_ACKNOWLEDGE 自动确认
+        // 2=CLIENT_ACKNOWLEDGE
+        // 3=DUPS_OK_ACKNOWLEDGE
+        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        //5、创建目标地址（Queue:点对点消息 ，Topic:发布订阅消息）
+        Queue queue = session.createQueue("queue01");
+        //6、创建消息生产者
+        MessageProducer producer = session.createProducer(queue);
+        //7、创建消息
+        TextMessage textMessage = session.createTextMessage("text message");
+        //8、发送消息
+        producer.send(textMessage);
+        System.out.println("消息发送完毕！");
+        //9、释放资源
+        session.close();
+        connection.close();
+    }
+}
+```
+
+
+
+#### PTP模式（消费者）
+
+##### 步骤：
+
+```properties
+1、创建连接工厂
+2、创建连接
+3、打开连接
+4、创建session
+5、指定目标地址（Queue:点对点消息 ，Topic:发布订阅消息）
+6、创建消息消费者
+7、创建消息监听器
+```
+
+##### 代码：
+
+```java
+
+/**
+ * 演示点对点模式 - 消息消费者（第二种方案 监听方式）
+ */
+public class PTP_Consumer2 {
+
+    public static void main(String[] args) throws JMSException {
+        //1、创建连接工厂
+        ConnectionFactory factory = new ActiveMQConnectionFactory("tcp://192.168.0.108:61616");
+        //2、创建连接
+        Connection connection = factory.createConnection();
+        //3、打开连接
+        connection.start();
+        //4、创建session
+        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        //5、指定目标地址（Queue:点对点消息 ，Topic:发布订阅消息）
+        Queue queue = session.createQueue("queue01");
+        //6、创建消息消费者
+        MessageConsumer consumer = session.createConsumer(queue);
+        //7、设置消息监听器接收消息
+        consumer.setMessageListener(new MessageListener() {
+            @Override
+            public void onMessage(Message message) {
+                if(message instanceof TextMessage){
+                    TextMessage textMessage = (TextMessage)message;
+                    try {
+                        System.out.println("接收到的消息为："+textMessage.getText());
+                    } catch (JMSException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+        //注意：在监听器模式下 不要关闭连接，否则接收不到消息
+    }
+}
+```
+
+
+
+#### Pub/Sub模式（生产者）
+
+##### 步骤：
+```properties
+1、创建连接工厂
+2、创建连接
+3、打开连接
+4、创建session
+5、创建目标地址（Queue:点对点消息 ，Topic:发布订阅消息）
+6、创建消息生产者
+7、创建消息
+8、发送消息
+9、释放资源
+```
+
+##### 代码：
+
+```java
+public static void main(String[] args) throws JMSException {
+
+        //1、创建连接工厂
+        ConnectionFactory factory = new ActiveMQConnectionFactory("tcp://192.168.0.108:61616");
+        //2、创建连接
+        Connection connection = factory.createConnection();
+        //3、打开连接
+        connection.start();
+        //4、创建session
+        //第一个参数 是否开启事务
+        //第二个参数 消息的确认机制  有四个值
+        // 0=SESSION_TRANSACTED
+        // 1=AUTO_ACKNOWLEDGE 自动确认
+        // 2=CLIENT_ACKNOWLEDGE
+        // 3=DUPS_OK_ACKNOWLEDGE
+        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        //5、创建目标地址（Queue:点对点消息 ，Topic:发布订阅消息）
+        Topic topic = session.createTopic("topic01");
+        //6、创建消息生产者
+        MessageProducer producer = session.createProducer(topic);
+        //7、创建消息
+        TextMessage textMessage = session.createTextMessage("text message -- topic");
+        //8、发送消息
+        producer.send(textMessage);
+        System.out.println("消息发送完毕！");
+        //9、释放资源
+        session.close();
+        connection.close();
+    }
+```
+
+#### Pub/Sub模式（消费者）
+
+##### 步骤：
+```properties
+1、创建连接工厂
+2、创建连接
+3、打开连接
+4、创建session
+5、指定目标地址（Topic:发布订阅消息 / Queue:点对点消息）
+6、创建消息消费者
+7、创建消息监听器
+```
+
+##### 代码：
+
+```java
+public static void main(String[] args) throws JMSException {
+        //1、创建连接工厂
+        ConnectionFactory factory = new ActiveMQConnectionFactory("tcp://192.168.0.108:61616");
+        //2、创建连接
+        Connection connection = factory.createConnection();
+        //3、打开连接
+        connection.start();
+        //4、创建session
+        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        //5、指定目标地址（Queue:点对点消息 ，Topic:发布订阅消息）
+        Topic topic = session.createTopic("topic01");
+        //6、创建消息消费者
+        MessageConsumer consumer = session.createConsumer(topic);
+        //7、设置消息监听器接收消息
+        consumer.setMessageListener(new MessageListener() {
+            @Override
+            public void onMessage(Message message) {
+                if(message instanceof TextMessage){
+                    TextMessage textMessage = (TextMessage)message;
+                    try {
+                        System.out.println("接收到的消息为："+textMessage.getText());
+                    } catch (JMSException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+        //注意：在监听器模式下 不要关闭连接，否则接收不到消息
+    }
+```
 
 
 ### 04、Spring与ActiveMQ整合
+
+#### 消息生产者
+
+##### 1、导入pom依赖
+
+```xml
+<dependency>
+    <groupId>org.apache.activemq</groupId>
+    <artifactId>activemq-all</artifactId>
+    <version>5.11.2</version>
+</dependency>
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-core</artifactId>
+    <version>5.0.2.RELEASE</version>
+ </dependency>
+ <dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-web</artifactId>
+    <version>5.0.2.RELEASE</version>
+</dependency>
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-oxm</artifactId>
+    <version>5.0.2.RELEASE</version>
+</dependency>
+<dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-tx</artifactId>
+            <version>5.0.2.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <version>5.0.2.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-aop</artifactId>
+            <version>5.0.2.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context-support</artifactId>
+            <version>5.0.2.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <version>5.0.2.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jms</artifactId>
+            <version>5.0.2.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.jms</groupId>
+            <artifactId>javax.jms-api</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.xbean</groupId>
+            <artifactId>xbean-spring</artifactId>
+            <version>3.7</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+            <version>4.12</version>
+        </dependency>
+```
+
+##### 2、Spring整合ActiveMQ配置 applicationContext-producer.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:amq="http://activemq.apache.org/schema/core"
+       xmlns:jms="http://www.springframework.org/schema/jms"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/jms http://www.springframework.org/schema/jms/spring-jms.xsd
+       http://activemq.apache.org/schema/core http://activemq.apache.org/schema/core/activemq-core.xsd">
+
+    <!-- 1 创建ActiveMQ连接工厂 -->
+    <amq:connectionFactory id="amqconnectionFactory"
+                           userName="admi" password="admin"
+                           brokerURL="tcp://192.168.0.108:61616" />
+    <!-- 2 创建缓存工厂 -->
+    <bean id="cachingConnectionFactory" class="org.springframework.jms.connection.CachingConnectionFactory">
+        <property name="targetConnectionFactory" ref="amqconnectionFactory"></property>
+        <property name="sessionCacheSize" value="10"></property>
+    </bean>
+
+    <!-- 3 创建JmsTempate(发送消息的末班工具类对象) -->
+    <!-- 3.1发送Queue队列消息 -->
+    <bean id="jmsQueueTemplate" class="org.springframework.jms.core.JmsTemplate">
+        <!--注入缓存工厂-->
+        <property name="connectionFactory" ref="cachingConnectionFactory"></property>
+        <!-- 默认值-->
+        <property name="pubSubDomain" value="false"></property>
+    </bean>
+    <!-- 3.2 发送Topic主题消息 -->
+    <bean id="jmsTopicTemplate" class="org.springframework.jms.core.JmsTemplate">
+        <!--注入缓存工厂-->
+        <property name="connectionFactory" ref="cachingConnectionFactory"></property>
+        <!-- 默认值-->
+        <property name="pubSubDomain" value="true"></property>
+    </bean>
+</beans>
+```
+
+##### 3、编写测试类，实现消息发送
+
+```java
+/**
+ * 测试Spring与ActiveMQ整合
+ */
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration("classpath:applicationContext-producer.xml")
+public class SpringProducer {
+
+    //点对点模式模板对象
+    @Autowired
+    @Qualifier("jmsQueueTemplate")
+    private JmsTemplate jmsQueueTemplate;
+
+    //发布订阅模式模板对象
+    @Autowired
+    @Qualifier("jmsTopicTemplate")
+    private JmsTemplate jmsTopicTemplate;
+
+    /**
+     * 对点点发送 -
+     */
+    @Test
+    public void ptpSender(){
+        //参数1 队列名称
+        //参数2 MessageCreator接口， 通常使用接口的匿名内部类实现
+        jmsQueueTemplate.send("spring_queue", new MessageCreator() {
+            //只需要返回发送消息的内容即可
+            @Override
+            public Message createMessage(Session session) throws JMSException {
+                //文本消息
+                TextMessage textMessage = session.createTextMessage("spring test message");
+                return textMessage;
+            }
+        });
+        System.out.println("消息发送已完成");
+    }
+
+    @Test
+    public void psSender(){
+        jmsTopicTemplate.send("spring_topic", new MessageCreator() {
+            @Override
+            public Message createMessage(Session session) throws JMSException {
+                //文本消息
+                TextMessage textMessage = session.createTextMessage("spring test message--topic");
+                return textMessage;
+            }
+        });
+        System.out.println("Topic消息发送已完成");
+    }
+}
+```
+
+#### 消息消费者
+
+##### 1、导入依赖
+
+```
+同生产者
+```
+
+
+
+##### 2、编写Spring整合ActiveMQ配置文件 applicationContext-consumer.xml
+
+```xml
+    <!-- 1 连接工厂-->
+    <amq:connectionFactory
+        id="connectionFactory"
+        brokerURL="tcp://192.168.0.108:61616"
+        userName="admin"
+        password="admin" />
+
+    <!-- 2 缓存连接工厂-->
+    <bean id="cachingConnectionFactory" class="org.springframework.jms.connection.CachingConnectionFactory">
+        <property name="targetConnectionFactory" ref="connectionFactory"/>
+        <property name="sessionCacheSize" value="10" />
+    </bean>
+    <!-- 3 配置消息监听组件扫描-->
+    <context:component-scan base-package="com.beyondsoft.listener" />
+
+    <!-- 4 配置监听器-->
+    <!--
+        destination-type 目标了下 queue 点对点 topic 发布订阅
+    -->
+    <jms:listener-container connection-factory="cachingConnectionFactory" destination-type="queue">
+        <jms:listener destination="spring_queue" ref="queueListener" />
+    </jms:listener-container>
+
+    <jms:listener-container connection-factory="cachingConnectionFactory" destination-type="topic">
+        <jms:listener destination="spring_topic" ref="topicListener" />
+    </jms:listener-container>
+```
+
+
+
+##### 3、编写测试类
+
+###### 3.1 编写点对点模式监听器
+
+```java
+/**
+ * 点对点模式下的监听器
+ */
+@Component
+public class QueueListener implements MessageListener {
+
+    @Override
+    public void onMessage(Message message) {
+        if (message instanceof TextMessage) {
+            TextMessage textMessage = (TextMessage) message;
+            try {
+                System.out.println("queue接口消息：" + textMessage.getText());
+            } catch (JMSException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
+```
+
+###### 3.2编写发布订阅模式监听器
+
+```java
+/**
+ * 发布订阅模式下下的监听器
+ */
+@Component
+public class TopicListener implements MessageListener {
+
+    @Override
+    public void onMessage(Message message) {
+        if (message instanceof TextMessage) {
+            TextMessage textMessage = (TextMessage) message;
+            try {
+                System.out.println("topic接口消息：" + textMessage.getText());
+            } catch (JMSException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
+```
+
+###### 3.3 编写监听启动类
+
+```java
+/**
+ * 用来启动消费者监听
+ */
+public class SpringConsumer {
+
+    public static void main(String[] args) throws IOException {
+        //1 加载spring配置文件
+        ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:applicationContext-consumer.xml");
+        //2 启动
+        applicationContext.start();
+        //3 阻塞方法 让程序一直处于等待状态
+        System.in.read();
+    }
+}
+```
 
 
 
 ### 05、SpingBoot与ActiveMQ整合
 
-消息生产者
+#### 消息生产者
+
+##### 1、引入pim依赖
 
 ```xml
 <!-- spring boot父工程 指定springboot的版本集群整合框架的版本 -->
 <parent>
-    <group>org.springframe</group>
-    <>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
     <version>2.0.1</version>
 </parent>
+
 <properties>
+    <java.version>1.8</java.version>
 </properties>
 
 <dependencies>
-    <dempendency>
-        
-    </dempendency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <!-- springboot 与ActiveMQ的整合依赖 -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-activemq</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-test</artifactId>
+        <scope>test</scope>
+        <exclusions>
+            <exclusion>
+                <groupId>org.junit.vintage</groupId>
+                <artifactId>junit-vintage-engine</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
 </dependencies>
 ```
 
+##### 2、编写yml配置文件
+
+```yml
+server:
+  port: 9001
+
+spring:
+  application:
+    name: activemq-producer # 服务名称
+
+  #springboot与activemq整合
+  activemq:
+    broker-url: tcp://192.168.0.108:61616
+    user: admin
+    password: admin
+  #指定发送模式
+  jms:
+    pub-sub-domain: false #指定发送模式 false是点对点, true发布订阅
+
+```
+
+##### 3、编写启动类
+
+```
+/**
+ * 生产者启动类
+ */
+@SpringBootApplication
+public class ActivemqApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(ActivemqApplication.class, args);
+    }
+}
+```
+
+##### 4、编写测试类测试消息发送
+
+```java
+/**
+ * 测试springboot与ActiveMQ整合 消息生产者
+ */
+@RunWith(SpringJUnit4ClassRunner.class)
+@SpringBootTest(classes = ProducerApplication.class)
+public class SpringBootProducer {
+
+    @Autowired
+    JmsTemplate jmsTemplate;
+
+    @Autowired
+    JmsMessagingTemplate jmsMessagingTemplate;
+
+    @Test
+    public void ptpSender() {
+        /**
+         * 参数：队列的名称 或主题名称
+         */
+        jmsMessagingTemplate.convertAndSend("springboot_queue", "spring boot message");
+    }
+}
+```
+
+#### 消息消费者
+
+##### 1、引入pim依赖
+
+```xml
+    <properties>
+        <java.version>1.8</java.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <!-- springboot 与ActiveMQ的整合依赖 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-activemq</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.junit.vintage</groupId>
+                    <artifactId>junit-vintage-engine</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>    
+```
+
+
+
+##### 2、编写yml配置文件
+
+```yml
+server:
+  port: 9002
+
+spring:
+  application:
+    name: activemq-consumer # 服务名称
+
+  # springboot与activemq整合
+  activemq:
+    broker-url: tcp://192.168.0.108:61616
+    user: admin
+    password: admin
+  #指定发送模式
+  jms:
+    pub-sub-domain: false #指定发送模式 false是点对点
+
+```
+
+##### 3、编写启动类
+
+```java
+/**
+ * 消息消费者启动类
+ */
+@SpringBootApplication
+public class ConsumerApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(ConsumerApplication.class, args);
+    }
+}
+```
+
+##### 4、消息监听类（队列监听/主题监听）
+
+```java
+/**
+ * 监听消息类（既可以用于队列监听，也可以用于主题监听）
+ */
+@Component
+public class MessageListener {
+    //**
+    @JmsListener(destination = "springboot_queue")
+    public void receiveMessage(Message message){
+        if(message instanceof TextMessage){
+            TextMessage textMessage = (TextMessage)message;
+            try {
+                System.out.println("接收消息："+textMessage.getText());
+            } catch (JMSException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
+```
+
+#### 发布订阅模式切换
+
+###### 1、生产方
+
+修改application.yml
+
+```yml
+spring: 
+#指定发送模式
+  jms:
+    pub-sub-domain: false #改为true 指定发送模式 false是点对点 true 是发布订阅模式
+```
+
+###### 2、消费方
+
+修改application.yml
+
+```yml
+spring: 
+#指定发送模式
+  jms:
+    pub-sub-domain: false #改为true 指定发送模式 false是点对点 true 是发布订阅模式
+```
+
+
+
+#### 抽取队列/主题名称到配置文件
+
+将队列/主题名称抽取到yml文件
+
+```yml
+# 自定义目标队列或主题名称
+activemq：
+    name: springboot_topic
+```
+
+使用时
+
+```java
+@Value("${activemq.name}")
+private String name;
+```
+
+
+
+### 06、ActiveMQ消息组成与高级特性
+
+#### JMS消息组成详解
+
+#### 消息持久化
+
+#### 消息事务
+
+#### 消息确认机制
+
+#### 消息投递方式
+
+#### 死信队列
+
+
+
+### 07、AvtiveMQ企业面试经典问题
