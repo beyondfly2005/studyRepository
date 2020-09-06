@@ -1116,16 +1116,675 @@ private String name;
 
 #### JMS消息组成详解
 
+##### JMS消息组成格式
+
+整个JMS协议组成结构如下：
+
+| 结构         | 描述                  |
+| ------------ | --------------------- |
+| JMS Provider | 消息中间件/消息服务器 |
+| JSM Producer | 消息生产者            |
+| JMS Consumer | 消息消费者            |
+| JMS Message  | 消息                  |
+
+JMS Message消息由三部分祖册
+
+- 消息头
+- 消息体
+- 消息属性
+
+##### JMS消息头
+
+JMS消息头预定义了若干字段用于客户端与JMS提供者之间识别和发送消息，预编译头如下：
+
+- <span style="color:red">红色</span>为重要的消息头
+
+| 名称             | 描述                                                         |
+| ---------------- | ------------------------------------------------------------ |
+| <span style="color:red">JMSDestination</span>   | 消息发送的Destination目的地，在发送过程中有提供者设置        |
+| <span style="color:red">JMSMessageID</span>     | 唯一表示发送者发送的每一条消息，这个字段是在发送过程中由提供者设置的，客户机只能在消息发送后才能确定消息的JMSMessageID |
+| <span style="color:red">JMSDeliveryMode</span>  | 消息持久化模式，包含值 `DeliveryMode.PERSISTENT` 或者 `DeliveryMode.NON_PERSISTENT` |
+| JMSTimestamp     | 提供者发送消息的时间，由提供者在发送过程中设置。             |
+| <span style="color:red">JMSExpiration</span>    | 消息失效的时间。单位毫秒，值 0 表明消息不会过期，默认值为0   |
+| <span style="color:red">JMSPriority</span>      | 消息的优先级，由提供者在发送过程中设置。优先级 0 的优先级最低，优先级 9 的优先级最高。0-4为普通消息，5-9为加急消息。ActiveMQ不保证优先级高就一定先发送，只保证了加急消息必须有限元普通消息发送。默认值为4 |
+| <span style="color:red">JMSCorrelationID</span> | 通常用来链接响应消息与请求消息，由发送消息的 JMS 程序设置。  |
+| JMSReplyTo       | 请求程序用它来指出回复消息应发送的地方，由发送消息的 JMS 程序设置。 |
+| JMSType          | JMS 程序用它来指出消息的类型                                 |
+| JMSRedelivered   | 消息的重发标志，false 代表该消息是第一次发送，true 代表该消息为重发消息 |
+
+不过需要注意的是，在传递消息时，消息头的值由JMS提供者来设置，因此开发者使用以上SetJMSxxx() 方法分配的值就被胡烈，只有以下几个值是key由开发者设置的
+
+JMSCorrelationID、JMSReplyTo、JMSType
+
+
+
+##### JMS消息体
+
+在消息体中，JMS  API定义了五种类型的消息格式，让我们可以以不同的相识发送和接收消息，并提供了对已有消息格式的兼容。不同的消息类型如下：
+
+JMS定义了五种不同的正文格式，以及调用消息类型，允许你发送并接收不同形式的数据，提供现有消息格式的一些级别的兼容性
+
+
+- TextMessage	一个字符串对象  * 
+- MapMessage   一套名称-值对
+- ObjectMessage  一个序列化的 Java对象
+- BytesMessage  一个字节的数据流
+- StreamMessage  Java原始值的数据流
+
+###### TextMessage
+
+发送：
+
+```java
+
+```
+
+接收
+
+```java
+
+```
+
+
+###### MapMessage   
+发送：
+
+```java
+
+```
+
+接收
+
+```java
+
+```
+
+###### ObjectMeassage
+
+传递的对象必须序列化
+
+发送：
+
+```java
+
+```
+
+接收
+
+```java
+
+```
+
+
+
+##### JMS消息属性
+
+我们可以给消息设置自定义属性，这些属性主要是提供给应用程序的，，消息属性分词有用，JMS API定义了一些标准属性，JMS服务提供者可以选择性的提供部分标准属性。
+
+```java
+message.setStringProperty("Property",property);	//自定义属性
+message.setIntgerProperty("Property",property);
+```
+
+作用：对消息的标记过滤去重等。
+
+
+
 #### 消息持久化
+
+消息持久化是保证消息不丢失的重要方式！！！
+
+ActiveMQ提供了以下三种的消息存储方式：
+
+（1）Memory消息纯粹-基于内存的消息存储
+
+（2）基于日志消息存储方式，KahaDB是ActiveMQ的默认日志存储方式， 它提供了容量的提升和恢复能力。
+
+（3）基于JDBC的消息存储方式：数据存储于数据库（例如：MySQL）中
+
+（此外还有LevelDB存储，AMQ方式--只适用于5.3版本以前）
+
+ActiveMQ持久化流程图：
+
+![img](http://image.mamicode.com/info/202002/20200215150830551305.png)
+
+![img](http://image.mamicode.com/info/202002/20200215150830787618.png)
+
+
+
+SpringBoot项目中
+
+###### 基于内存型的消息存储方式配置
+
+```yml
+spring:
+    jms:
+        template:
+            delivery-mode: non_persitent #非持久化配置（消息存储在内存里）
+```
+
+###### 基于日志型的消息存储方式配置
+
+基于日志存储是springboot的默认的存储方式
+
+```bash
+#基于KahaDb的日志存储方式 日志的存放路径
+cd /usr/local/apache-activemq6-xxx/data/kahadb
+```
+
+
+
+```yml
+spring:
+    jms:
+        template:
+            delivery-mode: persitent #持久化配置（消息存储在日志文件里）
+```
+
+###### 基于JDBC的消息存储方式
+
+**1）配置application,yml连接mysql**
+
+```
+spring:
+    jms:
+        template:
+            delivery-mode: persitent #持久化配置（消息存储在日志文件里）
+```
+
+2）修改activemq.xml
+
+位于 apache-activemq-5.16/conf/activemq.xml
+
+```xml
+<!-- 配置数据库练级池 -->
+<bean name="mysql-ds" class="com.alibaba.druid.pool.DruidDataSource" destroy-method="close">
+    <property name="driverClassName" value="com.mysql.jdbc.Driver" />
+    <property name="url" value="jdbc:mysql://192.168.66.133:2206/db_activemq" />
+    <property name="username" value="root" />
+    <property name="password" value="123456" />
+</bean>
+
+<!--JDBC Jdbc用于master/slave模式的数据库分享 -->
+<persistenceAdapter>
+    <jdbcPersistenceAdapter dataSource="#mysql-ds"/>
+</persistenceAdapter>
+```
+
+3） 拷贝mysql及durid数据源的jar包到activemq的lib目录下
+
+4）mysql中创建对应的数据库
+
+5）重启activemq
+
+
 
 #### 消息事务
 
+消息事务，是按照消息传递原子性的一个重要特性，和JDBC的事务特征类似。
+
+一个事务性发送，其中一组消息要么能够全部保证到达服务器，要么都不到达服务器。
+
+生产者、消费者与消息服务器直接都支持事务性；
+
+ActionMQ的是主要偏向在生产者的应用。
+
+ActionMQ消息事务流程图：
+
+![img]
+
+##### 一、生产者一方事务：
+
+###### 方式一：原生JMS事务
+
+```java
+/**
+     * 事务性消息发送--方案一 采用原生JMS API
+     */
+    @Test
+    public void sendMessageTx() {
+        Session session = null;
+        try {
+            //获取连接工厂
+            ConnectionFactory connectionFactory = jmsMessagingTemplate.getConnectionFactory();
+            //创建连接
+            Connection connection = connectionFactory.createConnection();
+            //创建sesison  参数一师范开启事务
+            session = connection.createSession(true, Session.AUTO_ACKNOWLEDGE);
+            //创建消息队列
+            Queue queue = session.createQueue(queue_name);
+            //创建生产者
+            MessageProducer producer = session.createProducer(queue);
+            for (int i = 0; i < 10; i++) {
+                //模拟异常
+                if(i==6){
+                    int num = i/0;
+                }
+                TextMessage textMessage = session.createTextMessage("消息——"+String.valueOf(i+1));
+                producer.send(textMessage);
+            }
+            //一旦开启了是事务f发送，必须使用commit方法进行事务提交 否则消息无法到达MQ服务器
+            session.commit();
+        } catch (JMSException e) {
+            e.printStackTrace();
+            //消息事务的会馆
+            try {
+                session.rollback();
+            } catch (JMSException jmsException) {
+                jmsException.printStackTrace();
+            }
+        }
+    }
+```
+
+###### 方式二、基于Spring JMS事务管理器方案
+
+1）编写ActiveMQ配置类 ActiveMQCoinfg
+
+```java
+/**
+ * ActiveMQ配置类
+ */
+@Configuration
+public class ActiveMQConfig {
+
+    /**
+     * 添加Jms事务管理器
+     * @return
+     */
+    @Bean
+    public PlatformTransactionManager createPlatformTransactionManager(ConnectionFactory connectionFactory){
+        return new JmsTransactionManager(connectionFactory);
+    }
+}
+```
+
+2）编写Service 并在方法上添加@Transactional
+
+```java
+@Service
+public class MessageService {
+
+    @Autowired
+    private JmsMessagingTemplate jmsMessagingTemplate;
+
+    @Value("${activemq.queue_name}")
+    private String queue_name;
+
+    @Transactional(rollbackFor = Exception.class)   //对消息发送加入事务管理，对数据库事务也同时生效
+    public void sendMessage(){
+        for (int i = 0; i < 10; i++) {
+            //模拟异常
+            if(i==6){
+                int num = i/0;
+            }
+            jmsMessagingTemplate.convertAndSend(queue_name, "消息--"+String.valueOf(i+1));
+        }
+    }
+}
+```
+
+3）编写测试类进行测试
+
+```java
+    @Autowired
+    private MessageService messageService;
+    /**
+     * 事务性消息发送--方案二 基于Spring JMS事务管理器方案
+     */
+    @Test
+    public void sendMessageTx2() {
+        messageService.sendMessage();
+    }
+```
+
+
+
+##### 二、消费者一方事务
+
+###### 消费方事务机制
+
+消费方是对单条消息的事务控制，接收成功做事务提交，在消息处理过程中，如果有逻辑业务处理失败，会进行消息事务回滚。
+
+一旦事务回滚，MQ服务器会重发该消息，总共最多可被重发6次（默认参数设置下），如果在6次重发之后，消息仍然无法被正常消费，MQ服务器会把该失败消息存储到DLQ死信队列。
+
+###### 代码示例
+
+```java
+/**
+ * 监听消息类（既可以用于队列监听，也可以用于主题监听）
+ */
+@Component
+public class MessageListener {
+
+    /**
+     * 接收消息的方法
+     * @param message
+     */
+    @JmsListener(destination = "${activemq.springboot_queue1}")
+    public void receiveMessage(Message message, Session session){
+        if(message instanceof TextMessage){
+            TextMessage textMessage = (TextMessage)message;
+            try {
+                System.out.println("接收消息："+textMessage.getText());
+                //提交事务
+                session.commit();
+            } catch (JMSException e) {
+                e.printStackTrace();
+                //回滚事务
+                try {
+                    session.rollback(); //一旦事务会馆，MQ服务器会重发消息，一共可被重复6次（默认设置时）
+                } catch (JMSException jmsException) {
+                    jmsException.printStackTrace();
+                }
+            }
+        }
+    }
+}
+```
+
+
+
 #### 消息确认机制
 
+JMS消息只有在被确认之后，才被认为已经被成功地消费了，消息的成功消费通常包括三个阶段：客户接受消息、客户处理消息和消息被确认。**在事务性 会话中，当一个事务被提交的时候，确认自动发生。**在非事务性会话中，消息合适被确认取决于创建会话的应答模式（acknowledgement mode）,该蚕食有以下三个可选值：
+
+| 值                        | 描述                                                         |
+| ------------------------- | ------------------------------------------------------------ |
+| Session.AUTO_ACKNOWLEDGE  | 当客户成功从reveive方法返回的时候，或者从MessageListener.onMessage方法成功返回的时候，会话自动确认客户收到的消息 |
+| Sessin.CLIENT_ACKNOWLEDGE | 客户通过消息的acknowledge方法确认消息，需要注意的是，在这种模式中，确认是在会话层上进行：确认一个被消费的消息将自动去人所有已被会话消费的消息。例如，如果一个消息消费者消费了10个消息，然后确认第5个消息，那么所有10个消息都被确认。 |
+| Sessin.DUPS_ACKNOWLEDGE   | 该选择知识会话迟钝确认消息的提交，如果JMS provider失败，那么可能会导致一些重复的消息，如果是重复的消息，那么JMS provider必须把消息头的JMSRedelivered自动设置为true |
+
+注意：**消息确认机制与事务机制是冲突的**， 只能选择其中一种，所以演示消息确认前，先关闭事务
+
+![img]()
+
+##### 自动确认机制
+
+SpringBoot在消费方默认自动开启事务，需要通过编写配置类的方式，关闭消费方事务
+
+```java
+/**
+ * 配置类
+ */
+@Configuration
+public class ActiveMQConfig {
+
+    @Bean("jmsJmsListenerContainerFactory")
+    public DefaultJmsListenerContainerFactory defaultJmsListenerContainerFactory(ConnectionFactory connectionFactory){
+        DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
+        factory.setConnectionFactory(connectionFactory);
+        //关闭事务
+        factory.setSessionTransacted(false);
+        //修改消息的确认模式为：自动确认
+        factory.setSessionAcknowledgeMode(Session.AUTO_ACKNOWLEDGE);
+        return factory;
+    }
+}
+```
+
+消费者方 在监听器里 指定containerFactory为通过配置类创建的containerFactory
+
+```java
+/**
+ * 监听消息类（既可以用于队列监听，也可以用于主题监听）
+ */
+@Component
+public class MessageListener {
+    
+    @JmsListener(destination = "$(activemq.queue_name)", containerFactory = "jmsJmsListenerContainerFactory")
+    public void receiveMessage(Message message){
+        if(message instanceof TextMessage){
+            TextMessage textMessage = (TextMessage)message;
+            try {
+                System.out.println("接收消息："+textMessage.getText());
+            } catch (JMSException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
+```
+
+##### 手动确认机制
+
+SpringBoot对Session.CLIENT_ACKNOWLEDGE (值为2)进行了修改，使用这个值仍然会被自动确认； 而如果用原生的JMS可以使用CLIENT_ACKNOWLEDGE 2 进行手动确认
+
+
+```java
+/**
+ * 配置类
+ */
+@Configuration
+public class ActiveMQConfig {
+
+    @Bean("jmsJmsListenerContainerFactory")
+    public DefaultJmsListenerContainerFactory defaultJmsListenerContainerFactory(ConnectionFactory connectionFactory){
+        DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
+        factory.setConnectionFactory(connectionFactory);
+        //关闭事务
+        factory.setSessionTransacted(false);
+        //修改消息的确认模式为：手动确认
+        factory.setSessionAcknowledgeMode(4);
+        return factory;
+    }
+}
+```
+
+消费方监听器收到消息需要调用textMessage.acknowledge(); 进行确认
+
+```java
+@Component
+public class MessageListener {
+    //**
+    @JmsListener(destination = "$(activemq.queue_name)", containerFactory = "jmsJmsListenerContainerFactory")
+    public void receiveMessage(Message message){
+        if(message instanceof TextMessage){
+            TextMessage textMessage = (TextMessage)message;
+            try {
+                System.out.println("接收消息："+textMessage.getText());
+                //手动消息确认
+                textMessage.acknowledge();
+            } catch (JMSException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
+```
+
+
+
 #### 消息投递方式
+
+三种投递方式：
+
+```bash
+异步投递
+延迟投递
+定时投递
+```
+
+##### 异步投递
+
+###### 1、异步投递 vs 同步投递
+
+同步发送：
+
+消息生产者使用持久（Persistent）传递模式发送消息的时候，Producer.send()方法会被阻塞，知道broker发送一个去人消息给生产者（ProducerAck），这个确认消息暗示broker以及成功接收到消息并把消息保存到二级存储中。
+
+异步发送：
+
+如果影城新能够容忍一些消息的丢失，那么可以使用异步发送。异步发送不会在收到broker的去人之前一直阻塞Producer.send方法。
+
+
+
+想要使用异步，在broker URL中增加jms.alwaysSyncSend=false&jms.useAsyncSend=true属性
+
+1）如果设置了alwaysSyncSend=true系统会忽略useAsyncSend设置的值都采用同步
+
+2）当alwaysSyncSend=false时，“NON_PERSISTENT”(非持久化)，事务中的消息将使用“异步发送”
+
+3）当alwaysSyncSend=false时，如果制定了useAsyncSend=true，“PERSISTENT”类型的消息使用异步发送。如果useAsyncSend=false，"PERSISTENT"类型的消息使用同步发送。
+
+总结：默认情况（alwaysSyncSend=false,useAsyncSend=false），非持久化消息、事务内的消息均采用异步发送；对于持久化消息采用同步发送！！
+
+
+
+###### 2、配置异步投递的方式
+
+###### 原生JMS AP
+
+1）在练级上配置
+
+```java
+new ActiveMQConnectionFactory("tcp://ip:61616?jms.useAsyncSend=true");
+```
+
+2）通过ConnectionFactory
+
+```java
+((ActiveMQConnectionFactory)connectionFactory).setUseAsyncSend(true);
+```
+
+3）通过connection
+
+```java
+((ActiveMQConnection)connection).setUseAsyncSend(true);
+```
+
+###### Spring或SpingBoot项目
+
+通过修改JmsTemplate的默认参数实现异步或同步投递
+
+```java
+@Configuration
+public class ActiveMQConfig{
+    //异步投递
+    @Autowired
+    @Bean
+    public JmsTemplate asynJmsTemplate(PooledConnectionFactory pooledConnectionFactory){
+        JmsTemplate template = new JmsTemplate(pooledConnectionFactory);
+        template.setExplicitQosEnabled(true);
+        template.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
+        return template;
+    }
+    
+    //同步投递
+    @Autowired
+    @Bean
+    public JmsTemplate asynJmsTemplate(PooledConnectionFactory pooledConnectionFactory){
+        JmsTemplate template = new JmsTemplate(pooledConnectionFactory);
+        return template;
+    }
+}
+
+```
+
+
+
+###### 异步投递如何确认发送成功？
+
+异步回调接口的两个方法 onSucess() 和 onException()
+
+异步投递丢失消息的场景是：生产者设置UseAsyncSend=true
+
+
+
+##### 延迟投递
+
+
+
+##### 定时投递
+
+
 
 #### 死信队列
 
 
 
 ### 07、AvtiveMQ企业面试经典问题
+
+#### 问题1：ActieMQ宕机了怎么办？
+
+1）ActiveMQ注册集群方案：Zookeeper集群+Replicatied LevelDB +AvtiveMQ集群
+
+三台ActiveMQ服务器
+
+官网链接：
+
+2）集群信息概览
+
+
+
+3）先搭建Zookeeper集群
+
+
+
+
+
+#### 问题2：如何防止消费方消息重复消费
+
+如果因为网络延迟等原因，MQ无法及时接收到消费方的应答，导致MQ重发，在重试过程中造成重复消费的问题
+
+解决思路：解决消费方的幂等性问题
+
+1）如果消费方是做数据库操作，那么可以吧消息的ID作为标的唯一主键，这样在重发的情况下，会触发主键冲突，从而避免出现脏数据；或者插入之前判断ID是否存在。
+
+2）如果消费方不是在做数据库操作，那么可以借助第三方的应用，例如Redis，来记录消费记录，每次消息被消费完成的时候，把当前消息的ID作为key存入redis，每次消费前，先到redis查询有没有该消息的消费记录。
+
+
+
+#### 问题3：如果防止消息丢失？
+
+可以采取以下手段防止消息丢失：
+
+1）在消息生产者和消费者使用事务
+
+2）在消息方采用手动消息确认（ACK）
+
+3）消息持久化，例如JDBC或日志
+
+
+
+#### 问题4：什么是死信队列？
+
+##### 什么是死信队列？
+
+DLQ-Dead Letter QUeue，死信队列是用来保存处理失败或者过期的消息
+
+
+
+##### 哪些消息有可能会处理失败？
+
+在重发失败的时候，消息可能会处理失败
+
+消息遇到以下情况会被重发：
+
+ 	- 事务开启了手动调用rollback
+
+​	- 开启了事务但是没有提交
+
+​	- 手动消息确认 调用了 recover方法
+
+
+
+##### 什么样的消息会进入死信队列 
+
+或者说 消息在什么样的情况下会进入死信队列？
+
+当一个消息被重复超过6次（默认为6次）都失败 会进入死信队列。
+
+
+
+##### 如何让每个队列的消息都有自己的死信队列
+
+在默认情况下，有一个默认的死信队列存储了所有队列的失败消息
+
+可以修改配置 让每个队列拥有自己的死信队列。
+
+
+
+##### 消息的重发配置?
+
+重发间隔时间、重发次数 等都可以通过配置文件来进行调整
