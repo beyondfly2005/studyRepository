@@ -604,8 +604,8 @@ public static void main(String[] args) throws JMSException {
     <groupId>org.springframework</groupId>
     <artifactId>spring-core</artifactId>
     <version>5.0.2.RELEASE</version>
- </dependency>
- <dependency>
+</dependency>
+<dependency>
     <groupId>org.springframework</groupId>
     <artifactId>spring-web</artifactId>
     <version>5.0.2.RELEASE</version>
@@ -616,51 +616,51 @@ public static void main(String[] args) throws JMSException {
     <version>5.0.2.RELEASE</version>
 </dependency>
 <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-tx</artifactId>
-            <version>5.0.2.RELEASE</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-webmvc</artifactId>
-            <version>5.0.2.RELEASE</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-aop</artifactId>
-            <version>5.0.2.RELEASE</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context-support</artifactId>
-            <version>5.0.2.RELEASE</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-test</artifactId>
-            <version>5.0.2.RELEASE</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-jms</artifactId>
-            <version>5.0.2.RELEASE</version>
-        </dependency>
-        <dependency>
-            <groupId>javax.jms</groupId>
-            <artifactId>javax.jms-api</artifactId>
-            <version>2.0.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.xbean</groupId>
-            <artifactId>xbean-spring</artifactId>
-            <version>3.7</version>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
-            <version>4.12</version>
-        </dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-tx</artifactId>
+    <version>5.0.2.RELEASE</version>
+</dependency>
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-webmvc</artifactId>
+    <version>5.0.2.RELEASE</version>
+</dependency>
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-aop</artifactId>
+    <version>5.0.2.RELEASE</version>
+</dependency>
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-context-support</artifactId>
+    <version>5.0.2.RELEASE</version>
+</dependency>
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-test</artifactId>
+    <version>5.0.2.RELEASE</version>
+</dependency>
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-jms</artifactId>
+    <version>5.0.2.RELEASE</version>
+</dependency>
+<dependency>
+    <groupId>javax.jms</groupId>
+    <artifactId>javax.jms-api</artifactId>
+    <version>2.0.1</version>
+</dependency>
+<dependency>
+    <groupId>org.apache.xbean</groupId>
+    <artifactId>xbean-spring</artifactId>
+    <version>3.7</version>
+</dependency>
+<dependency>
+    <groupId>junit</groupId>
+    <artifactId>junit</artifactId>
+    <scope>test</scope>
+    <version>4.12</version>
+</dependency>
 ```
 
 ##### 2、Spring整合ActiveMQ配置 applicationContext-producer.xml
@@ -1167,8 +1167,8 @@ JMS定义了五种不同的正文格式，以及调用消息类型，允许你�
 
 - TextMessage	一个字符串对象  * 
 - MapMessage   一套名称-值对
-- ObjectMessage  一个序列化的 Java对象
-- BytesMessage  一个字节的数据流
+- ObjectMessage  一个序列化的 Java对象  *
+- BytesMessage  一个字节的数据流   *
 - StreamMessage  Java原始值的数据流
 
 ###### TextMessage
@@ -1176,13 +1176,33 @@ JMS定义了五种不同的正文格式，以及调用消息类型，允许你�
 发送：
 
 ```java
-
+    //发送TextMessage消息
+    public void sendTextMessage(){
+        jmsTemplate.send("queue01", new MessageCreator() {
+            @Override
+            public Message createMessage(Session session) throws JMSException {
+                TextMessage textMessage = session.createTextMessage("文本消息");
+                return textMessage;
+            }
+        });
+    }
 ```
 
 接收
 
 ```java
-
+    //接收文本消息
+    @JmsListener(destination = "queue01")
+    public void recieveMessage(Message message){
+        if(message instanceof TextMessage){
+            TextMessage textMessage = (TextMessage)message;
+            try {
+                System.out.println("接收消息"+textMessage.getText());
+            } catch (JMSException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 ```
 
 
@@ -1215,7 +1235,37 @@ JMS定义了五种不同的正文格式，以及调用消息类型，允许你�
 
 ```
 
+###### BytesMeassage
 
+传递的对象必须序列化
+
+发送：
+
+```java
+
+```
+
+接收
+
+```java
+
+```
+
+###### StreamMeassage
+
+传递的对象必须序列化
+
+发送：
+
+```java
+
+```
+
+接收
+
+```java
+
+```
 
 ##### JMS消息属性
 
@@ -1693,13 +1743,195 @@ public class ActiveMQConfig{
 
 ##### 延迟投递
 
+生产者提供了两个发送消息的方法，一个是及时发送消息，一个是延迟发送消息
+
+1、修改activemq.xml
+
+apache-activemq/conf/
+
+```xml
+<broker xmlns="http://activemq.apache.org/schema/core"	 ... schedulerSupport="true">
+	....
+</broker>
+```
+
+**注意：添加 schedulerSupport="true" 的配置**
+
+2、在代码中设置延迟时长
+
+```java
+    /**
+     * 延时发送消息
+     */
+    @Test
+    public void sendMessageDelay() {
+        Session session = null;
+        try {
+            //获取连接工厂
+            ConnectionFactory connectionFactory = jmsMessagingTemplate.getConnectionFactory();
+            //创建连接
+            Connection connection = connectionFactory.createConnection();
+            //创建sesison  参数一师范开启事务
+            session = connection.createSession(true, Session.AUTO_ACKNOWLEDGE);
+            //创建消息队列
+            Queue queue = session.createQueue(queue_name);
+            //创建生产者
+            MessageProducer producer = session.createProducer(queue);
+            for (int i = 0; i < 10; i++) {
+                //模拟异常
+                if(i==6){
+                    int num = i/0;
+                }
+                TextMessage textMessage = session.createTextMessage("消息——"+String.valueOf(i+1));
+
+                //设置延迟时长（延时10秒） 默认单位毫秒
+                textMessage.setLongProperty(ScheduledMessage.AMQ_SCHEDULER_ACTION_END_TIME, 10000);
+
+                producer.send(textMessage);
+            }
+            //一旦开启了是事务f发送，必须使用commit方法进行事务提交 否则消息无法到达MQ服务器
+            session.commit();
+        } catch (JMSException e) {
+            e.printStackTrace();
+            //消息事务的会馆
+            try {
+                session.rollback();
+            } catch (JMSException jmsException) {
+                jmsException.printStackTrace();
+            }
+        }
+    }
+```
+
 
 
 ##### 定时投递
 
+基于SpringBoot实现
+
+1、启动类添加定时注解
+
+@EnableScheduling
+
+```java
+/**
+ * 生产者启动类
+ */
+@SpringBootApplication
+@EnableScheduling  //开启定时任务
+public class ProducerApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(ProducerApplication.class, args);
+    }
+}
+```
+
+
+
+2、在生产者添加@Scheduled设置定时
+
+```java
+@Component
+public class Producer {
+
+    @Autowired
+    private JmsMessagingTemplate jmsMessagingTemplate;
+    @Value("${activemq.queue}")
+    private String queue_name;
+
+    @Scheduled(fixedDelay = 3000)  //每隔3秒发一条
+    public void sendMessage(){
+        jmsMessagingTemplate.convertAndSend(queue_name,"定时消息... ...");
+    }
+}
+```
+
 
 
 #### 死信队列
+
+DLQ-Dead Letter Queue，死信队列，用来保证处理失败或者过期的消息，保证消息不丢失。
+
+什么时候消息会进入死信队列
+
+1）消息重发失败（我们叫处理失败）
+
+2）消息发送过期（超时）
+
+出现以下情况是，消息会被重发：
+
+```
+A transacted session is used and rollack() is called.
+一个事务会话，手动调用rollback()
+A transacted session is closeed before commit is called.
+一个事务会话，在提交之前被关闭
+A session is using CLIENT_ACK_ACKNOWLEDGE and Session.recover() is called.
+没有开启事务，手动消息确认方式，如果手动调用了Session.recover()
+
+当一个消息被重复超过6次（缺省为6次）时，会给broker发送一个“Poison ack”，这个消息被认为是 a poison pill (毒丸)，这是broker会将这个消息发送到死信队列，一遍后续处理。
+```
+
+注意两点：
+1）缺省持久消息过期，会被送到DLQ，非持久消息不会送到DLQ
+2）缺省的死信队列是ActiveMQ.DLQ，如果没有特别指定，死信都会被发送到这个队列。
+可以通过配置文件 activemq.xml来调整死信发送策略。
+
+
+
+如果把所有的失败消息放入同一个死信队列， 将不好处理；我们需要将每个队列的失败消息放入自己的死信队列
+
+##### 1、修改ActiveMQ.xml 为每个队列建立独立的死信队列
+
+```xml
+        <destinationPolicy>
+            <policyMap>
+              <policyEntries>
+                  
+                <policyEntry queue=">" >
+                  <deadLetterStrategy>
+                    <individualDeadLetterStrategy queuePrefix="DLQ." useQueueForQueueMessages="true" />
+                  </deadLetterStrategy>
+                </policyEntry>
+                  
+                <policyEntry topic=">" >
+                  <pendingMessageLimitStrategy>
+                    <constantPendingMessageLimitStrategy limit="1000"/>
+                  </pendingMessageLimitStrategy>
+                </policyEntry>
+              </policyEntries>
+            </policyMap>
+        </destinationPolicy>
+
+```
+
+##### 2、RedeliveryPolicy重复策略设置
+
+在springboot项目中可以通过修改配置类来更改
+
+放到消费方的配置类中
+
+```java
+public class ActiveMqConfig{
+    //RedeliveryPolicy重发策略设置
+    @Bean
+    public RedeliveryPolicy redeliveryPolicy(){
+        RedeliveryPolicy redeliveryPolicy= new RedeliveryPolicy();  
+        //是否在每次尝试重新发送失败后,增长这个等待时间  
+        redeliveryPolicy.setUseExponentialBackOff(true);  
+        //重发次数,默认为6次   这里设置为10次  
+        redeliveryPolicy.setMaximumRedeliveries(10);  
+        //重发时间间隔,默认为1秒  
+        redeliveryPolicy.setInitialRedeliveryDelay(1);  
+        //第一次失败后重新发送之前等待500毫秒,第二次失败再等待500 * 2毫秒,这里的2就是value  
+        redeliveryPolicy.setBackOffMultiplier(2);  
+        //是否避免消息碰撞  
+        redeliveryPolicy.setUseCollisionAvoidance(false);  
+        //设置重发最大拖延时间-1 表示没有拖延只有UseExponentialBackOff(true)为true时生效  
+        redeliveryPolicy.setMaximumRedeliveryDelay(-1);
+    }    
+}    
+```
 
 
 
@@ -1707,19 +1939,157 @@ public class ActiveMQConfig{
 
 #### 问题1：ActieMQ宕机了怎么办？
 
-1）ActiveMQ注册集群方案：Zookeeper集群+Replicatied LevelDB +AvtiveMQ集群
-
-三台ActiveMQ服务器
-
-官网链接：
-
-2）集群信息概览
+##### 1）ActiveMQ注册集群方案：Zookeeper集群+Replicatied LevelDB +AvtiveMQ集群
 
 
 
-3）先搭建Zookeeper集群
+官网链接：http://activemq.apache.org/replicated-leveldb-store
+
+![img](http://activemq.apache.org/assets/img/replicated-leveldb-store.png)
+
+三台ActiveMQ服务器  + 三台Zookeeeper Servers
 
 
+
+##### 2）集群信息概览
+
+| Zookeeper端口 | ActuveNQ Web端口 | ActiveNQ协议端口 |
+| ------------- | ---------------- | ---------------- |
+| 2181          | 8161             | 61616            |
+| 2182          | 9162             | 61617            |
+| 2183          | 8163             | 61618            |
+
+
+
+##### 3）搭建Zookeeper集群
+
+```
+1、上传zookeeper-3.4.6/tar.gz到linux服务器
+2、解压 tar -zxvf zookeeper-3.4.6.tar.gz
+3、创建根目录 mkdir /root/zookeeper
+4、创建节点目录及数据、日志存储目录：
+	mkdir -p zookeeper/218{1,2,3}/{data,datalogs}
+	三个几点的子文件夹为：2181 2182 2183 
+	mkdir -p 2181/data/
+	mkdir -p 2181/datalogs/
+	mkdir -p 2182/data/
+	mkdir -p 2182/datalogs/
+	mkdir -p 2183/data/
+	mkdir -p 2183/datalogs/	
+5、复制zookeeper到每个节点目录下	
+	cp -r zookeeper-3.4.6 zookeeper/2181	
+	cp -r zookeeper-3.4.6 zookeeper/2182
+	cp -r zookeeper-3.4.6 zookeeper/2183
+6、移除原始目录
+	rm -rf zookeeper-3.4.14
+7、修改2181服务器配置zoo.cfg
+	cd zookeeper/2181/zookeeper-3.4.6/conf/
+	cp zoo_sample.cfg zoo.cfg
+	vim zoo.cfg
+内容如下：
+	clientPort=2181
+	dataDir=/root/zookeeper/2181/data
+	dataLogDir=/root/zookeeper/2181/datalogs
+	server.1=192.168.0.108:2181:3181
+	server.2=192.168.0.108:2182:3181
+	server.3=192.168.0.108:2183:3181
+8、相同方式修改2182及2183节点的zoo.cfg
+
+9、每个节点必须有myid配置文件，记录节点的唯一标识，必须放到dataDir文件夹下，而且id值必须与上面的配置的server.x中的x对应
+	touch 2181/data/myid
+	vim myid
+	写入：1
+	或者
+	touch 2181/data/myid && echo "1"> 2181/data/myid
+	touch 2182/data/myid && echo "2"> 2182/data/myid
+	touch 2183/data/myid && echo "3"> 2183/data/myid
+查看创建是否成功：
+	more 2181/data/myid
+	more 2182/data/myid
+	more 2183/data/myid	
+10、分别启动三台zookeeper
+启动
+	cd zookeeper-3.4.6/bin
+	./zkServer.sh start
+
+查看状态
+	./zkServer.sh status
+	2181/zookeeper-3.4.6/bin/zkServer.sh status
+	2182/zookeeper-3.4.6/bin/zkServer.sh status
+	2183/zookeeper-3.4.6/bin/zkServer.sh status
+	当看到Mode: leader的Zookeeper为主节点，其他为从节点
+```
+
+##### 4）搭建ActiveMQ集群
+
+```
+1、上传 apache-activemq-5.15.9-bin.tar.gz到linux
+2、解压： tar -zxvf apache-activemq-5.15.9-bin.tar.gz
+3、创建三个节点目录
+	mkdir activemq/816{1,2,3}
+	mkdir activemq/8161
+	mkdir activemq/8162
+	mkdir activemq/8163
+4、复制activemq到么个节点目录：
+	cp -r apache-activemq-5.15.9 avtivemq/8161
+	cp -r apache-activemq-5.15.9 avtivemq/8162
+	cp -r apache-activemq-5.15.9 avtivemq/8163
+5、修改每个节点的activemq.xml
+	必须使用相同的集群名称
+	<broker xmls="http://activemq.apache.org/schena/core" brokerName="beyondsoft_mq" dataDirectory="${activemq.data}"
+	添加配置
+	61616:
+	<persistenceAdapter>
+	  <replicatedLevelDB directory="${activemq.data}/leveldb" replicas="3" bind="tcp://0.0.0.0:61616" zkAddress="192.168.0.108:2181,192.168.0.108:2182,192.168.0.108:2183" hostname="192.168.0.108" zkPath="/activemq/leveldb-stores" />
+	</persistenceAdapter>
+	
+	61617:
+	<persistenceAdapter>
+	  <replicatedLevelDB directory="${activemq.data}/leveldb" replicas="3" bind="tcp://0.0.0.0:61617" zkAddress="192.168.0.108:2181,192.168.0.108:2182,192.168.0.108:2183" hostname="192.168.0.108" zkPath="/activemq/leveldb-stores" />
+	</persistenceAdapter>
+	
+	61618:
+	<persistenceAdapter>
+	  <replicatedLevelDB directory="${activemq.data}/leveldb" replicas="3" bind="tcp://0.0.0.0:61617" zkAddress="192.168.0.108:2181,192.168.0.108:2182,192.168.0.108:2183" hostname="192.168.0.108" zkPath="/activemq/leveldb-stores" />
+	</persistenceAdapter>	
+
+6、修改jetty.xml
+8161
+<bean id="jettyPort" class="org.apache.activemq.web.WebConsolePort" int-method="start">
+    <property name="host" value="0.0.0.0"/>
+    <property name="port" value="8161"/>
+</bean>
+
+8162
+<bean id="jettyPort" class="org.apache.activemq.web.WebConsolePort" int-method="start">
+    <property name="host" value="0.0.0.0"/>
+    <property name="port" value="8162"/>
+</bean>
+
+8163
+<bean id="jettyPort" class="org.apache.activemq.web.WebConsolePort" int-method="start">
+    <property name="host" value="0.0.0.0"/>
+    <property name="port" value="8163"/>
+</bean>
+
+7、分表启动每台activemq
+```
+
+可以使用zookeeper图形客户端 ZooInspector查看ActiveMQ是否注册成功；查看 zk选取了那一台activemq 作为主服务器
+
+只有主服务器 才能访问web管理页面
+
+##### 5）生产者和消费者的broker-url需要修改
+
+```yml
+server:
+  port: 9001
+spring:
+  activemq:
+    broker-url: failover:(tcp:192.168.0.108:61616,tcp:192.168.0.108:61617,tcp:192.168.0.108:61618)
+    user: admin
+    password: admin
+```
 
 
 
