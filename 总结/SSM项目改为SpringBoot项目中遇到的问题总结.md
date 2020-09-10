@@ -26,7 +26,7 @@
 
 
 
-##### 1、Nginx中 session丢失问题
+##### 2、Nginx中 session丢失问题
 
 > https://www.jb51.net/article/187898.htm
 >
@@ -94,7 +94,7 @@ public class DefaultView extends WebMvcConfigurerAdapter {
 
 
 
-##### 2、项目中同时使用jsp和freeemarker，在访问首页时 发生了视图解析混乱问题
+##### 3、项目中同时使用jsp和freeemarker，在访问首页时 发生了视图解析混乱问题
 
 访问http://192.168.1.223:8081/IntellSecurity-web  做了访问控制 到 /page/login.jsp； 控制台输出 找不到/page/login.jsp.ftl 找不到 /page/login.jsp.html
 
@@ -140,7 +140,7 @@ public class BootApplication  extends SpringBootServletInitializer{
 
 
 
-##### 3、部分dao和mapper 无法绑定问题
+##### 4、部分dao和mapper 无法绑定问题
 
 org.apache.ibatis.binding.BindingException: Invalid bound statement (not found)错误
 
@@ -154,7 +154,7 @@ mybatis.mapper-locations=classpath*:com/ac/intellsecurity/dao/**/impl/*.xml
 
 
 
-##### 4、springboot Invalid character found in the request target 特殊字符传参报错
+##### 5、springboot Invalid character found in the request target 特殊字符传参报错
 
 > https://www.jianshu.com/p/b6911b45bc02
 
@@ -168,13 +168,52 @@ mybatis.mapper-locations=classpath*:com/ac/intellsecurity/dao/**/impl/*.xml
     }
 ```
 
-##### 5、通用报表 数据显示为 -  并不显示正确的数据
+##### 6、通用报表 数据显示为 -  并不显示正确的数据
+
+问题分析：从后端返回的json中查看 json中多了一些 为null的数据，但这并不会影响数据的加载展示，观察发现关于日期的字段都为长整形的timestamp 而不是格式化话的日期字符串，另外通用报表会对时间字符串 做截取 保留根据date formater，决定是否保留时间，只是年月日，并且 做了鼠标指向是 title加载全部日期数据等，据此判断与问题7相同，加入fastjson配置文件
+
+```java
+@Configuration
+public class FastJsonMessage {
+
+    @Bean
+    public HttpMessageConverters fastJsonHttpMessageConverters() {
+
+        //1、定义一个convert转换消息的对象
+        FastJsonHttpMessageConverter fastConverter = new FastJsonHttpMessageConverter();
+        //2、添加fastjson的配置信息
+        FastJsonConfig fastJsonConfig = new FastJsonConfig();
+        fastJsonConfig.setSerializerFeatures(
+                //禁用循环引用
+                SerializerFeature.DisableCircularReferenceDetect,
+                SerializerFeature.PrettyFormat,
+                SerializerFeature.IgnoreNonFieldGetter,
+                SerializerFeature.WriteEnumUsingToString,
+                SerializerFeature.WriteNullStringAsEmpty,
+                SerializerFeature.WriteMapNullValue,
+                SerializerFeature.WriteDateUseDateFormat);
+        fastJsonConfig.setSerializeFilters((ValueFilter) (o, s, source) -> {
+            if (source == null) {
+                return "";            //此处是关键,如果返回对象的变量为null,则自动变成""
+            }
+            return source;
+        });
+        //2-1 处理中文乱码问题
+        List<MediaType> fastMediaTypes = new ArrayList<>();
+        fastMediaTypes.add(MediaType.APPLICATION_JSON_UTF8);
+        fastConverter.setSupportedMediaTypes(fastMediaTypes);
+        //3、在convert中添加配置信息
+        fastConverter.setFastJsonConfig(fastJsonConfig);
+        //4、将convert添加到converters中
+        HttpMessageConverter<?> converter = fastConverter;
+        return new HttpMessageConverters(converter);
+    }
+}
+```
 
 
 
-
-
-##### 6、返回前端的json时间格式不正确 返回的为Timestamp，应为格式化后的字符串如2020-08-08 12:00:00
+##### 7、返回前端的json时间格式不正确 返回的为Timestamp，应为格式化后的字符串如2020-08-08 12:00:00
 
 问题分析：系统中采用了fastjson做的对象转json 返回给前端，应该是fastjson配置的问题
 
@@ -184,7 +223,21 @@ mybatis.mapper-locations=classpath*:com/ac/intellsecurity/dao/**/impl/*.xml
 
 问题处理：在FastJsonConfig 配置文件中增加对日期格式的处理
 
-```
+```java
  fastJsonConfig.setSerializerFeatures(SerializerFeature.WriteDateUseDateFormat);
+```
+
+##### 8、通用报表中，返回前端的数据与原ssm项目中的不一致，一些属性为null的 原项目不返回，现项目返回为“” 
+
+问题分析：fastjson 对null也进行了返回，查看资源默认是不返回的，如果需要返回才进行配置， 现在是返回了，说明进行了配置，或者说配置过度了
+
+问他处理：找到如下配置，说明json将null进行了返回，删除这段代码或者注释掉 就可以了
+
+```
+/*SerializerFeature.PrettyFormat,
+                SerializerFeature.IgnoreNonFieldGetter,
+                SerializerFeature.WriteEnumUsingToString,
+                SerializerFeature.WriteNullStringAsEmpty,
+                SerializerFeature.WriteMapNullValue,*/
 ```
 
