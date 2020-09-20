@@ -463,12 +463,433 @@ reset()	实现清空数据
 
 Clear()	实现数据的覆盖，position=0 重新开始读取缓冲区数据
 
+
+
 ### 自定义协议介绍
+
+自定义编解码工厂、自定义编码/解码器
+
+自定义编解码工厂 实现 ProtocolCodeFactory这个接口
+
+1、实现ProtocolCodeFactory接口
+
+2、实现自定义的 编码器ProtocalDecoder
+
+3、实现自定义的 解码器ProtocalDecoder接口
+
+4、根据自定义的编解码工厂获得编解码对象
+
+
+
+##### 为什么要使用自定义的编码器？
+
+因为我们在工作中 往往不是通过一个字符串就可以传输所有的信息，通常传输的是自定义的协议包，并且在应用层和网络通信中存在对象和二进制流之间的转换关系。
+
+
+
+##### 常用的自定义协议方法：
+
+1、定长的方式：如：AA Bb Cc OK NO
+
+2、定界符方式：如：helloworld|wacthmen|...|...|..
+
+  通过特殊的方式来区别消息，这样的方式会出现粘包，半包现象
+
+3、自定义协议包：包头+ 包体
+
+​	包头：通常包含：数据包的版本号，以及整个数据包（包头+包体）长度信息
+
+​	包体：实际数据
+
+​	下一节：为写一个实例做完整的准备工作。
 
 
 
 ### 自定义协议数据包分析
 
+本节内容：
+
+1、自定义协议包：
+
+​		包头：包头（length,flage）
+
+​		包体：(content) 
+
+2、完成客户端不断发送指定数据的数据包，然后在服务端解析。这个过程中我们要解决半包的问题
+
+下一节：完成代码实例
 
 
-自定义的编解码工厂
+
+### 自定义协议数据包代码实现
+
+
+
+协议包
+
+```java
+public class ProtocalPack {
+    private int length;
+    private byte flag;
+    private String content;
+
+    public int getLength() {
+        return length;
+    }
+
+    public byte getFlag() {
+        return flag;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public ProtocalPack(byte flag,String content){
+        this.length=content==null? 0 : content.length() +5;
+        //byte 长度为1
+        //int length 长度为4
+    }
+
+    public String toString(){
+        StringBuffer sb =new StringBuffer();
+        sb.append("length:").append(length);
+        sb.append("flag:").append(flag);
+        sb.append("content:").append(content);
+        return sb.toString();
+    }
+}
+```
+
+
+
+### 自定义协议-编解器
+
+```java
+package com.beyondsoft.mina.protocol;
+
+import org.apache.mina.core.buffer.IoBuffer;
+import org.apache.mina.core.session.IoSession;
+import org.apache.mina.filter.codec.ProtocolEncoderAdapter;
+import org.apache.mina.filter.codec.ProtocolEncoderOutput;
+
+import java.nio.charset.Charset;
+
+/**
+ * 编码器
+ */
+public class ProtocolEncoder extends ProtocolEncoderAdapter {
+
+    private final Charset charset;
+
+    public ProtocolEncoder(Charset charset) {
+        this.charset = charset;
+    }
+
+    @Override
+    public void encode(IoSession session, Object object, ProtocolEncoderOutput out) throws Exception {
+        ProtocolPack value = (ProtocolPack) object;
+        IoBuffer buffer = IoBuffer.allocate(value.getLength());
+        buffer.setAutoExpand(true); //自动增长
+        buffer.putInt(value.getLength());
+        buffer.put(value.getFlag());
+        if (value.getContent() != null) {
+            buffer.put(value.getContent().getBytes());
+        }
+        buffer.flip();
+        out.write(buffer);//发送出去
+    }
+}
+```
+
+
+
+### 自定义协议-解码器
+
+```java
+package com.beyondsoft.mina.protocol;
+
+import org.apache.mina.core.buffer.IoBuffer;
+import org.apache.mina.core.session.AttributeKey;
+import org.apache.mina.core.session.IoSession;
+import org.apache.mina.filter.codec.ProtocolDecoderOutput;
+
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+
+/**
+ * 解码器
+ */
+public class ProtocolDecoder implements org.apache.mina.filter.codec.ProtocolDecoder {
+
+    private final AttributeKey CONTEXT = new AttributeKey(this.getClass(), "context");
+    private final Charset charset;
+    private int maxPackLength = 100;
+
+    public int getMaxPackLength() {
+        return maxPackLength;
+    }
+
+    public void setMaxPackLength(int maxPackLength) {
+        if (maxPackLength < 0) {
+            throw new IllegalArgumentException("maxPackLength参数：" + maxPackLength);
+        }
+        this.maxPackLength = maxPackLength;
+    }
+
+    public Context getConText(IoSession session) {
+        Context ctx = (Context) session.getAttribute(CONTEXT);
+        if (ctx == null) {
+            ctx = new Context();
+            session.setAttribute(CONTEXT, ctx);
+        }
+        return ctx;
+    }
+
+    public void addpend(IoBuffer in) {
+
+    }
+
+    public Charset getCharset() {
+        return charset;
+    }
+
+    public ProtocolDecoder() {
+        this(Charset.defaultCharset());
+    }
+
+    public ProtocolDecoder(Charset charset) {
+        this.charset = charset;
+    }
+
+    @Override
+    public void decode(IoSession session, IoBuffer buffer, ProtocolDecoderOutput out) throws Exception {
+        final int packHeadLength=5;
+        Context ctx= this.getConText(session);
+        ctx.append(buffer);
+        IoBuffer buf = ctx.getBuffer();
+        buf.flip();
+        while(buf.remaining()>=packHeadLength){
+            buf.mark();
+            int length = buf.getInt();
+            byte flag =buf.get();
+            if(length<0 || length>maxPackLength){
+                buf.reset();
+                break;
+            } else if(length>packHeadLength && length-packHeadLength<=buf.remaining()){
+                int oldLimit = buf.limit();
+                buf.limit(buf.position()+length-packHeadLength);
+                String content = buf.getString(ctx.getDecoder());
+                buf.limit(oldLimit);
+                ProtocolPack _package = new ProtocolPack(flag,content);
+                out.write(_package);
+
+            } else {
+                //半包结构：数据包不完整，只读取了一部分，需要缓存起来下次再读
+                buf.clear();
+                break;
+            }
+        }
+        if(buf.hasRemaining()){ //是否还有剩余数据
+            IoBuffer temp =IoBuffer.allocate((maxPackLength)).setAutoExpand(true);
+            temp.put(buf);
+            temp.flip();
+            buf.reset();
+            buf.put(temp);
+        } else {
+            buf.reset();
+        }
+    }
+
+    @Override
+    public void finishDecode(IoSession session, ProtocolDecoderOutput out) throws Exception {
+
+    }
+
+    @Override
+    public void dispose(IoSession session) throws Exception {
+        Context ctx = (Context) session.getAttribute(CONTEXT);
+        if (ctx != null) {
+            session.removeAttribute(CONTEXT);
+        }
+    }
+
+    private class Context {
+        private final CharsetDecoder decoder;
+        private IoBuffer buffer;
+
+        private Context() {
+            decoder = charset.newDecoder();
+            buffer = IoBuffer.allocate(80).setAutoExpand(true);
+        }
+
+        public void append(IoBuffer in) {
+            this.getBuffer().put(in);
+        }
+
+        public void reset() {
+            decoder.reset();
+        }
+
+        public CharsetDecoder getDecoder() {
+            return decoder;
+        }
+
+        public IoBuffer getBuffer() {
+            return buffer;
+        }
+
+        public void setBuffer(IoBuffer buffer) {
+            this.buffer = buffer;
+        }
+    }
+}
+
+```
+
+
+
+### 自定义协议-服务端实例
+
+```java
+package com.beyondsoft.mina.protocol;
+
+import org.apache.mina.core.service.IoAcceptor;
+import org.apache.mina.core.service.IoHandlerAdapter;
+import org.apache.mina.core.session.IdleStatus;
+import org.apache.mina.core.session.IoSession;
+import org.apache.mina.filter.codec.ProtocolCodecFactory;
+import org.apache.mina.filter.codec.ProtocolCodecFilter;
+import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
+
+public class ProtocolServer {
+
+    /** 端口 */
+    private static final int PORT = 7080;
+
+    public static void main(String[] args) throws IOException {
+        IoAcceptor acceptor = new NioSocketAcceptor();
+        acceptor.getFilterChain().addLast("coderc", new ProtocolCodecFilter(new ProtocolFactory(Charset.forName("UTF-8"))));
+        acceptor.getSessionConfig().setReadBufferSize(1024);
+        acceptor.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE,10);
+        acceptor.setHandler(new MyHandler());
+        acceptor.bind(new InetSocketAddress(PORT));
+        System.out.println("server start ......");
+    }
+
+    static class MyHandler extends IoHandlerAdapter {
+        @Override
+        public void exceptionCaught(IoSession session, Throwable cause) throws Exception {
+            System.out.println("server -> exceptionCaught");
+        }
+
+        @Override
+        public void messageReceived(IoSession session, Object message) throws Exception {
+            ProtocolPack pack = (ProtocolPack) message;
+            System.out.println("服务端接收" + pack);
+        }
+
+        @Override
+        public void sessionIdle(IoSession session, IdleStatus status) throws Exception {
+            System.out.println("server -> session idler");
+        }
+
+        @Override
+        public void sessionCreated(IoSession session) throws Exception {
+            System.out.println("创建连接成功-----");;
+        }
+
+        @Override
+        public void sessionOpened(IoSession session) throws Exception {
+            System.out.println("打开连接成功-----");;
+        }
+    }
+}
+```
+
+
+
+### 自定义协议-客户端实例
+
+```java
+package com.beyondsoft.mina.protocol;
+
+import org.apache.mina.core.future.ConnectFuture;
+import org.apache.mina.core.future.IoFuture;
+import org.apache.mina.core.future.IoFutureListener;
+import org.apache.mina.core.service.IoConnector;
+import org.apache.mina.core.service.IoHandlerAdapter;
+import org.apache.mina.core.session.IdleStatus;
+import org.apache.mina.core.session.IoSession;
+import org.apache.mina.filter.codec.ProtocolCodecFilter;
+import org.apache.mina.transport.socket.nio.NioSocketConnector;
+
+import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
+
+public class ProtocolClient {
+
+    private static final String HOST = "127.0.0.1";
+    private static final int PORT = 7080;
+
+    static long conuter = 0;
+
+    final static int fil = 100;
+
+    static long start = 0;
+
+    public static void main(String[] args) {
+        start = System.currentTimeMillis();
+        IoConnector connector = new NioSocketConnector();
+        connector.getFilterChain().addLast("coderc", new ProtocolCodecFilter(new ProtocolFactory(Charset.forName("UTF-8"))));
+        connector.getSessionConfig().setReadBufferSize(1024);
+        connector.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, 10);
+        connector.setHandler(new MyHandler());
+        ConnectFuture connectFuture = connector.connect(new InetSocketAddress(HOST, PORT));
+        connectFuture.addListener(new IoFutureListener<ConnectFuture>() {
+            @Override
+            public void operationComplete(ConnectFuture future) {
+                if (future.isConnected()) {
+                    IoSession session = future.getSession();
+                    senddata(session);
+                }
+            }
+        });
+    }
+
+    public static void senddata(IoSession session) {
+        for (int i = 0; i < fil; i++) {
+            String content = "watchmen:" + i;
+            ProtocolPack pack = new ProtocolPack((byte) i, content);
+            session.write(pack);
+            System.out.println("客户端发送数据：" + pack);
+        }
+    }
+
+    //内部类
+    static class MyHandler extends IoHandlerAdapter {
+        @Override
+        public void messageReceived(IoSession session, Object message) throws Exception {
+            ProtocolPack pack = (ProtocolPack) message;
+            System.out.println("client->" + pack);
+        }
+
+        @Override
+        public void sessionIdle(IoSession session, IdleStatus status) throws Exception {
+            if (status == IdleStatus.READER_IDLE) {
+                session.close(true);
+//                session.closeNow();
+                System.out.println("客户端连接关闭");
+            }
+        }
+    }
+}
+
+
+
+```
+
