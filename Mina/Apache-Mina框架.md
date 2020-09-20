@@ -1,6 +1,18 @@
-> 课程地址 https://www.bilibili.com/video/BV1i54y1m7sx?p=1
+视频地址
 
+>  https://www.bilibili.com/video/BV1i54y1m7sx?p=1
 
+参考文档
+
+> https://blog.csdn.net/wang_snake/article/details/79495855 MINA快速开发Demo
+>
+> https://blog.csdn.net/wang_snake/article/details/79572953 MINA体系结构分析
+>
+> https://blog.csdn.net/wang_snake/article/details/79585791 MiNA学习之常用接口（一）
+>
+> https://blog.csdn.net/wang_snake/article/details/79600418 MiNA学习之常用接口（二）
+>
+> https://blog.csdn.net/wang_snake/article/details/79601828 MINA学习之自定义协议
 
 ## Mina框架
 
@@ -32,11 +44,46 @@ Mina是Apache开发的一开源网络通信框架，基于Java NIO来实现开�
 
 #### 依赖的jar包
 
+###### 手工添加
+
 - commons-logging-log4j-1.0.4.jar
 - log4j-1.2.1.2.jar
 - mina-cor-2.0.0-M1.jar
 - slf4j-api-1.7.2.jar
 - slf4j-log12-1.7.2.jar
+
+###### maven导入
+
+```xml
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.6.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.6.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.rxtx</groupId>
+            <artifactId>rxtx</artifactId>
+            <version>2.1.7</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.17</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.mina</groupId>
+            <artifactId>mina-core</artifactId>
+            <version>2.0.7</version>
+        </dependency>
+```
+
+
 
 #### 编码和解码器
 
@@ -46,7 +93,7 @@ Mina是Apache开发的一开源网络通信框架，基于Java NIO来实现开�
 
 #### Mina服务器端程序
 
-minaserver
+服务端MinaServer
 
 ```java
 public class MinaServer {
@@ -76,7 +123,8 @@ public class MinaServer {
     }
 }
 ```
-Handle
+###### 业务逻辑Handler
+
 ```java
 public class Myhandler extends IoHandlerAdapter {
 
@@ -123,7 +171,7 @@ public class Myhandler extends IoHandlerAdapter {
 }
 ```
 
-
+###### 客户端连接测试
 
 客户端使用telnet工具连接
 
@@ -142,17 +190,70 @@ telnet 127.0.0.1 7080
 
 4、绑定一个端口
 
-### Mina客户端程序
 
-#### 
+
+### Mina客户端程序
 
 #### 客户端程序实例
 
-```
+```java
+package com.beyondsoft.mina.demo;
 
+import org.apache.mina.core.future.ConnectFuture;
+import org.apache.mina.core.service.IoConnector;
+import org.apache.mina.core.session.IoSession;
+import org.apache.mina.filter.codec.ProtocolCodecFilter;
+import org.apache.mina.filter.codec.textline.LineDelimiter;
+import org.apache.mina.filter.codec.textline.TextLineCodecFactory;
+import org.apache.mina.transport.socket.nio.NioSocketConnector;
+
+import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
+
+public class MinaClient {
+
+    private static String host="127.0.0.1";
+    private static int port =7080;
+
+    public static void main(String[] args) {
+        IoConnector connector=new NioSocketConnector();
+        connector.setConnectTimeout(3000);
+        //设置过滤器
+        connector.getFilterChain().addLast("codec",new ProtocolCodecFilter(
+                new TextLineCodecFactory(
+                        Charset.forName("UTF-8"),
+                        LineDelimiter.WINDOWS.getValue(),
+                        LineDelimiter.WINDOWS.getValue()
+                )
+        ));
+        connector.setHandler(new MyClientHandler());
+        ConnectFuture connect = connector.connect(new InetSocketAddress(host, port));
+        connect.awaitUninterruptibly(); //等待我们的连接
+        IoSession session = connect.getSession();
+        session.write("你好,jerry");
+        session.getCloseFuture().awaitUninterruptibly();//等待关闭连接
+        connector.dispose();
+    }
+}
 ```
 
 ### Mina 体系结构
+
+##### Mina的介绍
+
+Mina是Apche开发的一个基于NIO的网络开源应用框架，是非阻塞模式，使用它编写程序时，可以专注于业务处理，而不用过于关心IO操作。不论应用程序采用什么协议（[TCP、UDP](http://blog.csdn.net/wang_snake/article/details/79519899)）或者其它的，Mina提供了一套公用的接口，来支持这些协议。目前可以处理的协议有：HTTP, XML, TCP, LDAP, DHCP, NTP, DNS, XMPP, SSH, FTP... 。从这一点来说，Mina不仅仅是一个基于NIO的框架，更是一个网络传输层协议的实现。
+
+##### 网络分词结构
+
+OSI的7层从上到下分别是：
+
+（7）应用层 （6）表示层 （5）会话层 （4）传输层 （3）网络层（2）数据链路层（1）物理层
+
+其中高层（即7、6、5、4层）定义了应用程序的功能，下面3层（即3、2、1层）主要面向通过网络的端到端的数据流。
+
+##### Mina在应用程序中处于什么样的位置？
+
+主要屏蔽了网络通信的一些细节，对socket进行封装，并且是NIO的一个实现架构，可以帮助我们快速的开发网络通信，常常用于游戏的开发，中间件等服务端程序。
 
 ##### Mina体系结构
 
@@ -160,11 +261,15 @@ telnet 127.0.0.1 7080
 
 
 
-##### Mina工作流程图
+##### Mina各种组件及工作流程图
 
+![img](https://img-blog.csdn.net/20180311172259181)
 
+##### Mina主要组成
 
-
+- IoService：执行实际的IO操作，管理 I/O会话。
+- IoFilter Chain：将数据进行过滤或者转换为期望的数据结构，反之亦然。
+- IoHandler：实际的业务操作。
 
 
 
@@ -182,7 +287,21 @@ IOHandlerAcceptor
 
 IOService接口
 
+编写网络程序，一般都分为Server/Clinet。
 
+（1）IoService接口描述的是客户端和服务端连接的一个抽象，常常用于接收和发送数据。其两个子接口为IoAcceptor和IoConnector，分别用于描述我们的客户端和服务端及IOproceser 多线程环境来处理我们的连接请求。
+
+（2）服务端通过创建一个NioSocketAcceptor来接受请求，客户端通过创建NioSocketConnector来连接服务端并发送请求
+
+（3）Mina为Server端程序提供的IoService实现是IoAcceptor，为客户端提供的实现是IoConnector。IoAcceptor用来接受连接，与客户端进行通讯。IoConnector用来发起连接，与服务端进行通讯。IoAcceptor和IoConnector都分别有基于TCP/IP协议协议，UDP/IP协议以及虚拟机管道通讯的子接口。
+
+Server端实现：
+
+![img](https://img-blog.csdn.net/20180311173517425)
+
+Clint端实现：
+
+![img](https://img-blog.csdn.net/20180311173554840)
 
 ##### 类图结构
 
@@ -888,8 +1007,5 @@ public class ProtocolClient {
         }
     }
 }
-
-
-
 ```
 
