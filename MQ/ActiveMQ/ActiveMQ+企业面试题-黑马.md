@@ -663,7 +663,9 @@ public static void main(String[] args) throws JMSException {
 </dependency>
 ```
 
-##### 2、Spring整合ActiveMQ配置 applicationContext-producer.xml
+##### 2、Spring整合ActiveMQ配置
+
+​	applicationContext-producer.xml
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -767,7 +769,9 @@ public class SpringProducer {
 
 
 
-##### 2、编写Spring整合ActiveMQ配置文件 applicationContext-consumer.xml
+##### 2、编写Spring整合ActiveMQ配置文件
+
+​	applicationContext-consumer.xml
 
 ```xml
     <!-- 1 连接工厂-->
@@ -934,7 +938,7 @@ spring:
 
 ##### 3、编写启动类
 
-```
+```java
 /**
  * 生产者启动类
  */
