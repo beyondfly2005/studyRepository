@@ -127,3 +127,51 @@ import org.mybatis.spring.annotation.MapperScan;
 
 
 
+##### springBoot 不同包下有同名类bean 启动报错问题
+
+> 参考 https://blog.csdn.net/ZYC88888/article/details/84758835
+
+```java
+public class UniqueNameGenerator extends AnnotationBeanNameGenerator {
+    @Override 
+    public String generateBeanName(BeanDefinition definition, BeanDefinitionRegistry registry) { 
+        //全限定类名 
+        String beanName = definition.getBeanClassName(); 
+        return beanName; 
+    } 
+}
+```
+
+在启动类上加注解@ComponentScan(nameGenerator = UniqueNameGenerator.class)使刚才我们自定义的BeanName生成策略生效。　
+
+```java
+@SpringBootApplication
+@ComponentScan(nameGenerator = UniqueNameGenerator.class) 
+public class BeanNameConflictApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(BeanNameConflictApplication.class, args);
+    } 
+}
+```
+
+
+
+#####  java.lang.IllegalArgumentException: 在请求目标中找到无效字符。有效字符在RFC 7230和RFC 3986中定义
+
+
+
+问题分析：
+
+```
+请求的URL地址中带有字符 ‘|’ ‘{’ ‘}’
+在低版本的tomcat没有这个问题 tomcat 7.0.5xx 之前的版本
+在7.0.5xx之后的版本 和8.xx之后的版本会有这个问题
+```
+
+###### 解决方案
+
+```
+在conf/catalina.properties文件中增加这样一条属性到最后：
+tomcat.util.http.parser.HttpParser.requestTargetAllow=|{}
+```
+
