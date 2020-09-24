@@ -105,3 +105,11 @@ public class ServletInitializer extends SpringBootServletInitializer {
 mvn clean package -Dmaven.test.skip=true
 ```
 
+#### 多个SpringBoot打成war包 放入tomcat运行冲突解决
+
+为每一个应用 配置spring.jmx.default-domain一个名称，在application.properties 或application.yml中配置
+
+```
+spring.jmx.default-domain=项目名contextpath(唯一名称)
+```
+
