@@ -1308,7 +1308,7 @@ ActiveMQ持久化流程图：
 
 SpringBoot项目中
 
-###### 基于内存型的消息存储方式配置
+##### 基于内存型的消息存储方式配置
 
 ```yml
 spring:
@@ -1317,7 +1317,7 @@ spring:
             delivery-mode: non_persitent #非持久化配置（消息存储在内存里）
 ```
 
-###### 基于日志型的消息存储方式配置
+##### 基于日志型的消息存储方式配置
 
 基于日志存储是springboot的默认的存储方式
 
@@ -1335,7 +1335,7 @@ spring:
             delivery-mode: persitent #持久化配置（消息存储在日志文件里）
 ```
 
-###### 基于JDBC的消息存储方式
+##### 基于JDBC的消息存储方式
 
 **1）配置application,yml连接mysql**
 
