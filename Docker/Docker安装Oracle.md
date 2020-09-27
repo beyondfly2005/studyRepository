@@ -157,11 +157,12 @@ docker exec -it oracle11g bash
 ```bash
 5.配置Oracle环境变量
 切换到root用户
+su - root
 用户名：root
 密码：helowin
 
 
-[root@a8a161b66e1d /]# vi /etc/profile
+[root@a8a161b66e1d /]# vim /etc/profile
 在文件末未添加
 export ORACLE_HOME=/home/oracle/app/oracle/product/11.2.0/dbhome_2
 export ORACLE_SID=helowin
@@ -210,7 +211,7 @@ SQL> create user rootep identified by lam123;
 --alter user rootep identified by lam123;
 User created.
 
-SQL> grant connect,resource,dba to rootep ;
+SQL> grant connect,resource,dba to rootep;
 Grant succeeded.
 
 8.配置本地tnsnames.ora文件
