@@ -42,7 +42,80 @@ MQ 存储、通知
 
 ##### 常用消息中间件
 
-| ActiveMQ | RabbitMQ | RocketMQ | Kafka |
+|特性 |ActiveMQ | RabbitMQ | RocketMQ | Kafka |
 | ---- | ---- | ---- | ---- |
 |      |      |||
+| | |||
+| | |||
+| | |||
+|  | |||
+
+#### ActiveMQ安全机制
+
+系统安全认证的
+
+web控制台的
+
+默认任何用户都可以连接到 broker
+
+一个项目一个账号
+
+conf/activemq.xml
+
+在borker节点上添加如下
+
+```xml
+    <plugins>
+        <simpleAuthenticationPlugin>
+            <users>
+                <authenticationUser username="${activemq.username}" password="${activemq.password}" groups="users,admins"/>
+            </users>
+        </simpleAuthenticationPlugin>
+    </plugins>
+```
+
+
+
+```
+
+```
+
+
+
+***/conf/credentials.properties*** 
+
+```
+activemq.username=system
+activemq.password=manager
+```
+
+
+
+持久化
+
+###### kahaDB存储
+
+
+
+###### AMQ方式
+
+只适用于5.3
+
+
+
+###### JDBC存储
+
+
+
+###### LevelDB存储
+
+
+
+###### Memory消息存储
+
+
+
+###### JDBC Message Stor with ActiveMQ 
+
+
 
