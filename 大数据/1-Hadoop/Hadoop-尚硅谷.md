@@ -416,15 +416,26 @@ vim etc/hadoop/core-site.xml
 
 hdfs namenode -formate
 
+
+格式化之前
+
+使用jps查看进程是否存在 存在则结束进程
+
 启动
 
-```
+```bash
 sbin/hadoop-daemon.sh start namenode
 
 jps  #java 的ps 
 ```
 
+然后删除data，删除logs
 
+为什么不能一直格式化NameNode
+
+namenode 和datanode id一致
+
+导致namenode和datanode 同时只有一个在工作，另一个挂掉
 
 #### 4.3 完全分布式运行模式
 
