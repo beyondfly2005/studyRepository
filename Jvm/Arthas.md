@@ -77,7 +77,7 @@ jps -lmv
 使用如下命令查找 加载器
 
 ```bash
-sc -d *dockdataController| grep classLoaderHash
+sc -d *DockdataController| grep classLoaderHash
 classLoaderHash   4d2889ff
 ```
 
