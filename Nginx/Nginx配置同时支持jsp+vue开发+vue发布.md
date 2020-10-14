@@ -203,7 +203,7 @@ http {
                     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
                     proxy_set_header Host $http_host;
                     proxy_set_header X-Forwarded-Proto https;
-                    proxy_cookie_path /IntellSecurity-App /api;
+                    # proxy_cookie_path /IntellSecurity-App /api;  ## coontext相同 不跨域 不需要配置cookie代理
                     proxy_intercept_errors on;
                     proxy_redirect off;
                     proxy_connect_timeout      10;
