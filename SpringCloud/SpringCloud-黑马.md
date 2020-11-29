@@ -292,20 +292,49 @@ eureka:
 
 #### Ribbon概述
 
-Ribbon是Netflix发布的一个负载均衡器，有助于控制http和tcp客户端行为
+Ribbon是Netflix发布的一个负载均衡器，有助于控制http和tcp客户端行为。在springCloud中Eureka一般配合Ribbon进行使用，
+
+#### 6.2.2 Ribbon的主要作用
+
+##### (1) 服务调用
+
+基于Ribbon实现服务调用，是通过拉取到的所有服务列表组成（服务名-请求路径）映射关系，借助RestTemplate最终进行调用
+
+##### (2) 负载均衡
+
+当有多个服务提供者时，Ribbon可以根据负载聚恒的算法自动的选择需要调用的服务地址
 
 eurka内部集成了ribbon
 
 - 在创建RestTemplate的时候，声明@LoadBalanced
 - 使用RestTemplate调用远程微服务，不需要拼接微服务的url 以待请求的服务名替换IP地址
 
-```
+```java
 #使用微服务名称替换ip地址
+@RequestMapping(value="/buy/{id}",method=RequestMethod.GET)    
 public Produc findByid(){
     Prodct  product = null;
-    product = restTemplate.getForObject(http://);
+    product = restTemplate.getForObject("http://127.0.0.1:9001/rpoduct/1",Product.class);
+    //改为
+    product = restTemplate.getForObject("http://service-product/rpoduct/1",Product.class);
 }
 ```
+
+#### 6.3 基于Ribbon实现订单调用商品服务
+
+不论是基于Eureka的注册中心还是基于Consul的注册中心，SpringCloudRibbon统一进行了封装，所以对于服务调用，两者的方式是一样的。
+
+1、引入坐标
+
+Eureka内部集成了Ribbbon 不需要在引入其他pom依赖
+
+2、修改调用RestTemplate 调用方式
+
+
+
+
+
+
 
 ### P34、Consul概述 替换Necos
 
@@ -324,6 +353,86 @@ Consul与Eureka的区别
 - Eurka 短时间内 可能额存在 数据不一致，但是能保证最终一致性
 
 
+
+### P44、Feign概述
+
+Ribbin远程调用存在的问题
+
+如果调用多个微服务 需要配置多个
+
+需要拼接url 及参数，如果参数过多 ，拼接会很麻烦
+
+#### 什么是Feign
+
+Feign是 声明式
+
+
+
+#### Feigin入门实例环境搭建
+
+##### 1、导入依赖
+
+```xml
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <!--<artifactId>spring-cloud-starter-netflix-feign</artifactId>-->
+        <artifactId>spring-cloud-starter-openfeign</artifactId>
+    </dependency>
+```
+
+##### 2、配置调用接口
+
+```java
+@FeignClient(name="service-product")
+public interface ProductFeighClient {
+
+    /**
+     * 配置需要调用的微服务接口
+     */
+    @RequestMapping(value = "/product/{id}",method = RequestMethod.GET)
+    public Product findById(@PathVariable("id")Long id);
+}
+```
+
+##### 3、启动类上 激活Feign
+
+```java
+@EntityScan("com.beyondsoft.intelsecurity.model")
+@EnableFeignClients
+public class OrderServerApplication{
+    
+}
+```
+
+##### 4、通过自定义的接口调用远程微服务
+
+```java
+@Autowired
+private ProductFeignClient productFeignClient;
+
+@RequestMapping(value = "/product/{id}",method = RequestMethod.GET)
+public Product findById(@PathVariable("id")Long id){
+    Product product = product FeignClient.findById(id);
+    return product
+}
+```
+
+### P45、入门案例搭建
+
+### P46、
+
+### P47、
+### P48、
+### P49、
+### P50、
+### P51、
+### P52、
+### P53、
+### P54、
+### P55、
+### P56、
+### P57、
+### P58、
 
 ### P75、 微服务网关
 
@@ -767,6 +876,93 @@ public class LoginFilter implements GlobalFilter, Ordered {
 请求必须拿到令牌才可以访问，如果拿不到令牌或者令牌桶中没有可用的令牌，要么等待，要么访问被拒绝
 
 
+
+请求过来之后，必须先拿到令牌，获取到了令牌
+
+令牌桶算法主要是为了保护自己，网关挂了，所有请求都进不了，所有微服务中通常使用令牌桶算法
+
+##### 2.4.1 基于filter的限流
+
+cloud官方提供了令牌桶算法进行限流
+
+RequestRateLimiterGatewayFilterFacory实现
+
+1、准备工作
+
+redis
+
+```
+monitor 命令监控redis 数据变化
+```
+
+工程中引入redis相应的依赖
+
+```xml
+    <!-- 监控依赖 -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+    <!--  -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
+    </dependency>
+```
+
+2、修改网关中的application.yml配置
+
+```yaml
+server:
+  port: 8080 #端口号
+spring:
+  application:
+    name: api-gateway-server #服务名称
+  redis:
+    host: localhost
+    poll: 6379
+    database: 0
+
+  # 配置springCloudgateway的路由
+  cloud:
+    gateway:
+      routes:
+        - id: product-service #路由id 保持唯一即可
+          uri: http://127.0.0.1:9001 #目标服务器IP地址
+          predicates:
+          - Path=/product/*  #路由条件 path：路由匹配条件
+
+          filters:
+          - name: RequestRateLimiter
+            args:
+              # 使用SpEL从容器中获取对象
+              key-resolver: '#{@pathKeyResolver}'
+              # 令牌桶每秒填充的评价速率
+              redis-rate-limiter.replenishRate: 1
+              # 令牌桶的上线
+              redis-rate-limiter.burstCapacity:3
+          - RewritePath=/product-service/(?<segment>.*),/$\{segment}
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:9000/eureka
+    instance:
+      prefer-ip-address: true #使用ip地址注册
+```
+
+
+
+3、配置一个redis 中key的解析器KeySesolver
+
+```java
+pathKeyResolver
+```
+
+
+
+
+
+##### 2.4.2 基于Sentinel的限流
 
 #### 3.6 网关的高可用
 

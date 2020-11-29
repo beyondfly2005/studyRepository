@@ -48,6 +48,24 @@
 
 
 
+### P8、接口隔离原则
+
+
+
+```java
+//Segregation
+interface Interface1{
+    void function1();
+        void function1();
+        void function2();
+        void function3();
+        void function4();
+        void function5();
+}    
+```
+
+
+
 ### P28、设计模式概述和分类
 
 ###### 掌握设计模式的层次
