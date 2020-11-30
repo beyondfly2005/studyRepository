@@ -241,3 +241,90 @@ public class FastJsonMessage {
                 SerializerFeature.WriteMapNullValue,*/
 ```
 
+##### 9、org.apache.tomcat.util.modeler.BaseModelMBean.invoke Exception invoking method createStandardContext javax.management.RuntimeOperationsException: Exception invoking method manageApp
+
+ContainerBase.addChild: start: org.apache.catalina.LifecycleException: Failed to start component [StandardEngine[Catalina].StandardHost[localhost].StandardContext[/IntellSecurity-web]]
+
+at org.apache.tomcat.util.modeler.BaseModelMBean.invoke
+
+
+
+##### 10、配置多个包扫描
+
+例如
+
+```java
+@SpringBootApplication  
+@MapperScan({"com.kfit.demo","com.kfit.user"})  
+public class App {  
+    public static void main(String[] args) {  
+       SpringApplication.run(App.class, args);  
+    }  
+} 
+```
+
+
+```java
+@SpringBootApplication  
+@MapperScan({"com.kfit.*.mapper","org.kfit.*.mapper"})  
+public class App {  
+    public static void main(String[] args) {  
+       SpringApplication.run(App.class, args);  
+    }  
+} 
+```
+
+
+
+```java
+@SpringBootApplication
+@MapperScan({"com.ac.intellsecurity.dao.*","com.ac.monitor.dao.*"})
+public class WebServerApplication extends SpringBootServletInitializer {
+}
+```
+
+
+
+##### 11、配置 .do后缀
+
+> https://blog.csdn.net/mycsdn_sy_yl/article/details/85463028 采用的方法二
+
+```
+@Configuration
+@ComponentScan
+@EnableWebMvc
+public class MvcConfig implements WebMvcConfigurer {
+
+    @Override
+    public void configurePathMatch(PathMatchConfigurer pathMatchConfigurer) {
+        pathMatchConfigurer.setUseSuffixPatternMatch(false);
+        pathMatchConfigurer.setUseRegisteredSuffixPatternMatch(true);
+    }
+
+    @Override
+    public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
+        configurer.favorPathExtension(false);
+    }
+}
+```
+
+
+
+##### 12、通用报表问题 
+
+jquery-1.12.3.js:10263 GET http://localhost:8086/IntellSecurity-web/page/statistics/generalStatistics.jsp?reporttype=YHTJYL_ORG&queryData={MENUID:262}&_=1604028159320 400
+
+ java.lang.IllegalArgumentException: Invalid character found in the request target. The valid characters are defined in RFC 7230 and RFC 3986
+
+```java
+
+```
+
+
+
+13、springboot配置 过滤器
+
+
+
+14、 springboot配置拦截器
+
