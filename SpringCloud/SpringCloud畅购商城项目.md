@@ -51,7 +51,7 @@
 
 重点： 后4个：了解工程结构  搭建
 
-#### 1、走进电商
+#### 1. 走进电商
 
 ##### 1.1 电商行业分析
 
@@ -103,7 +103,7 @@
 
 ​	京东商城 天猫商城
 
-#### 2、畅购-需求分析设计
+#### 2. 畅购-需求分析设计
 
 ##### 2.1 需求分析
 
@@ -130,6 +130,94 @@ Spring-AMQP
 支付接口：微信支付
 
 ###### 2.2.3 系统架构图
+
+
+
+#### 3. 畅购-框架搭建
+
+##### 3.1 环境准备
+
+- VMware Workstation Pro安装centos7镜像
+- 安装docker
+- 拉取MySQL镜像 并创建容器
+- 客户端连接mysql容器 创建表
+
+虚拟机数据
+
+- 虚拟机IP
+- 虚拟账号 root 密码123456
+- 数据库端口 3306
+- 数据库账号root ，密码123456
+
+数据脚本
+
+​	business.sql
+
+​	config.sql
+
+​	content.sql
+
+​	goods.sql 商品相关
+
+​	oauth.sql oauth权限
+
+​	order 订单
+
+​	seckill 秒杀
+
+​	system
+
+​	user 用户
+
+大型系统使用反三范式
+
+原子性 ：建议不要创建依赖
+
+依赖性：数据适当冗余
+
+##### 3.2 项目结构说明
+
+changgou_auth   OAuth2.0授权认证管理中心
+
+changgou_common  工具工程 工具类
+
+changgou_common_db  操作数据的依赖包
+
+changgou_eureka  注册中心
+
+changgou_gateway  微服务网关 多套，微服务
+
+​	changgou_gateway_system
+
+​	changgou_gateway_web
+
+changgou_service
+
+​	changgou_service_file
+
+​	changgou_service_goods
+
+​	changgou_service_order
+
+​	changgou_service_pay
+
+​	changgou_service_search
+
+​	changgou_service_seckill
+
+​	changgou_service_syscenter
+
+​	changgou_service_user
+
+changgou_service_api
+
+​		changgou_service_good_api
+
+​		changgou_service_auth_api
+
+​		changgou_service_order_api
+
+​		changgou_service_pay_api
 
 
 
