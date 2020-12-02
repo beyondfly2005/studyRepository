@@ -112,7 +112,7 @@ http://192.168.1.252:5000/v2/tomcat/tags/list
 http://192.168.1.252:5000/v2/tomcat/
 
 ```
-## Docker Registry WebUI部署
+## Docker Registry UI部署
 
 私服安装成功之后就可以使用docker命令行工具对registry做各种操作了，然而不方便的地方是不能直观的查看registry中俄资源情况，如果可以使用UI工具管理就更快了，这里介绍两个Docker Registry WebUI工具
 
