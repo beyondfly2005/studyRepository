@@ -1,5 +1,15 @@
 # docker 私服搭建 registy
 
+> 参考文档
+
+
+
+## Docker Registry 简介
+
+[Docker Hub](https://hub.docker.com/) 是 Docker 官方提供的一个管理公共镜像的镜像仓库，我们可以从上面拉取我们想要的镜像，也可以推送自己的镜像上去。但有时候，在无法访问互联网的情况下或者不希望将自己的镜像推送到公网上时，那么 Docker Registry （镜像私服）就可以用来存储管理自己的镜像
+
+## Docker Registry安装 
+
 ```bash
 # 创建安装目录
 cd /usr/local/
@@ -16,10 +26,10 @@ services:
     image: registry
     restart: always
     container_name: registry
-    port:
+    ports:
       - 5000:5000
-    volumns:
-      - /usr/local/docker/registry/data:var/lib/registry
+    volumes:
+      - /usr/local/docker/registry/data:/var/lib/registry
 ```
 
 ```bash
@@ -32,11 +42,17 @@ $ docker-compose up -d
 
 ip:5000/v2/
 
+```bash
+http://192.168.0.108:5000
+http://192.168.0.108:5000/v2
+http://192.168.0.108:5000/v2/_catalog
+```
+
 docker pull 从官网下载 docker-hub
 
 
 
-### 配置客户端
+## 配置客户端
 
 > 将本地docker镜像 将自己的项目做成docker镜像
 
@@ -96,7 +112,7 @@ http://192.168.1.252:5000/v2/tomcat/tags/list
 http://192.168.1.252:5000/v2/tomcat/
 
 ```
-#### 部署Docker Registry WebUI
+## Docker Registry WebUI部署
 
 私服安装成功之后就可以使用docker命令行工具对registry做各种操作了，然而不方便的地方是不能直观的查看registry中俄资源情况，如果可以使用UI工具管理就更快了，这里介绍两个Docker Registry WebUI工具
 
@@ -112,8 +128,6 @@ http://192.168.1.252:5000/v2/tomcat/
 ```
 
 ##### docker-registry-fontend
-
-
 
 
 ```bash
@@ -134,7 +148,7 @@ services:
   frontend:
     image: konradkleine/docker-registry-frontend:v2
     ports:
-      - 8080:80
+      - 8060:80
     volumes:
       - ./certs/frontend.crt:/etc/apache2/server.crt:ro
       - ./certs/frontend.key:/etc/apache2/server.key:ro
@@ -155,27 +169,35 @@ docker ps
 
 浏览器访问 测试前端webUI
 
-http://ip:8080
-
-
-
-#### 测试 docker compose
-
 ```
+http://ip:8080
+http:192.168.0.108:8080
+```
+
+
+
+## Docker Registry测试 
+
+```bash
 docker pull jdk:1.8
 docker pull tomcat:8.5
 
 #上传到私有仓库前需要加一下tag 镜像地址的格式为：仓库主机地址：端口/仓库名称/镜像名称:Tag
 #tomcat为惊险源，也就是刚才pull下来的镜像文件
 #192.168.1.252:5000 是目标镜像 也就是registry私有镜像服务器的IP地址和端口；
+#公司linux服务器
 docker tag tomcat:8.5 192.168.1.252:5000/tomcat:8.5
-docker tag tomcat:8.5 192.168.1.252:5000/tomcat:8.5
+#虚拟机vmware linux服务器
+docker tag tomcat:8.5 192.168.0.108:5000/tomcat:8.5
 ```
 
-##### 上传到镜像服务器
+#### 上传到镜像服务器
 
 ```bash
+#公司linux服务器
 docker push 192.168.1.252:5000/tomcat:8.5
+#虚拟机vmware linux服务器
+docker push 192.168.0.108:5000/tomcat:8.5
 ```
 
 ###### 提交报错
@@ -205,7 +227,10 @@ systemctl restart docker
 ###### 再次上传
 
 ```bash
+#公司linux服务器
 docker push 192.168.1.252:5000/tomcat:8.5
+#家里虚拟机vmware linux服务器
+docker push 192.168.0.108:5000/tomcat:8.5
 ```
 
 
@@ -215,13 +240,18 @@ docker push 192.168.1.252:5000/tomcat:8.5
 ###### 方法一  不好用
 
 ```bash
+#公司linux服务器
 docker search 192.168.1.252:5000
+#家里wmware
+docker search 192.168.0.108:5000
 ```
 
 ###### 方法二  可以用
 
 ```bash
 curl -XGET http://192.168.1.252:5000/v2/_catalog
+#家里wmware
+curl -XGET http://192.168.0.108:5000/v2/_catalog
 ```
 
 方法三： 浏览器查询
