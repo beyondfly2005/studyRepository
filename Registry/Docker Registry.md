@@ -159,6 +159,78 @@ http://ip:8080
 
 
 
+#### 测试 docker compose
+
+```
+docker pull jdk:1.8
+docker pull tomcat:8.5
+
+#上传到私有仓库前需要加一下tag 镜像地址的格式为：仓库主机地址：端口/仓库名称/镜像名称:Tag
+#tomcat为惊险源，也就是刚才pull下来的镜像文件
+#192.168.1.252:5000 是目标镜像 也就是registry私有镜像服务器的IP地址和端口；
+docker tag tomcat:8.5 192.168.1.252:5000/tomcat:8.5
+docker tag tomcat:8.5 192.168.1.252:5000/tomcat:8.5
+```
+
+##### 上传到镜像服务器
+
+```bash
+docker push 192.168.1.252:5000/tomcat:8.5
+```
+
+###### 提交报错
+
+```
+Get https://192.168.1.252:5000/v2/: http: server gave HTTP response to HTTPS client
+```
+
+问题原因：Docker自从1.3.X之后docker registry交互默认使用的是HTTPS，但是搭建私有镜像默认使用的是HTTP服务，所以与私有镜像交时出现以上错误
+
+###### 解决方法
+
+```bash
+#在docker server启动的时候，增加启动参数，默认使用HTTP访问
+vim /usr/lib/systemd/system/docker.service
+#在12行 ExecStart=/usr/bin/dockerd -H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock
+#的后面增加  --insecure-registry ip:5000
+ExecStart=/usr/bin/dockerd -H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock --insecure-registry 192.168.1.252:5000
+```
+
+```bash
+#修改好后重启docker 服务
+systemctl daemon-reload 
+systemctl restart docker
+```
+
+###### 再次上传
+
+```bash
+docker push 192.168.1.252:5000/tomcat:8.5
+```
+
+
+
+#### 查询私服镜像
+
+###### 方法一  不好用
+
+```bash
+docker search 192.168.1.252:5000
+```
+
+###### 方法二  可以用
+
+```bash
+curl -XGET http://192.168.1.252:5000/v2/_catalog
+```
+
+方法三： 浏览器查询
+
+```bash
+http://192.168.1.252:5000/v2/   # 查询不到
+http://192.168.1.252:5000/v2/_catalog  ## 可用查询到
+```
+
 
 
 ## Docker 
