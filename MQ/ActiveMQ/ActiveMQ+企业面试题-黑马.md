@@ -201,7 +201,7 @@ JMS本身只定义了一些列的接口规范，是一种与长商无关的API�
 
 1、安装JDK
 
-```
+```bash
 建议安装jdk 1.8
 ```
 
@@ -209,38 +209,38 @@ JMS本身只定义了一些列的接口规范，是一种与长商无关的API�
 
 3、解压压缩包
 
-```
+```bash
 tar -zxvf apache-activemq-5.16.0-bin.tar.gz
 ```
 
 4、进入解压后的apache-activemq-5.14.5的bin目录
 
-```
+```bash
 cd apache-activemq-5.16.0/bin
 ```
 
 5、启动activemq（执行两次：第一次生成配置信息，第二次启动）
 
-```
+```bash
 ./activemq start
 ./activemq start
 ```
 
 6、停止activemq
 
-```
+```bash
 ./activemq stop
 ```
 
 7、重启activemq
 
-```
+```bash
 ./activemq restart
 ```
 
 8、查看activemq状态
 
-```
+```bash
 ./activemq status
 ```
 
