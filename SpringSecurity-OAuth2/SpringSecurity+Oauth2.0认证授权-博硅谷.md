@@ -212,7 +212,7 @@ public class AuthorizationServerConfigurerAdapter implements AuthorizationServer
 - **AuthorizationServerEndpointsConfigurer**:用来配置令牌（`token`）的访问端点和令牌服务(`token services`)
 - **AuthorizationServerSecurityConfigurer**:用来配置令牌端点的安全约束
 
-#### 6.2.3.2 配置客户端详细信息
+##### 6.2.3.2 配置客户端详细信息
 
 ```java
 @Configuration
@@ -227,13 +227,13 @@ pubic class AuthorizationServer extends AuthorizationServer{
                 .resourceIds("res1")
                 .authorizedGrantTypes("authorization_code","password","client_credentials","implicit","refresh_token")  //该client允许的授权类型 五种授权类型
                 .scopes("all") //允许的授权范围
-                .autoApprove(false)  //跳转到授权页面
+                .autoApprove(false)  //false 跳转到授权页面
                 .redirectUris("http://www.baidu.com");
     }
 }
 ```
 
-#### 6.2.3.3 管理令牌
+##### 6.2.3.3 管理令牌
 
 AuthorizationServerTokenService接口定义了一些操作使得你可以对令牌进行一些必要的管理，令牌可以被用来加载身份信息，里面包含了这个令牌的相关权限。
 
@@ -285,11 +285,11 @@ public class TokenConfig {
     }
 ```
 
-#### 6.2.3.4 令牌访问端点配置
+##### 6.2.3.4 令牌访问端点配置
 
 AuthorizationServerEndpointsConfigurer这个对象的实例可以完成令牌服务以及令牌endpoint配置
 
-##### 配置授权类型（Grant Types）
+###### 配置授权类型（Grant Types）
 
 AuthorizationServerEndpointsConfigurer通过设定以下属性决定支持的 **授权类型（GrantTypes）**
 
@@ -297,9 +297,9 @@ AuthorizationServerEndpointsConfigurer通过设定以下属性决定支持的 **
 - **userDetailsService：**如果你设置了这个属性的话，那说明你有一个自己的 UserDetailsService 接口的实现，或者你可以把这个东西设置到全局域上面去（例如 GlobalAuthenticationManagerConfigurer 这个配置对象），当你设置了这个之后，那么 "refresh_token" 即刷新令牌授权类型模式的流程中就会包含一个检查，用来确保这个账号是否仍然有效，假如说你禁用了这个账户的话。
 - **authorizationCodeServices：**这个属性是用来设置授权码服务的（即 AuthorizationCodeServices 的实例对象），主要用于 "authorization_code" 授权码类型模式。
 - **implicitGrantService：**这个属性用于设置隐式授权模式，用来管理隐式授权模式的状态。
-- **tokenGranter：**这个属性就很牛B了，当你设置了这个东西（即 TokenGranter 接口实现），那么授权将会交由你来完全掌控，并且会忽略掉上面的这几个属性，这个属性一般是用作拓展用途的，即标准的四种授权模式已经满足不了你的需求的时候，才会考虑使用这个。
+- **tokenGranter：**当你设置了这个属性（即 TokenGranter 接口实现），那么授权将会交由你来完全掌控，并且会忽略掉上面的这几个属性，这个属性一般是用作拓展用途的，即标准的四种授权模式已经满足不了你的需求的时候，才会考虑使用这个。
 
-##### 配置授权端点的URL（Endpoint URLs）:
+###### 配置授权端点的URL（Endpoint URLs）:
 
 AuthorizationServerEndpointsConfigurer这个对象有一个叫做pathMapping()的方法用来配置端点URL链接，它有两个参数：
 
@@ -335,7 +335,7 @@ public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws E
 }
 ```
 
-#### 6.2.3.5 令牌端点的安全约束
+##### 6.2.3.5 令牌端点的安全约束
 
 **AuthorizationServerSecurityConfigurer：**用来配置令牌端点（Token Endpoint）的安全约束，在AuthorizationServer中配置如下
 
@@ -355,7 +355,107 @@ public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws E
 
 （3）允许表单验证
 
-#### 6.2.3.6 web安全配置
+**授权服务配置总结：**
+
+授权配置分为三大板块，可以关联记忆。
+
+既然要完成认证，它首先得知道客户端信息从哪儿读取，一次要进行客户端详情配置。
+
+既然要颁发token，那么必须得定义token的相关endpoint，以及tokern如何存取，以及客户端支持哪些类型的token。
+
+既然要爆了除了一些endpoint，那么对这些endpoint可以定义一些安全上的约束等。
+
+##### 6.2.3.6 web安全配置
+
+WebSecurityConfig
+
+```java
+@Configuration
+@EnableGlobalMethodSecurity(securedEnabled = true,prePostEnabled = true)
+public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http.csrf().disable()
+                .authorizeRequests()
+                .antMatchers("/r/**")
+                .authenticated()
+                .anyRequest().permitAll()
+                .and()
+                .formLogin()
+                .loginPage("/login-view")   //允许登录表单
+                .loginProcessingUrl("/login")   //登录页面
+                .successForwardUrl("/login-success") //自定义登录成功的页面地址
+                .and()
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                .and()
+                .logout()
+                .logoutUrl("/logout")
+                .logoutSuccessUrl("/login-view?logout");
+    }
+}
+```
+
+#### 6.2.4 授权码模式
+
+##### 6.2.4.1 授权码模式介绍
+
+授权码模式交互图
+
+![img](https://img-blog.csdnimg.cn/20200515143145439.png)
+
+（1） 资源拥有者打开客户端，客户端要求资源拥有者给予授权，它将浏览器被重定向到授权服务器，重定向时，会附件客户端的身份信息。如：
+
+```
+http://localhost:53020/uaa/oauth/authorize?client_id=c1&response_type=code&redirect_url=http://www.baidu.com
+```
+
+参数列表如下：
+
+- client_id：客户端准入标识
+- response_type：授权码模式固定为`code`
+- scope：客户端权限
+- redirect_uri：跳转uri，当授权码申请成功后会跳转到此地址，并在后边带上`code`参数（授权码）
+
+（2）浏览器出现向授权服务器授权页面，之后将用户同意授权。
+
+（3）授权服务器将授权码（`AuthorizationCode`）转经浏览器发送给`client`(通过`redirect_uri`)
+
+（4）客户端拿着授权码向授权服务器索要访问`access_token`，请求如下：`http://localhost:3001/oauth/token? client_id=c1&client_secret=secret&grant_type=authorization_code&code=5PgfcD&redirect_uri=http://www.baidu.com`
+
+（5）授权服务器返回令牌(`access_token`)
+这种模式是四种模式中最安全的一种模式。一般用于`client`是`Web`服务器端应用或第三方的原生`App`调用资源服务的时候。因为在这种模式中`access_token`不会经过浏览器或移动端的`App`，而是直接从服务端去交换，这样就最大限度的减小了令牌泄漏的风险。
+
+##### 6.2.4.2 测试
+
+使用postman测试
+
+```
+http://localhost:53020/uaa/token? client_id=c1&client_secret=secret&grant_type=authorization_code&code=5PgfcD&redirect_uri=http://www.baidu.com`
+```
+
+
+
+#### 6.2.5 简化模式
+
+##### 6.2.5.1 简化模式介绍
+
+简化模式交互图
+
+![img](https://img-blog.csdnimg.cn/20200515161306814.png)
+
+##### 6.2.5.2 测试
+
+
+
+#### 6.2.6 密码模式
+
+##### 6.2.6.1 密码模式介绍
+
+##### 6.2.6.2 测试
+
+#### 6.2.7 客户端模式
 
 
 
