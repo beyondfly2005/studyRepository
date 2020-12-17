@@ -1911,7 +1911,7 @@ OAuth2.0的服务提供方涵盖两个服务，即授权服务 (Authorization Se
 - **AuthorizationEndpoint** 服务于认证请求。默认 URL： /oauth/authorize 。
 - **TokenEndpoint** 服务于访问令牌的请求。默认 URL： /oauth/token 。
 
-**资源服务** **(Resource Server)**，应包含对资源的保护功能，对非法请求进行拦截，对请求中token进行解析鉴权等，下面的过滤器用于实现 OAuth 2.0 资源服务：
+**资源服务** **(Resource Server)**  应包含对资源的保护功能，对非法请求进行拦截，对请求中token进行解析鉴权等，下面的过滤器用于实现 OAuth 2.0 资源服务：
 
 - OAuth2AuthenticationProcessingFilter 用来对请求给出的身份令牌解析鉴权。
 
