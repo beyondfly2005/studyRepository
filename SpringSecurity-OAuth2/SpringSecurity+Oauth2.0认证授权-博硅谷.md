@@ -36,11 +36,77 @@
 
 如何实现授权，
 
+1.4.1 基于角色的访问控制
+
+1.4.2 基于资源的访问控制
+
+RBAC(Resource  based  access  control)，基于资源的访问控制。资源在系统中是不变的，比如资源有：类中的方法，页面中的按钮。
+
+```java
+if(user.hasPermission('用户报表查看（权限标识符）')){
+	//系统资源内容
+	//用户报表查看
+}
+```
+
 
 
 ## 2、基于Session的认证方式
 
+### 2.1 认证流程
 
+用户认证成功后，**在服务端生成**用户相关的数据保存在session(当前会话)中，**发给客户端的 sesssion_id 存放到 cookie 中**，这样用户客户端**请求时带上 session_id** 就可以验证服务器端是否存在 session 数 据，以此完成用户的合法校验，当用户退出系统或session过期销毁时,客户端的session_id也就无效了。
+
+夏天是session认证方式的流程图：
+
+![img](https://img-blog.csdnimg.cn/20200817171649769.png)
+
+
+
+基于Session的认证机制由Servlet规范定制，Servlet容器已经实现，用户通过HttpSession的操作方法即可实现，下面是HttpSession的相关的操作API
+
+| 方法                                        | 含义                    |
+| ------------------------------------------- | ----------------------- |
+| HttpSession getSession(Boolean create )     | 获取当前HttpSession对象 |
+| void setAttribute(String name,Object value) | 向session中存放对象     |
+| void removeAttribute(String name)           | 移除session对象         |
+| void invalidate()                           | 使得HttpSession失效     |
+| 略... ...                                   |                         |
+
+
+
+### 2.2 创建工程
+
+​	本案例工程使用maven进行构建，使用SprignMVC、Servlet3.0实现。
+
+​	Servlet3.0 支持使用Java类的方式实现配置
+
+2.2.1 创建maven工程
+
+​	工程名称 springsecurity-springmvc
+
+com.beyondsoft.security
+
+引入依赖
+
+```xml
+<packageing>war</packageing>	
+
+```
+
+```java
+pacakge config;
+
+@Configuration
+@ComponentScan(backPackges="com.beyondsoft.spring", exclu)
+public class ApplicationConfig{
+    
+}
+```
+
+
+
+##### 2.2.2 容器配置
 
 
 
@@ -490,7 +556,7 @@ http://localhost:53020/uaa/oauth/authorize?client_id=c1&response_type=code&redir
 使用postman测试
 
 ```
-http://localhost:53020/uaa/token? client_id=c1&client_secret=secret&grant_type=authorization_code&code=5PgfcD&redirect_uri=http://www.baidu.com`
+http://localhost:53020/uaa/token?client_id=c1&client_secret=secret&grant_type=authorization_code&code=5PgfcD&redirect_uri=http://www.baidu.com`
 ```
 
 
