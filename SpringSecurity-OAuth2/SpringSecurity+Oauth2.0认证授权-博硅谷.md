@@ -475,7 +475,7 @@ antMatchers("/r/r1").hasAuthority("p1")表示：访问/r/r1资源的 url需要�
 
 2、访问/r/r1和/r/r2，有权限时则正常访问，否则返回403（拒绝访问）
 
-## 3.5 小结
+### 3.5 小结
 
 通过快速上手，咱们使用Spring Security实现了认证和授权，Spring Security提供了基于账号和密码的认证方式，通过安全配置即可实现请求拦截，授权功能，Spring Security能完成的不仅仅是这些。
 
@@ -1006,9 +1006,9 @@ GCnMCL5i4RpQrYV12xNKye").authorities("p1").build());
 
 实际项目中存储在数据库中的密码并不是原始密码，都是经过加密处理的密码。
 
-### 4.2.3.授权流程
+#### 4.2.3.授权流程
 
-#### 4.2.3.1 授权流程
+##### 4.2.3.1 授权流程
 
 通过**快速上手**我们知道，Spring Security可以通过 http.authorizeRequests() 对web请求进行授权保护。SpringSecurity使用标准Filter建立了对web请求的拦截，最终实现对资源的授权访问。
 
@@ -1020,9 +1020,9 @@ Spring Security的授权流程如下：
 
 分析授权流程：
 
-\1. **拦截请求**，已认证用户访问受保护的web资源将被SecurityFilterChain中的 FilterSecurityInterceptor 的子类拦截。
+1. **拦截请求**，已认证用户访问受保护的web资源将被SecurityFilterChain中的 FilterSecurityInterceptor 的子类拦截。
 
-\2. **获取资源访问策略**，FilterSecurityInterceptor会从 SecurityMetadataSource 的子类
+2. **获取资源访问策略**，FilterSecurityInterceptor会从 SecurityMetadataSource 的子类
 
 DefaultFilterInvocationSecurityMetadataSource 获取要访问当前资源所需要的权限
 
@@ -1073,7 +1073,7 @@ AccessDecisionManager采用**投票**的方式来确定是否能够访问受保�
 
 AccessDecisionVoter是一个接口，其中定义有三个方法，具体结构如下所示。
 
-```text
+```java
 public interface AccessDecisionVoter<S> {
     int ACCESS_GRANTED = 1;
     int ACCESS_ABSTAIN = 0;
@@ -1120,25 +1120,25 @@ UnanimousBased的逻辑具体来说是这样的：
 
 Spring Security也内置一些投票者实现类如**RoleVoter**、**AuthenticatedVoter**和**WebExpressionVoter**等，可以自行查阅资料进行学习。
 
-## 4.3 自定义认证
+### 4.3 自定义认证
 
 Spring Security提供了非常好的认证扩展方法，比如：快速上手中将用户信息存储到内存中，实际开发中用户信息通常在数据库，Spring security可以实现从数据库读取用户信息，Spring security还支持多种授权方法。
 
-### 4.3.1 自定义登录页面
+#### 4.3.1 自定义登录页面
 
 在**快速上手**中，你可能会想知道登录页面从哪里来的？因为我们并没有提供任何的HTML或JSP文件。SpringSecurity的默认配置没有明确设定一个登录页面的URL，因此Spring Security会根据启用的功能自动生成一个登录页面URL，并使用默认URL处理登录的提交内容，登录后跳转的到默认URL等等。尽管自动生成的登录页面很方便快速启动和运行，但大多数应用程序都希望定义自己的登录页面。
 
-#### 4.3.1.1 认证页面
+##### 4.3.1.1 认证页面
 
 将security-springmvc工程的login.jsp拷贝到security-springboot下，目录保持一致。
 
 ![img](https://pic2.zhimg.com/80/v2-30d6c13b4133c8f0a278dfff107dfded_720w.jpg)
 
-#### 4.3.1.2 配置认证页面
+##### 4.3.1.2 配置认证页面
 
 在WebConfig.java中配置认证页面地址：
 
-```text
+```java
 // 默认Url根路径跳转到/login，此url为spring security提供
 @Override
 public void addViewControllers(ViewControllerRegistry registry) {
@@ -1147,11 +1147,11 @@ public void addViewControllers(ViewControllerRegistry registry) {
 }
 ```
 
-#### **4.3.1.3 安全配置**
+##### **4.3.1.3 安全配置**
 
 在WebSecurityConfig中配置表章登录信息：
 
-```text
+```java
 // 配置安全拦截机制
 @Override
 protected void configure(HttpSecurity http) throws Exception {
@@ -1178,7 +1178,7 @@ protected void configure(HttpSecurity http) throws Exception {
 
 （5）我们必须允许所有用户访问我们的登录页（例如为验证的用户），这个 formLogin().permitAll() 方法允许任意用户访问基于表单登录的所有的URL。
 
-#### **4.3.1.4 测试**
+##### **4.3.1.4 测试**
 
 当用户没有认证时访问系统的资源会重定向到login-view页面
 
@@ -1219,21 +1219,21 @@ protected void configure(HttpSecurity http) throws Exception {
 </form>
 ```
 
-### 4.3.2 连接数据库认证
+#### 4.3.2 连接数据库认证
 
 前边的例子我们是将用户信息存储在内存中，实际项目中用户信息存储在数据库中，本节实现从数据库读取用户信息。根据前边对认证流程研究，只需要重新定义UserDetailService即可实现根据用户账号查询数据库。
 
-#### 4.3.2.1 创建数据库
+##### 4.3.2.1 创建数据库
 
 创建user_db数据库
 
-```text
+```sql
 CREATE DATABASE `user_db` CHARACTER SET 'utf8' COLLATE 'utf8_general_ci';
 ```
 
 创建t_user表
 
-```text
+```sql
 CREATE TABLE `t_user` ( 
   `id` bigint(20) NOT NULL COMMENT '用户id',
   `username` varchar(64) NOT NULL,
@@ -1244,13 +1244,13 @@ CREATE TABLE `t_user` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC
 ```
 
-#### **4.3.2.2 代码实现**
+##### **4.3.2.2 代码实现**
 
 1）定义dataSource
 
 在application.properties配置
 
-```text
+```properties
 spring.datasource.url=jdbc:mysql://localhost:3306/user_db 
 spring.datasource.username=root
 spring.datasource.password=mysql
@@ -1259,7 +1259,7 @@ spring.datasource.driver-class-name=com.mysql.jdbc.Driver
 
 2）添加依赖
 
-```text
+```xml
 <dependency> 
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-test</artifactId>
@@ -1310,7 +1310,7 @@ BeanPropertyRowMapper<>(UserDto.class));
 }
 ```
 
-#### **4.3.2.3 定义UserDetailService**
+##### **4.3.2.3 定义UserDetailService**
 
 在service包下定义SpringDataUserDetailsService：
 
@@ -1336,11 +1336,11 @@ User.withUsername(user.getFullname()).password(user.getPassword()).authorities("
 }
 ```
 
-#### **4.3.2.4 测试**
+##### **4.3.2.4 测试**
 
 输入账号和密码请求认证，跟踪代码。
 
-#### **4.3.2.5 使用BCryptPasswordEncoder**
+##### **4.3.2.5 使用BCryptPasswordEncoder**
 
 按照我们前边讲的PasswordEncoder的使用方法，使用BCryptPasswordEncoder需要完成如下工作：
 
@@ -1810,17 +1810,124 @@ public Account post(Account account, double amount);
 
 ### 6.1 OAuth2.0介绍
 
+OAuth（开放授权）是一个开放标准，允许用户授权第三方应用访问他们存储在另外的服务提供者上的信息，而不需要将用户名和密码提供给第三方应用或分享他们数据的所有内容。OAuth2.0是OAuth协议的延续版本，但不向后兼容OAuth 1.0即完全废止了OAuth1.0。很多大公司如Google，Yahoo，Microsoft等都提供了OAUTH认证服务，这些都足以说明OAUTH标准逐渐成为开放资源授权的标准。
+
+Oauth协议目前发展到2.0版本，1.0版本过于复杂，2.0版本已得到广泛应用。
+
+参考：[oAuth_百度百科](https://link.zhihu.com/?target=https%3A//baike.baidu.com/item/oAuth/7153134%3Ffr%3Daladdin)
+
+Oauth 协议：[https://tools.ietf.org/html/rfc6749](https://link.zhihu.com/?target=https%3A//tools.ietf.org/html/rfc6749)
+
+下边分析一个 Oauth2认证的例子，通过例子去理解OAuth2.0协议的认证流程，本例子是某个客户端网站使用微信认证的过程，这个过程的简要描述如下：
+
+用户借助微信认证登录客户端网站，用户就不用单独在客户端注册用户，怎么样算认证成功吗？客户端网站需要成功从微信获取用户的身份信息则认为用户认证成功，那如何从微信获取用户的身份信息？用户信息的拥有者是用户本人，微信需要经过用户的同意方可为客户端网站生成令牌，客户端网站拿此令牌方可从微信获取用户的信息。
+
+1、客户端请求第三方授权
+
+用户进入客户端的登录页面，点击微信的图标以微信账号登录系统，用户是自己在微信里信息的资源拥有者。
+
+![img](https://pic1.zhimg.com/80/v2-89058e1e5b048b5da57306471b675b0c_720w.jpg)
+
+
+
+点击“微信”出现一个二维码，此时用户扫描二维码，开始给客户端网站授权。
+
+[https://open.weixin.qq.com/connect/confirm?uuid=081HotoNCFsqdaOu](https://link.zhihu.com/?target=https%3A//open.weixin.qq.com/connect/confirm%3Fuuid%3D081HotoNCFsqdaOu) (二维码自动识别)
+
+2、资源拥有者同意给客户端授权
+
+资源拥有者扫描二维码表示资源拥有者同意给客户端授权，微信会对资源拥有者的身份进行验证， 验证通过后，微信会询问用户是否给授权客户端网站访问自己的微信数据，用户点击“确认登录”表示同意授权，微信认证服务器会颁发一个授权码，并重定向到客户端的网站。
+
+![img](https://pic3.zhimg.com/v2-2154fbda03f941407ea6dc5bf24a0b16_r.jpg)
+
+3、客户端获取到授权码，请求认证服务器申请令牌:
+
+此过程用户看不到，客户端应用程序请求认证服务器，请求携带授权码。
+
+4、认证服务器向客户端响应令牌:
+
+微信认证服务器验证了客户端请求的授权码，如果合法则给客户端颁发令牌，令牌是客户端访问资源的通行证。此交互过程用户看不到，当客户端拿到令牌后，用户在客户端网站看到已经登录成功。
+
+5、客户端请求资源服务器的资源
+
+客户端携带令牌访问资源服务器的资源。
+
+客户端网站携带令牌请求访问微信服务器获取用户的基本信息。
+
+6、资源服务器返回受保护资源
+
+资源服务器校验令牌的合法性，如果合法则向用户响应资源信息内容。
+
+以上认证授权详细的执行流程如下：
+
+
+![img](https://pic1.zhimg.com/80/v2-42012141d4365664ebfb588158546ec0_720w.jpg)
+
+通过上边的例子我们大概了解了OAauth2.0的认证过程，下边我们看OAuth2.0认证流程：
+
+引自OAauth2.0协议rfc6749 [The OAuth 2.0 Authorization Framework](https://link.zhihu.com/?target=https%3A//tools.ietf.org/html/rfc6749)
+
+
+![img](https://pic2.zhimg.com/80/v2-29a12b0b101bfc25ed96657950ca5ae9_720w.jpg)
+
+OAauth2.0包括以下角色：
+
+1、客户端
+
+本身不存储资源，需要通过资源拥有者的授权去请求资源服务器的资源，比如：Android客户端、Web客户端（浏览器端）、微信客户端等。
+
+2、资源拥有者
+
+通常为用户，也可以是应用程序，即该资源的拥有者。
+
+3、授权服务器（也称认证服务器）
+
+用于服务提供商对资源拥有的身份进行认证、对访问资源进行授权，认证成功后会给客户端发放令牌（access_token），作为客户端访问资源服务器的凭据。本例为微信的认证服务器。
+
+4、资源服务器
+
+存储资源的服务器，本例子为微信存储的用户信息。
+
+现在还有一个问题，服务提供商能允许随便一个**客户端**就接入到它的**授权服务器**吗？答案是否定的，服务提供商会给准入的接入方一个身份，用于接入时的凭据:
+
+**client_id**：客户端标识 
+
+**client_secret**：客户端秘钥
+
+因此，准确来说，**授权服务器**对两种OAuth2.0中的两个角色进行认证授权，分别是资源**拥有者、客户端**。
+
+
+
 ### 6.2 Spring Cloud Security OAuth2
 
 #### 6.2.1 环境介绍
 
-Spring-Security-OAuth2是对OAuth2的一种实现，并且跟我们之前学习的Spring-Security相辅相成
+Spring-Security-OAuth2是对OAuth2的一种实现，并且跟我们之前学习的Spring-Security相辅相成，与Spring Cloud体系的集成也非常便利，接下来，我们需要对它进行学习，最终使用它来实现我们设计的分布式认证授权解决方案。
 
-Spring-Security-OAuth2 包含两个服务：授权服务、资源服务
+OAuth2.0的服务提供方涵盖两个服务，即授权服务 (Authorization Server，也叫认证服务) 和资源服务 (Resource Server)，使用 Spring Security OAuth2 的时候你可以选择把它们在同一个应用程序中实现，也可以选择建立使用同一个授权服务的多个资源服务。
 
-**授权服务（认证服务Author）**
+**授权服务（认证服务Authorization Server）** 应包含对接入端以及登入用户的合法性进行验证并颁发token等功能，对令牌的请求端点由 Spring MVC 控制器进行实现，下面是配置一个认证服务必须要实现的endpoints：
 
-**资源服务**
+- **AuthorizationEndpoint** 服务于认证请求。默认 URL： /oauth/authorize 。
+- **TokenEndpoint** 服务于访问令牌的请求。默认 URL： /oauth/token 。
+
+**资源服务** **(Resource Server)**，应包含对资源的保护功能，对非法请求进行拦截，对请求中token进行解析鉴权等，下面的过滤器用于实现 OAuth 2.0 资源服务：
+
+- OAuth2AuthenticationProcessingFilter 用来对请求给出的身份令牌解析鉴权。
+
+本教程分别创建uaa授权服务（也可叫认证服务）和order订单资源服务。
+
+![img](https://pic3.zhimg.com/80/v2-3f47ea460a9c228924968e6941c8390a_720w.jpg)
+
+认证流程如下：
+
+1、客户端请求UAA授权服务进行认证。
+
+2、认证通过后由UAA颁发令牌。
+
+3、客户端携带令牌Token请求资源服务。
+
+4 、资源服务校验令牌的合法性，合法即返回资源信息。
 
 #### 6.2.2 环境搭建
 
