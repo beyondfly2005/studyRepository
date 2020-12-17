@@ -2130,7 +2130,44 @@ public class UaaServer{
 3、配置文件 application.properties
 
 ```properties
+spring.application.name=uaa-service
+server.port=53020
+spring.main.allow-bean-definition-overriding = true
 
+logging.level.root = debug
+logging.level.org.springframework.web = info
+
+spring.http.encoding.enabled = true
+spring.http.encoding.charset = UTF-8
+spring.http.encoding.force = true
+
+server.tomcat.remote_ip_header = x-forwarded-for
+server.tomcat.protocol_header = x-forwarded-proto
+server.use-forward-headers = true
+server.servlet.context-path = /uaa
+
+spring.freemarker.enabled = true
+spring.freemarker.suffix = .html
+spring.freemarker.request-context-attribute = rc
+spring.freemarker.content-type = text/html
+spring.freemarker.charset = UTF-8
+spring.mvc.throw-exception-if-no-handler-found = true
+spring.resources.add-mappings = false
+spring.datasource.url = jdbc:mysql://localhost:3306/user_db?useUnicode=true
+spring.datasource.username = root
+spring.datasource.password = mysql
+spring.datasource.driver-class-name = com.mysql.jdbc.Driver
+#eureka.client.serviceUrl.defaultZone = http://localhost:53000/eureka/
+#eureka.instance.preferIpAddress = true
+#eureka.instance.instance-id = ${spring.application.name}:${spring.cloud.client.ip-address}:${spring.application.instance_id:${server.port}}
+management.endpoints.web.exposure.include = refresh,health,info,env
+feign.hystrix.enabled = true
+feign.compression.request.enabled = true
+feign.compression.request.mime-types[0] = text/xml
+feign.compression.request.mime-types[1] = application/xml
+feign.compression.request.mime-types[2] = application/json
+feign.compression.request.min-request-size = 2048
+feign.compression.response.enabled = true
 ```
 
 ##### 6.2.2.3 创建Order资源服务工程
@@ -2138,8 +2175,58 @@ public class UaaServer{
 1、导入依赖
 
 ```xml
-
+<?xml version="1.0" encoding="UTF-8"?> 
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-
+4.0.0.xsd">
+    <parent>
+        <artifactId>distributed-security</artifactId>
+        <groupId>com.lw.security</groupId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>distributed-security-order</artifactId> 
+    <dependencies>
+        <!--<dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-oauth2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.interceptor</groupId>
+            <artifactId>javax.interceptor-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+    </dependencies>
+</project>
 ```
+
+2、工程结构
+
+![img](https://pic2.zhimg.com/80/v2-de99972446c8f95175f4c0b56f38c2a9_720w.jpg)
 
 2、启动类
 
@@ -2150,8 +2237,45 @@ public class UaaServer{
 
 3、配置文件
 
-```properties
+[在resources中创建application.properties](https://link.zhihu.com/?target=http%3A//xn--resourcesapplication-j545am19cnr0aeu5b.properties/)
 
+```properties
+spring.application.name=order-service
+server.port=53021
+spring.main.allow-bean-definition-overriding = true
+
+logging.level.root = debug
+logging.level.org.springframework.web = info
+
+spring.http.encoding.enabled = true
+spring.http.encoding.charset = UTF-8
+spring.http.encoding.force = true
+
+server.tomcat.remote_ip_header = x-forwarded-for
+server.tomcat.protocol_header = x-forwarded-proto
+server.use-forward-headers = true
+server.servlet.context-path = /order
+
+spring.freemarker.enabled = true
+spring.freemarker.suffix = .html
+spring.freemarker.request-context-attribute = rc
+spring.freemarker.content-type = text/html
+spring.freemarker.charset = UTF-8
+spring.mvc.throw-exception-if-no-handler-found = true
+spring.resources.add-mappings = false
+
+#eureka.client.serviceUrl.defaultZone = http://localhost:53000/eureka/
+#eureka.instance.preferIpAddress = true
+#eureka.instance.instance-id = ${spring.application.name}:${spring.cloud.client.ip-address}:${spring.application.instance_id:${server.port}}
+management.endpoints.web.exposure.include = refresh,health,info,env
+
+feign.hystrix.enabled = true
+feign.compression.request.enabled = true
+feign.compression.request.mime-types[0] = text/xml
+feign.compression.request.mime-types[1] = application/xml
+feign.compression.request.mime-types[2] = application/json
+feign.compression.request.min-request-size = 2048
+feign.compression.response.enabled = true
 ```
 
 #### 6.2.3 授权服务器配置
@@ -2192,7 +2316,7 @@ public class AuthorizationServerConfigurerAdapter implements AuthorizationServer
 ```java
 @Configuration
 @EnableAuthorizationServer
-pubic class AuthorizationServer extends AuthorizationServer{
+pubic class AuthorizationServer extends AuthorizationServerConfigurerAdapter {
     //配置客户端详细信息服务
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
@@ -2383,8 +2507,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 （1） 资源拥有者打开客户端，客户端要求资源拥有者给予授权，它将浏览器被重定向到授权服务器，重定向时，会附件客户端的身份信息。如：
 
 ```
-http://localhost:53020/uaa/oauth/authorize?client_id=c1&response_type=code&redirect_url=http://www.baidu.com
+http://localhost:53020/uaa/oauth/authorize?client_id=c1&response_type=code&scope=all&redirect_url=http://www.baidu.com
 ```
+
 
 参数列表如下：
 
@@ -2397,7 +2522,12 @@ http://localhost:53020/uaa/oauth/authorize?client_id=c1&response_type=code&redir
 
 （3）授权服务器将授权码（`AuthorizationCode`）转经浏览器发送给`client`(通过`redirect_uri`)
 
-（4）客户端拿着授权码向授权服务器索要访问`access_token`，请求如下：`http://localhost:3001/oauth/token? client_id=c1&client_secret=secret&grant_type=authorization_code&code=5PgfcD&redirect_uri=http://www.baidu.com`
+（4）客户端拿着授权码向授权服务器索要访问`access_token`，请求如下：
+
+```
+http://localhost:3001/oauth/token? client_id=c1&client_secret=secret&grant_type=authorization_code&code=5PgfcD&redirect_uri=http://www.baidu.com
+```
+
 
 （5）授权服务器返回令牌(`access_token`)
 这种模式是四种模式中最安全的一种模式。一般用于`client`是`Web`服务器端应用或第三方的原生`App`调用资源服务的时候。因为在这种模式中`access_token`不会经过浏览器或移动端的`App`，而是直接从服务端去交换，这样就最大限度的减小了令牌泄漏的风险。
@@ -2406,32 +2536,286 @@ http://localhost:53020/uaa/oauth/authorize?client_id=c1&response_type=code&redir
 
 使用postman测试
 
-```
-http://localhost:53020/uaa/token?client_id=c1&client_secret=secret&grant_type=authorization_code&code=5PgfcD&redirect_uri=http://www.baidu.com`
+```bash
+http://localhost:53020/uaa/oauth/token?client_id=c1&client_secret=secret&grant_type=authorization_code&code=5PgfcD&redirect_uri=http://www.baidu.com
 ```
 
+![img](https://pic2.zhimg.com/80/v2-0b2134ba79475280786faea322b9c951_720w.jpg)
+
+然后输入模拟的账号和密码点登陆之后进入授权页面：
+
+![img](https://pic4.zhimg.com/80/v2-b25c8e837cab757206f25ad4a18cf967_720w.jpg)
+
+确认授权后，浏览器会重定向到指定路径（oauth_client_details表中的web_server_redirect_uri）并附加验证码?code=sc0N9W（每次不一样），最后使用该验证码获取token。
+
+```text
+POST http://localhost:53020/uaa/oauth/token 
+```
+
+![img](https://pic2.zhimg.com/80/v2-402532cb64b665f59d9d8d26ab097135_720w.jpg)
 
 
 #### 6.2.5 简化模式
 
 ##### 6.2.5.1 简化模式介绍
 
-简化模式交互图
+简化模式交互图：
 
 ![img](https://img-blog.csdnimg.cn/20200515161306814.png)
 
+**（1）资源拥有者打开客户端，客户端要求资源拥有者给予授权，它将浏览器被重定向到授权服务器，重定向时会附加客户端的身份信息。如：**
+
+```text
+http://localhost:53020/uaa/oauth/authorize?client_id=c1&response_type=token&scope=all&redirect_uri=http://www.baidu.com 
+```
+
+参数描述同**授权码模式** ，注意response_type=token，说明是简化模式。
+
+**（2）浏览器出现向授权服务器授权页面，之后将用户同意授权。**
+
+**（3）授权服务器将授权码将令牌（access_token）以Hash的形式存放在重定向uri的fargment中发送给浏览器。**
+
+注：fragment 主要是用来标识 URI 所标识资源里的某个资源，在 URI 的末尾通过 （#）作为 fragment 的开头，其中 # 不属于 fragment 的值。如[https://domain/index#L18](https://link.zhihu.com/?target=https%3A//domain/index%23L18)这个 URI 中 L18 就是 fragment 的值。大家只需要知道js通过响应浏览器地址栏变化的方式能获取到fragment 就行了。
+
+一般来说，简化模式用于没有服务器端的第三方单页面应用，因为没有服务器端就无法接收授权码。
+
 ##### 6.2.5.2 测试
 
+浏览器访问认证页面：
 
+```text
+http://localhost:53020/uaa/oauth/authorize?client_id=c1&response_type=token&scope=all&redirect_uri=http://www.baidu.com
+```
+
+![img](https://pic2.zhimg.com/80/v2-1adfca2b4f1b9cedf7eb52d8f467f6f9_720w.jpg)
+
+然后输入模拟的账号和密码点登陆之后进入授权页面：
+
+![img](https://pic2.zhimg.com/80/v2-a5840784c515a08153a355f6e910b819_720w.jpg)
+
+确认授权后，浏览器会重定向到指定路径（oauth_client_details表中的web_server_redirect_uri）并以Hash的形式存放在重定向uri的fargment中,如：
+
+```text
+http://www.baidu.com/receive#access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0ZW5hbn...
+```
 
 #### 6.2.6 密码模式
 
 ##### 6.2.6.1 密码模式介绍
 
+下图是密码模式交互图：
+
+![img](https://pic3.zhimg.com/80/v2-a9544cf5e68c16209050fb48fae1d88a_720w.jpg)
+
+**（1）资源拥有者将用户名、密码发送给客户端**
+
+**（2）客户端拿着资源拥有者的用户名、密码向授权服务器请求令牌（access_token）**，请求如下：
+
+```text
+http://localhost:53020/uaa/oauth/token?client_id=c1&client_secret=secret&grant_type=password&username=shangsan&password=123
+```
+
+![img](https://pic1.zhimg.com/80/v2-72ad959e3e6092cbae5a2ccda13280f0_720w.jpg)
+
+参数列表如下：
+
+- client_id ：客户端准入标识。
+- client_secret ：客户端秘钥。
+- grant_type ：授权类型，填写password表示密码模式
+- username ：资源拥有者用户名。
+- password ：资源拥有者密码。
+
+**（3）授权服务器将令牌（access_token）发送给client**
+
+这种模式十分简单，但是却意味着直接将用户敏感信息泄漏给了client，因此这就说明这种模式只能用于client是我们自己开发的情况下。因此密码模式一般用于我们自己开发的，第一方原生App或第一方单页面应用。
+
 ##### 6.2.6.2 测试
+
+```text
+POST http://localhost:53020/uaa/oauth/token 
+```
+
+请求参数：
+
+![img](https://pic1.zhimg.com/80/v2-53a68ede5415bf063ee2cecf1ac59d68_720w.jpg)
 
 #### 6.2.7 客户端模式
 
+##### 6.2.7.1 客户端模式介绍
 
+![img](https://pic4.zhimg.com/80/v2-c35691525dc1a7bdd188976eb6267abf_720w.jpg)
 
-### 6.3 JWT
+**（1）客户端向授权服务器发送自己的身份信息，并请求令牌（access_token）**
+
+**（2）确认客户端身份无误后，将令牌（access_token）发送给client**，请求如下：
+
+```text
+http://localhost:53020/uaa/oauth/token?client_id=c1&client_secret=secret&grant_type=client_credentials 
+```
+
+参数列表如下：
+
+- client_id ：客户端准入标识。
+- client_secret ：客户端秘钥。
+- grant_type ：授权类型，填写client_credentials表示客户端模式
+
+这种模式是最方便但最不安全的模式。因此这就要求我们对client完全的信任，而client本身也是安全的。因此这种模式一般用来提供给我们完全信任的服务器端服务。比如，合作方系统对接，拉取一组用户信息。
+
+##### 6.2.7.2 客户端模式测试
+
+```text
+POST http://localhost:53020/uaa/oauth/token 
+```
+
+请求参数：
+
+![img](https://pic2.zhimg.com/80/v2-3d58960e538cb95f417a837852bcf47d_720w.jpg)
+
+#### 6.2.8 资源服务测试
+
+##### 6.2.7.1 资源服务器配置
+
+@EnableResourceServer 注解到一个 @Configuration 配置类上，并且必须使用 ResourceServerConfigurer 这个配置对象来进行配置（可以选择继承自 ResourceServerConfigurerAdapter 然后覆写其中的方法，参数就是这个
+
+对象的实例），下面是一些可以配置的属性：
+
+ResourceServerSecurityConfigurer中主要包括：
+
+- tokenServices ：ResourceServerTokenServices 类的实例，用来实现令牌服务。
+- tokenStore ：TokenStore类的实例，指定令牌如何访问，与tokenServices配置可选
+- resourceId ：这个资源服务的ID，这个属性是可选的，但是推荐设置并在授权服务中进行验证。
+- 其他的拓展属性例如 tokenExtractor 令牌提取器用来提取请求中的令牌。
+
+HttpSecurity配置这个与Spring Security类似：
+
+- 请求匹配器，用来设置需要进行保护的资源路径，默认的情况下是保护资源服务的全部路径。
+- 通过 http.authorizeRequests()来设置受保护资源的访问规则
+- 其他的自定义权限保护规则通过 HttpSecurity 来进行配置。
+
+@EnableResourceServer 注解自动增加了一个类型为 OAuth2AuthenticationProcessingFilter 的过滤器链
+
+编写ResouceServerConfig：
+
+```java
+@Configuration
+@EnableResourceServer
+@EnableGlobalMethodSecurity(prePostEnabled = true)
+public class ResouceServerConfig extends ResourceServerConfigurerAdapter {
+    public static final String RESOURCE_ID = "res1";
+   
+    @Override
+    public void configure(ResourceServerSecurityConfigurer resources) {
+        resources.resourceId(RESOURCE_ID)
+                .tokenServices(tokenService())
+                .stateless(true);
+    }
+    @Override
+    public void configure(HttpSecurity http) throws Exception {
+        http
+                .authorizeRequests()
+                .antMatchers("/**").access("#oauth2.hasScope('all')")
+                .and().csrf().disable()
+                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+    }
+}
+```
+
+##### 6.2.8.2 验证token
+
+ResourceServerTokenServices 是组成授权服务的另一半，如果你的授权服务和资源服务在同一个应用程序上的话，你可以使用 DefaultTokenServices ，这样的话，你就不用考虑关于实现所有必要的接口的一致性问题。如果你的资源服务器是分离开的，那么你就必须要确保能够有匹配授权服务提供的 ResourceServerTokenServices，它知道如何对令牌进行解码。
+
+令牌解析方法： 使用 DefaultTokenServices 在资源服务器本地配置令牌存储、解码、解析方式 使用RemoteTokenServices 资源服务器通过 HTTP 请求来解码令牌，每次都请求授权服务器端点 /oauth/check_token
+
+使用授权服务的 /oauth/check_token 端点你需要在授权服务将这个端点暴露出去，以便资源服务可以进行访问，这在咱们授权服务配置中已经提到了，下面是一个例子,在这个例子中，我们在授权服务中配置了/oauth/check_token 和 /oauth/token_key 这两个端点：
+
+```java
+@Override
+public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
+    security
+.tokenKeyAccess("permitAll()")// /oauth/token_key 安全配置                
+.checkTokenAccess("permitAll()") // /oauth/check_token 安全配置                
+}
+```
+
+在资源 服务配置RemoteTokenServices ，在ResouceServerConfig中配置：
+
+```text
+// 资源服务令牌解析服务
+@Bean
+public ResourceServerTokenServices tokenService() {
+    //使用远程服务请求授权服务器校验token,必须指定校验token 的url、client_id，client_secret
+    RemoteTokenServices service=new RemoteTokenServices();
+    service.setCheckTokenEndpointUrl("http://localhost:53020/uaa/oauth/check_token");
+    service.setClientId("c1");
+    service.setClientSecret("secret");
+    return service;
+}
+```
+
+##### 6.2.8.3编写资源
+
+在controller包下编写OrderController，此controller表示订单资源的访问类：
+
+```text
+@RestController 
+public class OrderController {
+    @GetMapping(value = "/r1")
+    @PreAuthorize("hasAnyAuthority('p1')")
+    public String r1(){
+        return "访问资源1";
+    }
+}
+```
+
+##### 6.2.8.4 添加安全访问控制
+
+```java
+@Configuration 
+@EnableGlobalMethodSecurity(securedEnabled = true,prePostEnabled = true)
+public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+    //安全拦截机制（最重要）
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http.csrf().disable()
+                .authorizeRequests()
+//                .antMatchers("/r/r1").hasAuthority("p2")
+//                .antMatchers("/r/r2").hasAuthority("p2")
+                .antMatchers("/r/**").authenticated()//所有/r/**的请求必须认证通过
+                .anyRequest().permitAll()//除了/r/**，其它的请求可以访问
+                ;
+    }
+}
+```
+
+配置引导类OrderServer
+
+```text
+@SpringBootApplication
+public class OrderServer {
+    public static void main(String[] args) {
+        SpringApplication.run(OrderServer.class, args);
+    }
+}
+```
+
+##### 6.2.8.5 测试
+
+1、申请令牌
+
+这里我们使用密码方式
+
+![img](https://pic4.zhimg.com/80/v2-62b40960d1df47fa2b30ae58126f6d97_720w.jpg)
+
+2、请求资源
+
+按照oauth2.0协议要求，请求资源需要携带token，如下：
+
+token的参数名称为：Authorization，值为：Bearer token值
+
+![img](https://pic1.zhimg.com/80/v2-74f19730a8e00e9990a6ae2bec0ea93c_720w.jpg)
+
+### 6.3 JWT令牌
+
+```
+
+```
