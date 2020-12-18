@@ -1380,7 +1380,7 @@ BeanPropertyRowMapper<>(UserDto.class));
 
 在service包下定义SpringDataUserDetailsService：
 
-```text
+```java
 @Service 
 public class SpringDataUserDetailsService implements UserDetailsService {
     @Autowired
@@ -2300,7 +2300,7 @@ http://localhost:53020/uaa/oauth/authorize?client_id=c1&response_type=code&redir
 使用postman测试
 
 ```
-http://localhost:53020/uaa/token?client_id=c1&client_secret=secret&grant_type=authorization_code&code=5PgfcD&redirect_uri=http://www.baidu.com`
+http://localhost:53020/uaa/token?client_id=c1&client_secret=secret&grant_type=authorization_code&code=5PgfcD&redirect_uri=http://www.baidu.com
 ```
 
 
