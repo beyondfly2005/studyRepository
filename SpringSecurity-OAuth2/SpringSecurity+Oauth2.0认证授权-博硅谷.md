@@ -1869,7 +1869,7 @@ public Account post(Account account, double amount);
 
 ## 5、分布式系统认证方案
 
-### 
+
 
 ## 6、OAuth2.0
 
@@ -3221,9 +3221,9 @@ POST http://localhost:53020/uaa/oauth/token
 
 ![img](https://pic4.zhimg.com/80/v2-83f9f92f6d60aa41aac29b0fde7307a3_720w.jpg)
 
-### 7 SpringSecurity 实现分布式系统授权
+## 7 SpringSecurity 实现分布式系统授权
 
-#### 7.1 需求分析
+### 7.1 需求分析
 
 回顾技术方案如下：
 
@@ -3237,7 +3237,7 @@ POST http://localhost:53020/uaa/oauth/token
 
 4、网关将token解析后传给微服务，微服务进行授权。
 
-#### 7.2 注册中心
+### 7.2 注册中心
 
 所有微服务的请求都经过网关，网关从注册中心读取微服务的地址，将请求转发至微服务。
 
@@ -3249,7 +3249,7 @@ POST http://localhost:53020/uaa/oauth/token
 
 2、pom.xml依赖如下
 
-```text
+```xml
 <?xml version="1.0" encoding="UTF-8"?> 
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -3279,7 +3279,7 @@ POST http://localhost:53020/uaa/oauth/token
 
 在resources中配置application.yml
 
-```text
+```yaml
 spring: 
     application:
         name: distributed-discovery
@@ -3314,7 +3314,7 @@ public class DiscoveryServer {
 }
 ```
 
-#### 7.3 网关
+### 7.3 网关
 
 网关整合 OAuth2.0 有两种思路，一种是认证服务器生成jwt令牌, 所有请求统一在网关层验证，判断权限等操作；另一种是由各资源服务处理，网关只做请求转发。
 
@@ -3332,13 +3332,13 @@ API网关在认证授权体系里主要负责两件事：
 
 （2）将用户信息存储进当前线程上下文（有利于后续业务逻辑随时获取当前用户信息）
 
-##### **7.3.1 创建工程**
+#### **7.3.1 创建工程**
 
 ![img](https://pic4.zhimg.com/80/v2-e97a2ee7641d58804f60a381460a8efb_720w.jpg)
 
 1、pom.xml
 
-```text
+```xml
 <?xml version="1.0" encoding="UTF-8"?> 
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -3420,7 +3420,7 @@ API网关在认证授权体系里主要负责两件事：
 
 [配置application.properties](https://link.zhihu.com/?target=http%3A//xn--application-2k23aj16m.properties/)
 
-```text
+```properties
 spring.application.name=gateway-server
 server.port=53010
 spring.main.allow-bean-definition-overriding = true
@@ -3449,7 +3449,7 @@ feign.compression.response.enabled = true
 
 统一认证服务（UAA）与统一用户服务都是网关下微服务，需要在网关上新增路由配置：
 
-```text
+```properties
 zuul.routes.uaa-service.stripPrefix = false
 zuul.routes.uaa-service.path = /uaa/**
 
@@ -3472,11 +3472,11 @@ public class GatewayServer {
 }
 ```
 
-##### 7.3.2 token配置
+#### 7.3.2 token配置
 
 前面也介绍了，**资源服务器**由于需要验证并解析令牌，往往可以通过在授权服务器暴露check_token的Endpoint来完成，而我们在授权服务器使用的是对称加密的jwt，因此知道密钥即可，资源服务与授权服务本就是对称设计，那我们把授权服务的TokenConfig两个类拷贝过来就行 。
 
-```text
+```java
 @Configuration
 public class TokenConfig {
   private String SIGNING_KEY = "uaa123";
@@ -3493,7 +3493,7 @@ public class TokenConfig {
 }
 ```
 
-##### 7.3.3 配置资源服务
+#### 7.3.3 配置资源服务
 
 在ResouceServerConfig中定义资源服务配置，主要配置的内容就是定义一些匹配规则，描述某个接入客户端需要什么样的权限才能访问某个微服务，如：
 
@@ -3521,11 +3521,11 @@ public class ResouceServerConfig {
                     .antMatchers("/uaa/**").permitAll();
         }
     }
+    
     /**
      *  订单服务
      */
-
-@Configuration
+    @Configuration
     @EnableResourceServer
     public class OrderServerConfig extends
         ResourceServerConfigurerAdapter {
@@ -3569,13 +3569,13 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 }
 ```
 
-## 7.3.转发明文token给微服务
+### 7.3.转发明文token给微服务
 
 通过Zuul过滤器的方式实现，目的是让下游微服务能够很方便的获取到当前的登录用户信息（明文token）
 
 **（ 1）实现Zuul前置过滤器，完成当前登录用户信息提取，并放入转发微服务的request中**
 
-```text
+```java
  /**
  * token传递拦截
  */
@@ -3625,7 +3625,7 @@ public class AuthFilter extends ZuulFilter {
 
 common包下建EncryptUtil类 UTF8互转Base64
 
-```text
+```java
 public class EncryptUtil {
     private static final Logger logger = LoggerFactory.getLogger(EncryptUtil.class);
 
@@ -3699,8 +3699,6 @@ public class EncryptUtil {
         System.out.println(urlEncoded);
         System.out.println(urlDecoded);
     }
-
-
 }
 ```
 
@@ -3733,7 +3731,7 @@ public class ZuulConfig {
 }
 ```
 
-## 7.4.微服务用户鉴权拦截
+### 7.4.微服务用户鉴权拦截
 
 当微服务收到明文token时，应该怎么鉴权拦截呢？自己实现一个filter？自己解析明文token，自己定义一套资源访问策略？能不能适配Spring Security呢，是不是突然想起了前面我们实现的Spring Security基于token认证例子。咱们还拿统一用户服务作为网关下游微服务，对它进行改造，增加**微服务用户鉴权拦截**功能。
 
@@ -3836,7 +3834,7 @@ UserDTO user = (UserDTO) SecurityContextHolder.getContext().getAuthentication().
 
 剩下的事儿就交给Spring Security好了。
 
-## 7.5.集成测试
+### 7.5.集成测试
 
 **注意:记得uaa跟order的pom导入eurika坐标,以及application.properties配置eurika**
 
@@ -3894,7 +3892,7 @@ http://localhost:53010/uaa/oauth/token
 }
 ```
 
-## 7.6 扩展用户信息
+### 7.6 扩展用户信息
 
 **7.6.1 需求分析**
 
