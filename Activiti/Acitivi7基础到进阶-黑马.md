@@ -804,7 +804,39 @@ repositoryService.deleteDeployment(deploymentId,true); //级联删除 未完成�
 通过流程定义对象获取流程定义资源，获取bpmn和png文件
 
 ```java
-
+//下载 资源文件
+    // 方案1 使用activiti提供的api 下载资源文件
+    @Test
+    public void getDeployment() throws IOException {
+        //1、获取流程引擎processEngine
+        ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+        //2、获取RepositoryService
+        RepositoryService repositoryService = processEngine.getRepositoryService();
+        //3、获取ProcessDefinitionQuery对象
+        ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery().processDefinitionKey("myEvection")
+                .singleResult();
+        //根据流程定义信息 获取部署id
+        String deploymentId = processDefinition.getDeploymentId();
+        //5、通过repositoryService 传递部署id参数 读取资源信息 png 和bpmn
+        //5.1获取png的流
+        String pngName = processDefinition.getDiagramResourceName();
+        InputStream pngInput = repositoryService.getResourceAsStream(deploymentId, pngName);
+        //5.2获取bpmn的流
+        String bpmnName = processDefinition.getResourceName();
+        InputStream bpmnInput = repositoryService.getResourceAsStream(deploymentId, bpmnName);
+        //6、构造OutputStream流
+        File pngFile = new File("d:/evectionflow01.png");
+        File bpmnFile = new File("d:/evectionflow01.bpmn");
+        FileOutputStream pngOutStream = new FileOutputStream(pngFile);
+        FileOutputStream bpmnOutputStream = new FileOutputStream(bpmnFile);
+        IOUtils.copy(pngInput,pngOutStream);
+        IOUtils.copy(bpmnInput,bpmnOutputStream);
+        //8 关闭流
+        pngOutStream.close();
+        bpmnOutputStream.close();
+        pngInput.close();
+        bpmnInput.close();
+    }
 ```
 
 
