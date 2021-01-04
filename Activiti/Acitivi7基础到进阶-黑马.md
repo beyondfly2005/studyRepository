@@ -703,3 +703,110 @@ User Task用户任务 Service Task服务任务 Sub Process 子流程
 https://blog.csdn.net/wk52525/article/details/79362904
 
 xml中文乱码问题
+
+
+
+# 六、流程操作
+
+## 6.1 流程定义
+
+## 6.2 流程定义部署
+
+## 6.3 启动流程实例
+
+## 6.4 任务查询
+
+## 6.5 流程任务处理
+
+## 6.6 流程定义信息查询
+
+查询流程相关信息，包含流程定义，流程部署，流程定义版本
+
+```java
+//查询流程定义
+    @Test
+    public void queryProcessDefinition(){
+        //1、获取流程引擎processEngine
+        ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+        //2、获取RepositoryService
+        RepositoryService repositoryService =processEngine.getRepositoryService();
+        //获取ProcessDefinitionQuery对象
+        ProcessDefinitionQuery processDefinitionQuery = repositoryService.createProcessDefinitionQuery();
+        //查询当前所有的流程定义
+        List<ProcessDefinition> definitionList = processDefinitionQuery.processDefinitionKey("myEvection").orderByProcessDefinitionVersion().desc().list();
+        //输出信息
+        for (ProcessDefinition processDefinition : definitionList) {
+            System.out.println("流程定义id="+processDefinition.getId());
+            System.out.println("流程定义名称="+processDefinition.getName());
+            System.out.println("流程定义key="+processDefinition.getKey());
+            System.out.println("流程定义版本="+processDefinition.getVersion());
+            System.out.println("流程部署id="+processDefinition.getDeploymentId());
+        }
+    }
+```
+
+
+
+## 6.7 流程删除
+
+```java
+    //删除流程部署信息
+    @Test
+    public void deleteDeployment(){
+        //1、获取流程引擎processEngine
+        ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+        //2、获取RepositoryService
+        RepositoryService repositoryService = processEngine.getRepositoryService();
+        //通过流程部署id
+        String deploymentId ="1";
+        repositoryService.deleteDeployment(deploymentId);
+    }
+```
+
+删除的表包括
+
+```java
+act_ge_bytearray
+act_re_deployment
+act_re_procdef
+
+历史信息不删除
+act_his
+
+未完成的流程
+默认不允许删除 如果想要删除 需要使用级联删除
+repositoryService.deleteDeployment(deploymentId,true); //级联删除 未完成的任务也一起删除 cascade=true
+
+```
+
+## 6.8 流程资源下载
+
+我们的流程资源已经上传到数据库了，如果其他用户想要查看这些资源文件，可以从数据库中把资源文件下载到本地
+
+解决方案有：
+
+1、jdbc对blob类型 clob类型数据读取出来，保存到文件目录
+
+2、使用activiti的api来实现
+
+使用commons-io.jar解决IO的操作
+
+引入commons-io依赖包
+
+```xml
+<dependency>
+	<groupId>common-io</groupId>
+    <artifactId>commons-io</artifactId>
+    <version>2.6</version>
+</dependency>
+```
+
+通过流程定义对象获取流程定义资源，获取bpmn和png文件
+
+```java
+
+```
+
+
+
+## 6.9 流程历史信息的查看
