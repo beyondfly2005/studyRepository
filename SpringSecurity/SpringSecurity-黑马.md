@@ -6,7 +6,7 @@
 
 Spring Security 是一款强大的高度可定制的，认证、授权的框架
 
-
+官网：https://spring.io/projects/spring-security
 
 ##### P2、案例介绍
 
@@ -46,7 +46,7 @@ P6、
 
 **三、初识 Spring Security**
 
-**3.1 Spring Security****概念**
+**3.1 Spring Security概念**
 
 Spring Security是spring采用AOP思想，基于servlet过滤器实现的安全框架。它提供了完善的认证机制和方法级的
 
