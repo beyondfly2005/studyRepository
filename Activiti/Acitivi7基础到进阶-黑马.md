@@ -845,19 +845,223 @@ repositoryService.deleteDeployment(deploymentId,true); //级联删除 未完成�
 
 ### 6.9 流程历史信息的查看
 
+```java
+    //查看历史信息
+    @Test
+    public void findHistoryInfo(){
+        //获取引擎
+        ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+        //获取HistoryService
+        HistoryService historyService = processEngine.getHistoryService();
+        //查询act_inst表
+        HistoricActivityInstanceQuery instanceQuery = historyService.createHistoricActivityInstanceQuery();
+        instanceQuery.processInstanceId("2501");
+        //增加排序操作， 按开始时间升序
+        instanceQuery.orderByHistoricActivityInstanceStartTime().asc();
+        List<HistoricActivityInstance> list = instanceQuery.list();
+        for (HistoricActivityInstance historicActivityInstance : list) {
+            System.out.println(historicActivityInstance.getActivityId());
+            System.out.println(historicActivityInstance.getActivityName());
+            System.out.println(historicActivityInstance.getProcessDefinitionId());
+            System.out.println(historicActivityInstance.getProcessInstanceId());
+            System.out.println("=================");
+        }
+    }
+```
+
 
 
 # Activiti 进阶
 
 ## 一、流程实例
 
+### 什么是流程实例
+
+**流程实例**（ProcessInstance）代表流程定义的执行实例.
+
+一个流程实例包括了所有的运行节点。我们可以利用这个对象来了解当前流程实例的进度等信息。
+
+例如：用户或程序按照流程定义内容发起一个流程，这就是一个流程实例，这就是-一个流程实例。是动态的。
+
+流程定义和流程实例的图解
+
+![img](https://img-blog.csdnimg.cn/20200824140436440.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0x2X3ZJ,size_16,color_FFFFFF,t_70#pic_center)
+
+### 启动流程实例 
+
+启动流程实例并添加BusinessKey(业务标识)
+
+流程定义部署在activiti后，就可以在系统中通过activiti去管理流程的执行，执行流程标识流程的一次执行。
+
+比如部署系统出差流程后，如果某用户要申请出差，这是就需要执行这个流程，如果另外一个用户也要申请出差也需要执行该流程，每个执行互补影响，每个执行是单独的流程实例。
+
+启动流程实例时，指定的BusinessKey，就会在art_ru_execution #流程实例的执行表中存储businesskey。
+
+BusinessKe：业务标识，通常为业务表额主键，业务标识和流程实例一一对应，业务标识来源于业务系统，存储业务标识就是根据业务标识来关联查询业务系统的数据，
+
+比如：出差流程启动一个实例，就可以将出差单的id作为业务流程标识存储到activiti中，将来查询activiti的流程实例就可以获取出差单的id从而关联查询业务系统数据库得到出差单的信息。
+
+```java
+    /**
+     * 添加业务key 到Activiti
+     */
+    @Test
+    public void addBusinessKey(){
+        //1、获取流程引擎
+        ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+        //2、获取RuntimeService
+        RuntimeService runtimeService = processEngine.getRuntimeService();
+        //3、启动流程的过程中 添加businessKey
+        // 第一个参数 是流程定义的key 第二个参数是 businessKey
+        ProcessInstance instance = runtimeService.startProcessInstanceByKey("myEvecton", "1001");
+        //4、输出
+        System.out.println("业务id=="+instance.getBusinessKey());
+    }
+```
+
+Activiti的act_ru_execution中存储业务标识：
+
+![img](https://img-blog.csdnimg.cn/20200824142424228.png#pic_center)
+
+### 操作数据库表
+
+启动流实例，操作如下数据库表：
+
+select * from act_ru_execution #流程实例执行表，记录当前流程实例的执行情况
+
+![img](https://img-blog.csdnimg.cn/20200824142636375.png#pic_center)
+
+说明:
+流程实例执行，如果当前只有一一个分支时，一个流程实例只有一条记录且执行表的主键id和流程实例id相同，如果当前有多个分支正在运行则该执行表中有多条记录，存在执行表的主键和流程实例id不相同的记录。不论当前有几个分支总会有一条记录的执行表的主键和流程实例id相同
+
+一个流程实例运行完成，此表中与流程实例相关的记录删除。
+
+SELECT * FROM act_ru_task #任务执行表，记录当前执行的任务
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200824142809723.png#pic_center)
+说明：
+启动流程实例，流程当前执行到第一个任务节点，此表会插入一条记录表示当前任务的执行情况，如果任务完成则该记录删除。
+
+SELECT * FROM act _hi _procinst #流程实例历史表
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200824143649732.png#pic_center)
+SELECT * FROM act_hi_taskinst #任务历史表，记录所有任务
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200824143831245.png#pic_center)
+开始一个任务，不仅在act_ru_task表插入记录，也会在历史任务表插入一条记录，任务历史表的主键就是任务id，任务完成此表记录不删除。
+
+SELECT * FROM act_hi_actinst #活动历史表，记录所有活动。
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200824144116274.png#pic_center)
+活动包括任务，所以此表中不仅记录了任务，还记录了流程执行过程的其它活动，比如开始事件、结束事件。
+
+### 查询流程实例
+
+流程在运行过程中可以查询流程实例的状态，当前运行结点等信息。
+
+```java
+	/**
+     * 查询流程实例
+     */
+    @Test
+    public void queryProcessInstance(){
+        //流程定义key
+        Stromg processDefinitionKey="myEvection";
+        List<ProcessInstance> list = runtimeService.createProcessInstanceQuery()
+                .processInstanceId("6fa76f62-e5d5-11ea-958c-68ecc5dbc2f7")
+                .list();
+        for (ProcessInstance processInstance : list) {
+            System.out.println(processInstance.getId());
+        }
+    }
+```
+
+
+
+### 挂起、激活流程实例
+
+某些情况可能由于流程变更需要将当前运行的流程暂停而不是直接删除，流程暂停后将不再继续执行
+
+#### 全部流程实例挂起
+
+操作流程定义为挂起状态，该流程定义下边的所有的流程实例全部暂停：
+
+流程定义为挂起状态该流程定义将不允许启动新的流程实例，同时该流程定义下所有的流程实例将全部挂起暂停执行。
+
+```java
+    /**
+     * 全部流程实例额挂起和激活
+     * suspend 暂停
+     */
+    @Test
+    public void suspendAllProcessInstance(){
+        //1、获取流程引擎
+        ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+        //2、获取RepositoryService
+        RepositoryService repositoryService = processEngine.getRepositoryService();
+        //3、查询流程定义
+        ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery().processDefinitionKey("myEvection").singleResult();
+        //4、获取当前流程定义的实例是否都是挂起状态
+        boolean suspended = processDefinition.isSuspended();
+        //5、获取流程的id
+        String definitionId = processDefinition.getId();
+        //6、如果是挂起状态 改为激活状态
+        if(suspended){//挂起状态 改为激活
+            //参数1 流程定义id 参数2 是否激活 参数三 激活时间
+            repositoryService.activateProcessDefinitionById(definitionId,true,null);
+            System.out.println("流程定义id:"+definitionId+ "已激活");
+        } else {
+            //7、如果是激活状态 改为挂起状态
+            //参数1 流程定义id 参数2 是否暂停 参数三 激活时间
+            repositoryService.suspendProcessDefinitionById(definitionId,true, null);
+            System.out.println("流程定义id:"+definitionId+ "已挂起");
+        }
+    }
+```
+
+#### 单个流程实例挂起
+
+```java
+    /**
+     * 挂起、激活单个流程实例
+     */
+    @Test
+    public void  suspendSingleProcessInstance(){
+        //1、获取流程引擎
+        ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+        //2、获取RuntimeService
+        RuntimeService runtimeService = processEngine.getRuntimeService();
+        //3、通过RuntimeService获取流程实例对象
+        ProcessInstance instance = runtimeService.createProcessInstanceQuery().processInstanceId("27501").singleResult();
+        //4、得到当前流程实例的暂停状态
+        boolean suspended = instance.isSuspended();
+        //5、获取流程实例id
+        String instanceId = instance.getId();
+        //6、判断是否已经暂停 如果已经暂停 则执行激活
+        if(suspended){
+            runtimeService.activateProcessInstanceById(instanceId);
+            System.out.println("流程实例ID："+instanceId+"已经激活");
+        } else {
+            //7、判断是否已经激活 如果已经激活 则暂停
+            runtimeService.suspendProcessInstanceById(instanceId);
+            System.out.println("流程实例ID："+instanceId+"已经暂停");
+        }
+    }
+```
+
+
+
 ## 二、个人任务
+
+
 
 ## 三、流程变量
 
+
+
 ## 四、组任务
 
+
+
 ## 五、网关
+
+
 
 ## 六、课程总结
 
