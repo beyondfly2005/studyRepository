@@ -1782,13 +1782,203 @@ shiro-08web-java 从shiro-07web 项目拷贝
 
 ###### 4.1.4.2 修改shiro.ini
 
+注释路径过滤器相关配置
+
+```ini
+#声明自定义的realm,且为安全管理器指定realms
+[main]
+definitionRealm=com.beyondsoft.shiro.realm.DefinitionRealm
+securityManager.realms=$definitionRealm
+#用户退出后跳转到指定JSP云
+logout.redirectUrl=/login.jsp
+#若没有登录，则被authc过滤器重定向到login.jsp页面
+authc.loginUrl=/login.jsp
+[urls]
+/login=anon
+#发送/home请求需要先登录
+#/home=authc
+#/order-list=roles[admin]
+#/order-add=perms["order:add"]
+#/order-del=perms["order:del"]
+/logout=logout
+
+```
+
 ###### 4.1.4.3 登录相关
+
+HomeServlet
+
+```java
+package com.beyondsoft.shiro.web;
+
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.subject.Subject;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+@WebServlet(urlPatterns = "/home")
+public class HomeServlet extends HttpServlet {
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        doPost(req,resp);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        //获得当前主体
+        Subject subject = SecurityUtils.getSubject();
+        //获取当前主体是否登录
+        boolean authenticated = subject.isAuthenticated();
+        if(authenticated) {
+            req.getRequestDispatcher("home.jsp").forward(req, resp);
+        }
+        req.getRequestDispatcher("/login").forward(req, resp);
+    }
+}
+```
 
 ###### 4.1.4.4 角色相关
 
+OrderListServlet
+
+```java
+package com.beyondsoft.shiro.web;
+
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.subject.Subject;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+@WebServlet(urlPatterns = "/order-list")
+public class OrderListServlet extends HttpServlet {
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        doPost(req,resp);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        //获得当前主体
+        Subject subject = SecurityUtils.getSubject();
+        //判断当前主体是否具有admin角色
+        boolean isAdmin = subject.hasRole("admin");
+        if(isAdmin) {
+            req.getRequestDispatcher("order-list.jsp").forward(req, resp);
+            return;
+        }
+        //权限不足 提示401错误 或者返回登录
+        req.getRequestDispatcher("/login").forward(req, resp);
+    }
+}
+```
+
 ###### 4.1.4.5 资源相关
 
+OrderAddServlet
+
+```java
+package com.beyondsoft.shiro.web;
+
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.subject.Subject;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+@WebServlet(urlPatterns = "/order-add")
+public class OrderAddServlet extends HttpServlet {
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        doPost(req,resp);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        //获得当前主体
+        Subject subject = SecurityUtils.getSubject();
+        //判断当前主体是否有相应的权限
+        boolean permitted = subject.isPermitted("order:add");
+        if(permitted) {
+            req.getRequestDispatcher("order-add.jsp").forward(req, resp);
+            return;
+        }
+        //权限不足 提示401错误 或者返回登录
+        req.getRequestDispatcher("/login").forward(req, resp);
+    }
+}
+```
+
 #### 4.2 基于jsp标签
+
+###### 4.2.1 使用方式
+
+Shiro提供了一套JSP标签库来实现页面级的授权控制，在使用Shiro标签库前，首先需要在Jsp页面引入shiro标签
+
+```jsp
+<%@ taglib prefix="shiro" uri="http://shiro.apache.org/tags" %>
+```
+
+###### 4.2.2 相关标签
+
+| 标签                                 | 说明                                                         |
+| ------------------------------------ | ------------------------------------------------------------ |
+| \<shiro:guest>                       | 验证当前用户是否为“访客”，即未认证(包含为记住)的用户         |
+| \<shiro:user>                        | 认证通过或已记住的用户                                       |
+| \<shiro:authenticated>               | 已认证通过的用户，不包含已经记住的用户，这是与user标签的区别所在 |
+| \<shiro:notAuthenticated>            | 未认证通过的用户，与guest标签的区别是该标签包含已记住用户    |
+| \<shiro:principal>                   | 输出当前用户信息，通常为登录账号信息                         |
+| \<shiro:hasRole name="角色">         | 验证当前用户是否具有该角色                                   |
+| \<shiro:lacksRole name="角色">       | 与hasRole标签逻辑相反，当用户不具有该角色时验证通过          |
+| \<shiro:hasRoles name="a,b">         | 验证当前用户是否具有以下任意一个角色                         |
+| \<shiro:hasPermission name="资源">   | 验证当前用户是否拥有指定的权限                               |
+| \<shiro:lacksPermission name="资源"> | 与shiro:hasPermission标签逻辑相反，验证当前用户是否不具有指定权限 |
+
+###### 4.2.3 案例
+
+新建项目shiro-09web-jsp-taglib，从shiro-008web-java项目拷贝
+
+修改home.jsp
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="shiro" uri="http://shiro.apache.org/tags" %>
+<html>
+<head>
+    <title>Title</title>
+</head>
+<body>
+<h6>
+    <a href="${pageContext.request.contextPath}/logout">退出</a>
+    <shiro:hasRole name="admin">
+    <a href="${pageContext.request.contextPath}/order-list">列表</a>
+    </shiro:hasRole>
+    <shiro:hasPermission name="order:add">
+    <a href="${pageContext.request.contextPath}/order-add">添加</a>
+    </shiro:hasPermission>
+</h6>
+</body>
+</html>
+
+```
+
+注意：jsp 标签只能控制页面控件的显示与否，不能防止盗链。安全级别较低
 
 #### 4.3 基于注解的方式
 
@@ -1797,6 +1987,130 @@ shiro-08web-java 从shiro-07web 项目拷贝
 
 
 ## 第五章 SpringBoot项目集成Shiro
+
+### 1、技术栈
+
+主框架：Springboot
+
+响应层：SpringMVC
+
+持久层：Mybatis
+
+事务控制：JTA
+
+前端框架：easyUI
+
+### 2、数据库设计
+
+#### 2.1 数据库图解
+
+![img](https://img-blog.csdnimg.cn/img_convert/d47b3b894ac3a6ad076e875ec3065f6d.png)
+
+sh_user:  用户表，一个用户可以有多个角色
+
+sh_role:  角色表，一个角色可以有多个资源
+
+sh_resource:  资源表
+
+sh_user_role:  用户角色中间表
+
+sh_role_resource:  角色资源中间表
+
+#### 2.2 数据库脚本
+
+sh_user
+
+```sql
+CREATE TABLE `sh_user` (  `ID` varchar(36) NOT NULL COMMENT '主键',  `LOGIN_NAME` varchar(36) DEFAULT NULL COMMENT '登录名称',  `REAL_NAME` varchar(36) DEFAULT NULL COMMENT '真实姓名',  `NICK_NAME` varchar(36) DEFAULT NULL COMMENT '昵称',  `PASS_WORD` varchar(150) DEFAULT NULL COMMENT '密码',  `SALT` varchar(36) DEFAULT NULL COMMENT '加密因子',  `SEX` int(11) DEFAULT NULL COMMENT '性别',  `ZIPCODE` varchar(36) DEFAULT NULL COMMENT '邮箱',  `ADDRESS` varchar(36) DEFAULT NULL COMMENT '地址',  `TEL` varchar(36) DEFAULT NULL COMMENT '固定电话',  `MOBIL` varchar(36) DEFAULT NULL COMMENT '电话',  `EMAIL` varchar(36) DEFAULT NULL COMMENT '邮箱',  `DUTIES` varchar(36) DEFAULT NULL COMMENT '职务',  `SORT_NO` int(11) DEFAULT NULL COMMENT '排序',  `ENABLE_FLAG` varchar(18) DEFAULT NULL COMMENT '是否有效',  PRIMARY KEY (`ID`)) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='用户表';
+```
+
+sh_role
+
+```sql
+CREATE TABLE `sh_role` (  `ID` varchar(36) NOT NULL COMMENT '主键',  `ROLE_NAME` varchar(36) DEFAULT NULL COMMENT '角色名称',  `LABEL` varchar(36) DEFAULT NULL COMMENT '角色标识',  `DESCRIPTION` varchar(200) DEFAULT NULL COMMENT '角色描述',  `SORT_NO` int(36) DEFAULT NULL COMMENT '排序',  `ENABLE_FLAG` varchar(18) DEFAULT NULL COMMENT '是否有效',  PRIMARY KEY (`ID`)) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='用户角色表';
+```
+
+sh_resource
+
+```sql
+CREATE TABLE `sh_resource` (  `ID` varchar(36) NOT NULL COMMENT '主键',  `PARENT_ID` varchar(36) DEFAULT NULL COMMENT '父资源',  `RESOURCE_NAME` varchar(36) DEFAULT NULL COMMENT '资源名称',  `REQUEST_PATH` varchar(200) DEFAULT NULL COMMENT '资源路径',  `LABEL` varchar(200) DEFAULT NULL COMMENT '资源标签',  `ICON` varchar(20) DEFAULT NULL COMMENT '图标',  `IS_LEAF` varchar(18) DEFAULT NULL COMMENT '是否叶子节点',  `RESOURCE_TYPE` varchar(36) DEFAULT NULL COMMENT '资源类型',  `SORT_NO` int(11) DEFAULT NULL COMMENT '排序',  `DESCRIPTION` varchar(200) DEFAULT NULL COMMENT '描述',  `SYSTEM_CODE` varchar(36) DEFAULT NULL COMMENT '系统code',  `IS_SYSTEM_ROOT` varchar(18) DEFAULT NULL COMMENT '是否根节点',  `ENABLE_FLAG` varchar(18) DEFAULT NULL COMMENT '是否有效',  PRIMARY KEY (`ID`)) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='资源表';
+```
+
+sh_role_resource
+
+```sql
+CREATE TABLE `sh_role_resource` (  `ID` varchar(36) NOT NULL,  `ENABLE_FLAG` varchar(18) DEFAULT NULL,  `ROLE_ID` varchar(36) DEFAULT NULL,  `RESOURCE_ID` varchar(36) DEFAULT NULL,  PRIMARY KEY (`ID`)) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='角色资源表';
+```
+
+sh_user_role
+
+```sql
+CREATE TABLE `sh_user_role` (  `ID` varchar(36) NOT NULL,  `ENABLE_FLAG` varchar(18) DEFAULT NULL,  `USER_ID` varchar(36) DEFAULT NULL,  `ROLE_ID` varchar(36) DEFAULT NULL,  PRIMARY KEY (`ID`)) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='用户角色表';
+```
+
+### 3、项目骨架
+
+![c116b4a7d0d7856bb91b9f76726ff3a9.png](https://img-blog.csdnimg.cn/img_convert/c116b4a7d0d7856bb91b9f76726ff3a9.png)
+
+### 4、ShiroDbRealm定义
+
+#### 4.1 图解
+
+![c39e4012a3c3ae3ee2e0c98734703b4f.png](https://img-blog.csdnimg.cn/img_convert/c39e4012a3c3ae3ee2e0c98734703b4f.png)
+
+#### 4.2 原理分析
+
+(1)、ShiroDbRealmImpl继承ShiroDbRealm向上继承AuthorizingRealm，ShiroDbRealmImpl实例化时会创建密码匹配器HashedCredentialsMatcher实例，HashedCredentialsMatcher指定hash次数与方式，交于AuthenticatingRealm
+
+(2)、调用login方法后，最终调用doGetAuthenticationInfo(AuthenticationToken authcToken)方法，拿到SimpleToken的对象，调用UserBridgeService的查找用户方法，把ShiroUser对象、密码和salt交于SimpleAuthenticationInfo去认证
+
+(3)、访问需要鉴权时，调用doGetAuthorizationInfo(PrincipalCollection principals)方法，然后调用UserBridgeService的授权验证
+
+#### 4.3 核心类代码
+
+##### 4.3.1 ShiroDbRealm
+
+```java
+package com.itheima.shiro.core;
+import org.apache.shiro.authc.AuthenticationInfo;
+import org.apache.shiro.authc.AuthenticationToken;import org.apache.shiro.authz.AuthorizationInfo;import org.apache.shiro.realm.AuthorizingRealm;import org.apache.shiro.subject.PrincipalCollection;import javax.annotation.PostConstruct;/** * * @Description shiro自定义realm */public abstract class ShiroDbRealm extends AuthorizingRealm {    /**     * @Description 认证     * @param authcToken token对象     * @return      */    public abstract AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authcToken) ;    /**     * @Description 鉴权     * @param principals 令牌     * @return     */    public abstract AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals);    /**     * @Description 密码匹配器     */    @PostConstruct    public abstract void initCredentialsMatcher() ;}
+```
+
+##### 4.3.2 ShiroDbRealmImpl
+
+```java
+package com.itheima.shiro.core.impl;import com.itheima.shiro.constant.SuperConstant;import com.itheima.shiro.core.base.ShiroUser;import com.itheima.shiro.core.base.SimpleToken;import com.itheima.shiro.core.ShiroDbRealm;import com.itheima.shiro.core.bridge.UserBridgeService;import com.itheima.shiro.pojo.User;import com.itheima.shiro.utils.BeanConv;import com.itheima.shiro.utils.DigestsUtil;import com.itheima.shiro.utils.EmptyUtil;import org.apache.shiro.authc.AuthenticationInfo;import org.apache.shiro.authc.AuthenticationToken;import org.apache.shiro.authc.SimpleAuthenticationInfo;import org.apache.shiro.authc.UnknownAccountException;import org.apache.shiro.authc.credential.HashedCredentialsMatcher;import org.apache.shiro.authz.AuthorizationInfo;import org.apache.shiro.subject.PrincipalCollection;import org.apache.shiro.util.ByteSource;import org.springframework.beans.factory.annotation.Autowired;/** * @Description：自定义shiro的实现 */public class ShiroDbRealmImpl extends ShiroDbRealm {    @Autowired    private UserBridgeService userBridgeService;    /**     * @Description 认证方法     * @param authcToken 校验传入令牌     * @return AuthenticationInfo     */    @Override    public AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authcToken) {        SimpleToken token = (SimpleToken)authcToken;        User user  = userBridgeService.findUserByLoginName(token.getUsername());        if(EmptyUtil.isNullOrEmpty(user)){            throw new UnknownAccountException("账号不存在");        }        ShiroUser shiroUser = BeanConv.toBean(user, ShiroUser.class);        shiroUser.setResourceIds(userBridgeService.findResourcesIdsList(user.getId()));        String salt = user.getSalt();        String password = user.getPassWord();        return new SimpleAuthenticationInfo(shiroUser, password, ByteSource.Util.bytes(salt), getName());    }    /**     * @Description 授权方法     * @param principals SimpleAuthenticationInfo对象第一个参数     * @return     */    @Override    public AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {        ShiroUser shiroUser = (ShiroUser) principals.getPrimaryPrincipal();        return userBridgeService.getAuthorizationInfo(shiroUser);    }    /**     * @Description 加密方式     */    @Override    public void initCredentialsMatcher() {        HashedCredentialsMatcher matcher = new HashedCredentialsMatcher(SuperConstant.HASH_ALGORITHM);        matcher.setHashIterations(SuperConstant.HASH_INTERATIONS);        setCredentialsMatcher(matcher);    }}
+```
+
+##### 4.3.3 SimpleToken
+
+```
+package com.itheima.shiro.core.base;
+import org.apache.shiro.authc.UsernamePasswordToken;
+/** * @Description 自定义tooken */
+public class SimpleToken extends UsernamePasswordToken {
+/** serialVersionUID */    private static final long serialVersionUID = -4849823851197352099L;    private String tokenType;    private String quickPassword;    /**     * Constructor for SimpleToken     * @param tokenType     */    public SimpleToken(String tokenType, String username,String password) {        super(username,password);        this.tokenType = tokenType;    }    public SimpleToken(String tokenType, String username,String password,String quickPassword) {        super(username,password);        this.tokenType = tokenType;        this.quickPassword = quickPassword;    }    public String getTokenType() {        return tokenType;    }    public void setTokenType(String tokenType) {        this.tokenType = tokenType;    }    public String getQuickPassword() {        return quickPassword;    }    public void setQuickPassword(String quickPassword) {        this.quickPassword = quickPassword;    }}
+```
+
+### 4、ShiroDbRealm定义
+
+### 5、ShiroConfig配置
+
+5.1 图解
+
+5.2 原理分析
+
+（1）、创建SimpleCookie，访问项目时，会在客户端中的cookie中存放ShiroSession的对
+
+（2）、创建DefaultWebSessionManager会话管理器定义cookie机制，定时刷新、全局会话超时时间然后交
+
+### 6、Shiro过滤器
+
+### 7、注解方式鉴权
+
+### 8、项目测试
+
+
 
 
 
