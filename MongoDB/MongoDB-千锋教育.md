@@ -54,7 +54,13 @@
 >
 > 能够独立完成MongoDB数据库CURD
 >
-> 能够实现
+> 能够实现分页、数据统计、索引、备份等功能
+>
+> 能够使用mongoose开发接口
+>
+> 能够使用apiDoc开发接口文档
+
+
 
 ## 第一章 MongoDB基础
 
@@ -1762,7 +1768,7 @@ npm i -g nodemon
 
 步骤1： 定义路由 /stu post
 
-​	新建文件夹 controller, 其下新建stu.js 用于处理用户请求
+新建文件夹 controller, 其下新建stu.js 用于处理用户请求
 
 ```javascript
 //导入模型 
@@ -1895,6 +1901,224 @@ app.use(bodyParser.json())
 
 #### 3.6.4 学生列表接口
 
+步骤1：定义路由 /stu get
+
+http.js文件中增加路由
+
+```javascript
+// 学生列表
+app.get('/stu',stuController.index)
+```
+
+步骤2：响应任意json数据
+
+```javascript
+// 列表
+const index = async(req, res) => {
+    //res.send("this is index");
+}
+```
+
+步骤3：修改stu模型，增加查询方法
+
+```javascript
+// 查询方法
+const listModel = () =>{
+    return model.find().then(res=> {
+        console.log(res)        
+        return res
+    })
+    .catch(err => {
+        console.log('查询出错'+err)
+        return []
+    })
+}
+
+// 导出方法
+module.exports = {
+    createModel,
+    listModel
+}
+```
+
+步骤4：修改控制类，调用模型返回数据
+
+```javascript
+//列表
+const index = async(req, res) => {
+    //res.send("this is index");
+    //1.获取数据    
+    let data = await listModel()
+    //2.响应数据
+    res.send({
+        meta: {
+            state: 200,
+            msg: "查询数据成功"
+        },
+        data: data
+    })
+}
+
+//导出成员
+module.exports = {
+    create, index
+}
+```
+
+
+
 #### 3.6.5 学生列表接口分页
 
+步骤1：修改控制器，接收请求参数（get）
+
+```javascript
+//列表
+const index = async(req, res) => {
+    //res.send("this is index");  
+    //1.接收数据
+    let getData = req.query;
+    //console.log(getData);  //{ pageNo: '1', pageSize: '10' }
+    
+    //2.过滤
+    let skip = (parseInt(getData.pageNo) - 1) * parseInt(getData.pageSize)
+    //3.获取数据    
+    let data = await listModel(skip,parseInt(getData.pageSize))
+    //4.响应数据
+    res.send({
+        meta: {
+            state: 200,
+            msg: "查询数据成功"
+        },
+        data: data
+    })
+}
+```
+
+
+
+步骤2：传递给模型
+
+```javascript
+    //1.接收数据
+    let getData = req.query;
+    //console.log(getData);  //{ pageNo: '1', pageSize: '10' }
+    
+    //2.过滤
+    let skip = (parseInt(getData.pageNo) - 1) * parseInt(getData.pageSize)
+    //3.获取数据    
+    let data = await listModel(skip,parseInt(getData.pageSize))
+```
+
+
+
+步骤3：模型增加skip和limit
+
+```javascript
+//查询方法
+const listModel = (skip, limit) =>{
+    return model.find().skip(skip).limit(limit).then(res=> {
+        console.log(res)        
+        return res
+    })
+    .catch(err => {
+        console.log('查询出错'+err)
+        return []
+    })
+}
+```
+
+
+
 ### 3.7 实战接口文档开发apiDoc
+
+#### 明确需求
+
+实际看法中后端会开发很多接口文档
+
+每个接口都有大量的参数
+
+思考：前端开发人员如何知道有哪些接口，并且每个接口有哪些参数
+
+回答：通过接口文档
+
+思考：接口文档时自己写还是怎样做？
+
+回答：可以有多种方法，比如：1-自己写，2-通过Swagger文档，3-通过apiDoc生成
+
+#### 什么是apiDoc
+
+apiDoc是nodejs中的一个模块，可以快速生成接口文档
+
+#### apiDoc能做什么
+
+apiDoc可以帮我们快速生成接口文档
+
+前提：写接口的时候需要把注释加上，apiDoc是通过注释生成接口文档的
+
+#### 下载安装
+
+官网：http://apidocjs.com/#configuration
+
+apiDoc支持多种语言：Java JS PHP Erlang、Perl Python Rubby Lua
+
+安装：可以通过npm进行全局安装
+
+```bash
+# 全局安装
+npm install apidoc -g
+```
+
+
+
+#### 如何使用
+
+步骤1：先下载模块，后期通过命令基于注释生成文档（仅首次使用需要下载）
+
+步骤2：在项目根目录创建文件 apidoc.json（项目中仅首次使用需要创建该文件）
+
+​	内容如下：
+
+```json
+{
+  "name": "教学管理系统接口文档",
+  "version": "1.0",
+  "description": "apiDoc basic example",
+  "title": "Custom apiDoc browser title",
+  "url" : "http://localhost:3000"
+}
+```
+
+踩坑：版本号 version 必须为三位，x.y.c 否则启动报错 
+
+```
+Uncaught (in promise) TypeError: Invalid Version: 1.0
+```
+
+步骤3：写接口注释 
+
+```javascript
+/**
+ * @api {get} /user/:id Request User information
+ * @apiName GetUser
+ * @apiGroup User
+ *
+ * @apiParam {Number} id Users unique ID.
+ *
+ * @apiSuccess {String} firstname Firstname of the User.
+ * @apiSuccess {String} lastname  Lastname of the User.
+ */
+```
+
+步骤3：生成接口文档，（每次修改注释，都需要生成一次接口文档）
+
+```bash
+apidoc -i myapp/ -o apidoc/ -t mytemplate/
+apidoc -i 接口注释目录 -o 接口文档存放目录
+apidoc -i ./controller -o ./apidoc
+```
+
+查看生成的接口文档
+
+找到 工程下的 apidoc/index.html，右键Open with Live Server （IDE为VsCode）
+
+### 3.8 课程总结
