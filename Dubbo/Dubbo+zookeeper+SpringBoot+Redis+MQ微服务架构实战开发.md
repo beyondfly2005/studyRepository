@@ -2,7 +2,11 @@
 
 
 
-> 视频地址：https://www.bilibili.com/video/BV1VJ411g7Zq?t=53
+> 视频地址：https://www.bilibili.com/video/BV1VJ411g7Zq
+>
+> 文档地址：https://zhuanlan.zhihu.com/p/58523066
+>
+> ​                   https://zhuanlan.zhihu.com/p/58523066
 
 ## P1 架构演变-分析AllInOne的使用场景及问题
 
@@ -33,19 +37,353 @@
 
 ##### 2、单体应用模式存在的问题
 
-开发效率低、
+- 开发效率低
+- 由于某个模块存在bug，导致整个系统出现问题
+- 重新打包部署，没有问题的模块也会重新发布，重新发布时导致系统不可用
+- 每个模块访问频率不同，无法按需（按访问压力）升级
 
 
 
 ## P2  架构演变-垂直拆分+水平拆分
 
-拆分的依据：
+**垂直拆分**
 
-以业务的边界进行拆分
+将系统按业务功能拆分为多个独立的子系统，对于访问压力比较大的业务，比如商城首页 搜索模块等，也可通过Nginx负载均衡部署到多个服务器，降低访问压力
+
+拆分的依据：以业务的边界进行拆分
 
 分布式集群
 
 系统之间的通信方式一般采用Http---Apache HttpClient
+
+
+
+## P9、解读下官网案例介绍
+
+创建3个子工程
+
+- dubbo-demo-api  公共服务api
+- dubbo-demo-provider 服务提供者示例代码
+- dubbo-demo-consumer 服务消费者示例代码
+
+
+
+## P10、实现Dubbo的第一个例子-纯Maven工程
+
+> https://zhuanlan.zhihu.com/p/58522889
+
+#### 1、项目准备
+
+新建父工程，创建一个maven工程，工程类型为pom，作为聚合工程，然后创建三个子模块module，分别如下：
+dubbo-interface  接口模块
+dubbo-provider  服务提供者
+dubbo-comsumer  服务消费者
+
+#### 2、接口模块
+
+dubbo-interface
+
+开发接口
+
+```java
+public interface IUserService{
+    public String hello();
+}
+```
+
+
+
+#### 3、服务提供者
+
+**引入Dubbo依赖和zookeeper客户端依赖**
+
+```xml
+<!--引入dubbo的依赖-->
+<dependency>
+   <groupId>com.alibaba</groupId>
+   <artifactId>dubbo</artifactId>
+   <version>2.5.8</version>
+</dependency>
+<!-- zookeeper客户端依赖 -->
+<dependency>
+   <groupId>com.github.sgroschupf</groupId>
+   <artifactId>zkclient</artifactId>
+   <version>0.1</version>
+</dependency>
+```
+
+**依赖接口模块dubbo-interface**
+
+```xml
+ <dependency>   
+     <groupId>com.beyondsoft.dubbo</groupId>   
+     <artifactId>dubbo-interface</artifactId>   
+     <version>1.0-SNAPSHOT</version>
+</dependency>
+```
+
+**开发service实现类**
+
+```java
+public class UserServiceImpl implements IUserService{
+    public String hello(){
+        return "hello,dubbo!";
+    }
+}
+```
+
+**配置spring配置文件**
+
+douubo-provider.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://code.alibabatech.com/schema/dubbo http://code.alibabatech.com/schema/dubbo/dubbo.xsd">
+    <!--1.定义应用的名称-->
+    <dubbo:application name="dubbo-provider"></dubbo:application>
+    <!--2.定义服务注册中心-->
+    <dubbo:registry protocol="zookeeper" address="192.168.10.168:2181"/>
+    <!--3.用dubbo协议在20880端口暴露服务-->
+    <dubbo:protocol port="20880"></dubbo:protocol>
+    <!--4.定义我们的实现类-->
+    <bean id="userService" class="com.huangguizhao.service.UserServiceImpl"/>
+    <!--5.声明暴露的服务接口-->
+    <dubbo:service interface="com.huangguizhao.interfaces.IUserService" ref="userService"/>
+</beans>
+```
+
+**通过启动Spring容器，发布服务**
+
+```java
+public class Provider {
+    public static void main(String[] args) throws Exception {
+        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new String[] {"classpath:provider.xml"});
+        context.start();
+        System.out.print("发布服务成功！");
+        System.in.read(); // 按任意键退出
+    }
+}
+```
+
+#### 4、服务消费者
+
+**引入dubbo依赖和zookeeper客户端依赖**
+
+```xml
+<!--引入dubbo的依赖-->
+<dependency>
+   <groupId>com.alibaba</groupId>
+   <artifactId>dubbo</artifactId>
+   <version>2.5.8</version>
+</dependency>
+<!-- zookeeper客户端依赖 -->
+<dependency>
+   <groupId>com.github.sgroschupf</groupId>
+   <artifactId>zkclient</artifactId>
+   <version>0.1</version>
+</dependency>
+```
+
+**依赖接口模块dubbo-interface**
+
+```xml
+<dependency>
+   <groupId>com.beyondsoft.dubbo</groupId>
+   <artifactId>dubbo-interface</artifactId>
+   <version>1.0-SNAPSHOT</version>
+</dependency>
+```
+
+**配置spring配置文件**
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://code.alibabatech.com/schema/dubbo http://code.alibabatech.com/schema/dubbo/dubbo.xsd">
+    <!--1.定义应用的名称-->
+    <dubbo:application name="java_dubbo_consumer"></dubbo:application>
+    <!--2.定义服务注册中心-->
+    <dubbo:registry protocol="zookeeper" address="192.168.10.168:2181"></dubbo:registry>
+    <!--3.生成远程服务代理，可以跟本地bean一样使用UserService-->
+    <dubbo:reference interface="com.huangguizhao.interfaces.IUserService" id="userService"/>
+</beans>
+```
+
+**启动容器，然后调用远程服务，观察调用结果**
+
+```java
+public class Consumer {
+    public static void main(String[] args) throws IOException {
+        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new String[] {"classpath:dubbo-consumer.xml"});
+        context.start();
+        //调用远程服务
+        IUserService userService = context.getBean(IUserService.class);
+        System.out.println(userService.hello());
+
+        System.in.read(); // 按任意键退出
+    }
+}
+```
+
+## P11、day04_12_zookeeper内部的结构
+
+## P12、Dubbo的负载均衡策略
+
+> https://zhuanlan.zhihu.com/p/58522889
+
+##### **负载均衡策略**
+
+Dubbo为我们提供了4种策略，默认是随机策略。
+
+- **Random LoadBalance  随机**
+
+  **随机**，按权重设置随机概率。
+  在一个截面上碰撞的概率高，但调用量越大分布越均匀，而且按概率使用权重后也比较均匀，有利于动态调整提供者权重。
+
+- **RoundRobin LoadBalance 轮询**
+
+  **轮询**，按公约后的权重设置轮询比率。
+  存在慢的提供者累积请求的问题，比如：第二台机器很慢，但没挂，当请求调到第二台时就卡在那，久而久之，所有请求都卡在调到第二台上。
+
+- **LeastActive LoadBalance 最少活跃调用数**
+
+  **最少活跃调用数**，相同活跃数的随机，活跃数指调用前后计数差。
+  使慢的提供者收到更少请求，因为越慢的提供者的调用前后计数差会越大。
+
+- **ConsistentHash LoadBalance  一致性 Hash**
+
+  **一致性 Hash**，相同参数的请求总是发到同一提供者。
+  当某一台提供者挂时，原本发往该提供者的请求，基于虚拟节点，平摊到其它提供者，不会引起剧烈变动。
+
+  算法参见：[http://en.wikipedia.org/wiki/Consistent_hashing](https://link.zhihu.com/?target=http%3A//en.wikipedia.org/wiki/Consistent_hashing)
+  缺省只对第一个参数 Hash，如果要修改，请配置 `<dubbo:parameter key="hash.arguments" value="0,1" />`
+  缺省用 160 份虚拟节点，如果要修改，请配置 `<dubbo:parameter key="hash.nodes" value="320" />`
+
+##### **如何设置负载均衡策略**
+
+服务端设置
+
+```xml
+<dubbo:service interface="xxx" loadbalance="roundrobin">
+```
+
+客户端设置
+
+```xml
+<dubbo:reference interface="xxx" loadbalance="roundrobin">
+```
+
+基于springboot的设置方式
+
+```yml
+dubbo:
+  provider:
+    loadbalance: roundrobin
+```
+
+
+
+## P13、Dubbo整合SpringBoot开发服务的提供者-XML
+
+### 1，整合方式一：采用XML的方式
+
+- 1，首先接口层不变
+- 2，服务提供者采用SpringBoot创建
+
+> 编写服务实现类，加注解@Service
+> 导入dubbo和zookeeper的依赖
+> 创建dubbo配置文件
+> **在启动类，加上注解@ImportResource("classpath:dubbo-provider.xml")**
+
+- 3，服务消费者采用SpringBoot创建
+
+> 导入dubbo和zookeeper的依赖
+> 创建dubbo配置文件
+> 在启动类，加上注解@ImportResource("classpath:dubbo-consumer.xml")
+> 测试，注入服务@Autowired private IUserService userService;
+
+至此，完成整合
+
+### 2，整合方式二：采用注解的方式
+
+#### 2.1 生产者
+
+- **1，引入依赖**
+
+```xml
+<dependency>
+    <groupId>com.alibaba.boot</groupId>
+    <artifactId>dubbo-spring-boot-starter</artifactId>
+    <version>0.2.0</version>
+</dependency>
+```
+
+- **2，配置dubbo**
+
+```properties
+dubbo.application.name=dubbo2-springboot-provider
+dubbo.registry.protocol=zookeeper
+dubbo.registry.address=192.168.10.173:2181
+dubbo.protocol.port=20883
+```
+
+- **3，给Service加@Service注解（dubbo提供的@Service）**
+
+```java
+import com.alibaba.dubbo.config.annotation.Service;
+
+@Component
+@Service//dobbo的@Serivice
+public class UesrServiceImpl implements UserService{
+    @Ovrride
+    public String hello(){
+        return "SpringBoot整合Dubbo"
+    }
+}
+```
+
+
+
+- **4，启动类加上@EnableDubbo注解**
+
+```java
+@EnableDubbo
+@SpringApplication
+public class ProviderApplication{
+    public static void main(String[] args){
+        SpringApplication.run(ProviderApplication.class, args);
+    }
+}
+```
+
+#### 2.2 消费者
+
+- 1，引入依赖
+- 2，配置dubbo
+
+```text
+dubbo.application.name=dubbo2-springboot-consumer
+dubbo.registry.protocol=zookeeper
+dubbo.registry.address=192.168.10.173:2181
+```
+
+- **3，需要引用Service的地方，加入@Reference注解，代替原先的@Autowried注解**
+- **4，启动类加上@EnableDubbo注解**
+
+## P14、SpringBoot整合dubbo注解的方式
+
+
+
+## P15、Dubbo架构流程回顾
+
+
+
+## P16、回顾开发流程
+
+
 
 ## P17 设计表需要注意什么
 
@@ -225,6 +563,61 @@ dubbo-mall
 
 
 ## P20 实现entity+mapper层
+
+
+
+## P21 打通整个项目的开发流程
+
+
+
+## P22、快速掌握BootStrap搭建页面布局
+
+
+
+## P23、搭建好FastDFS，完成上传服务的测试
+
+#### 1、什么是FastDFS
+
+FastDFS是一个开源的分布式文件系统，她对文件进行管理，功能包括：文件存储、文件同步、文件访问（文件上传、文件下载）等，解决了大容量存储和负载均衡的问题。特别适合以文件为载体的在线服务，如相册网站、视频网站等等。
+
+##### 2、为什么使用FASTDFS
+
+##### 3、分布式文件系统介绍
+
+
+
+![img](http://static.oschina.net/uploads/img/201204/20230218_pNXn.jpg)
+
+FastDFS中的文件标识分为两个部分：卷名和文件名，二者缺一不可。
+
+![img](http://static.oschina.net/uploads/img/201204/20230218_6wXI.jpg)
+
+ 
+
+​                FastDFS file upload
+
+上传文件交互过程：
+\1. client询问tracker上传到的storage，不需要附加参数；
+\2. tracker返回一台可用的storage；
+\3. client直接和storage通讯完成文件上传。 
+
+![img](http://static.oschina.net/uploads/img/201204/20230218_ieZW.jpg)
+
+ 
+
+​             FastDFS file download
+
+下载文件交互过程：
+
+\1. client询问tracker下载文件的storage，参数为文件标识（卷名和文件名）；
+\2. tracker返回一台可用的storage；
+\3. client直接和storage通讯完成文件下载。
+
+
+
+
+
+## P29、引入文件服务器的发展演变
 
 
 
@@ -947,3 +1340,9 @@ String-----------------------List
 String-----------------------Set
 
 String-----------------------Zset
+
+
+
+
+
+## P167、对接第三方物流平台
