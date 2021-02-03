@@ -2362,7 +2362,7 @@ public class WebMvcAutoConfiguration {
 
 2）、在SpringBoot中会有非常多的xxxConfigurer帮助我们进行扩展配置
 
-
+3）、在SpringBoot中会有很多的xxCustomizer帮助我们进行定制配置
 
 ```
 快捷键ctrl+o ：打开可重写的方法列表
@@ -2673,69 +2673,2078 @@ public class MyMvcConfig extends WebMvcConfigurerAdapter{
 
 ### P36 web开发-【实验】-登陆&拦截器
 
+#### 1.登录
+
+##### 1）登录页login.html
+
+```html
+<form class="form-signin" action="dashboard.html" th:action="@{user/login}", method="post">
+	<!-- 登陆错误消息的显示 判断errorMsg是否为空 -->
+    <p style="color: red" th:text="${msg}" th:if="${not #strings.isEmpty(msg)}"></p> <!-- 错误消息框 -->
+    <input type="text" name="username" class="form-control" placeholder="Username" th:placeholder="#{login.username}" required="" autofocus="">
+	<input type="password" name = "password" class="form-control" placeholder="Password" th:placeholder="#{login.password}" required="">
+ 
+```
+
+登录消息提示
+
+```html
+<p style="color: red" th:text="${msg}" th:if="${not #strings.isEmpty(msg)}"></p>
+```
+
+##### 2）LoginController
+
+```java
+@Controller
+public class LoginController {
+ 
+    @PostMapping(value = "/user/login")
+    //@RequestMapping(value = "/user/login",method = RequestMethod.POST)
+    public String login(@RequestParam("username") String username,
+                        @RequestParam("password") String password,
+                        Map<String, Object> map) {
+ 
+        if (!StringUtils.isEmpty(username) && "123456".equals(password)) {
+            //登录成功
+            return "dashboard"; //请求转发到主页
+        } else {
+            //登录失败
+            map.put("errorMsg", "用户名和密码错误");
+            return "login";
+        }
+    }
+}
+```
+
+##### 3）开发期间模板引擎页面修改以后，要实时生效
+
+1、禁用模板引擎的缓存
+
+```yaml
+# 禁用缓存
+spring.thymeleaf.cache=false 
+```
+
+2、页面修改完成以后ctrl+f9：重新编译；
+
+3、或者使用热部署工具DevTools、JRebel
+
+4）、登录成功后的页面，看url还是在login页面，是转发到dashboard页面，这时刷新页面就会提示表单重复提交，防止重复提交，可以使用重定向
+
+![img](https://img-blog.csdnimg.cn/20190818081848955.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
+##### 5）重定向--添加视图映射
+
+```java
+//重定向
+if (!StringUtils.isEmpty(username) && "123456".equals(password)) {
+    //登录成功 防止表单重复提交，
+    return "redirect:/main.html";
+
+```
+
+```java
+@Bean
+public WebMvcConfigurerAdapter webMvcConfigurerAdapter(){
+    WebMvcConfigurerAdapter adapter = new WebMvcConfigurerAdapter(){}
+    	public void addViewCOntrollers(ViewControllerRegistry registry){
+			//... 其他视图映射这里省略
+            //添加视图映射
+			registry.addViewController("/main.html").setViewName("dashboard");
+        }
+}
+```
+
+#### 2.拦截器进行登陆检查
+
+登录状态拦截器，检查登录状态，没有登录的用户，不允许访问主页和增删改查页
+
+##### **1）添加拦截器**
+
+```java
+ 
+/**
+ * 登陆检查，
+ */
+public class LoginHandlerInterceptor implements HandlerInterceptor {
+    //目标方法执行之前
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        Object user = request.getSession().getAttribute("loginUser");
+        if(user == null){
+            //未登陆，返回登陆页面
+            request.setAttribute("msg","没有权限，请先登陆");
+            request.getRequestDispatcher("/index.html").forward(request,response);
+            return false;
+        }else{
+            //已登陆，放行请求
+            return true;
+        } 
+    }
+ 
+    @Override
+    public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
+ 
+    }
+ 
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+ 
+    }
+}
+```
+
+##### **2）注册拦截器**
+
+```java
+ //所有的WebMvcConfigurerAdapter组件都会一起起作用
+    @Bean //将组件注册在容器
+    public WebMvcConfigurerAdapter webMvcConfigurerAdapter(){
+        WebMvcConfigurerAdapter adapter = new WebMvcConfigurerAdapter() {
+            @Override
+            public void addViewControllers(ViewControllerRegistry registry) {
+                registry.addViewController("/").setViewName("login");
+                registry.addViewController("/index.html").setViewName("login");
+                registry.addViewController("/main.html").setViewName("dashboard");
+            }
+ 
+            //注册拦截器 ******************************
+            @Override
+            public void addInterceptors(InterceptorRegistry registry) {
+                //super.addInterceptors(registry);
+                //静态资源；  *.css , *.js ，html
+                //SpringBoot已经做好了静态资源映射  这里不需要处理静态资源
+                registry.addInterceptor(new LoginHandlerInterceptor()).addPathPatterns("/**")  //拦截请求
+                        .excludePathPatterns("/index.html","/","/user/login");	//排除请求
+            }
+        };
+        return adapter;
+    }
+```
+
+左上角显示登录用户
+
+```html
+Company name 改为  
+[[session.loginUser]]  # 行内写法
+```
+
 
 
 ### P37 web开发-【实验】-Restful实验要求
+
+实验要求：
+
+1）、RestfulCRUD：CRUD满足Rest风格；
+
+URI： /资源名称/资源标识 HTTP请求方式区分对资源CRUD操作
+
+|      | 普通CRUD（uri来区分操作） | Restful-CRUD      |
+| :--- | :------------------------ | :---------------- |
+| 查询 | getEmp                    | emp---GET         |
+| 添加 | addEmp?xxx                | emp---POST        |
+| 修改 | updateEmp?id=xxx&xxx=xx   | emp/{id}---PUT    |
+| 删除 | deleteEmp?id=1            | emp/{id}---DELETE |
+
+2）、实验的请求架构;
+
+| 实验功能                             | 请求URI | 请求方式 |
+| :----------------------------------- | :------ | :------- |
+| 查询所有员工                         | emps    | GET      |
+| 查询某个员工(来到修改页面)           | emp/1   | GET      |
+| 来到添加页面                         | emp     | GET      |
+| 添加员工                             | emp     | POST     |
+| 来到修改页面（查出员工进行信息回显） | emp/1   | GET      |
+| 修改员工                             | emp     | PUT      |
+| 删除员工                             | emp/1   | DELETE   |
+
 
 
 
 ### P38 web开发-【实验】-员工列表-公共页抽取
 
+```html
+<a class="nav-link" href="#" th:href="@{/emps}"> 员工管理</a>
+```
 
+##### 3) 员工列表页
+
+```java
+@Controller
+public class EmployeeController {
+ 
+    @Autowired
+    EmployeeDao employeeDao;
+ 
+    //查询所有员工，返回员工列表页面
+    //thymeleaf默认就会拼接字符串
+    //classpath：/templates/xxx.html    xxx=emp/list
+    @GetMapping(value = "/emps")
+    public String list(Map<String, Object> map) {
+        Collection<Employee> employees = employeeDao.getAll();
+        map.put("emps", employees);
+        return "emp/list";
+    }
+}
+```
+
+##### 4） thymeleaf公共页面元素抽取
+
+--将侧边栏和上边栏公共部分抽取出来
+
+```html
+1、抽取公共片段
+<div th:fragment="copy">
+&copy; 2011 The Good Thymes Virtual Grocery
+</div>
+ 
+2、引入公共片段
+<div th:insert="~{footer :: copy}"></div>
+~{templatename::selector}：模板名::选择器
+~{templatename::fragmentname}:模板名::片段名
+模板名 会使用thymeleaf的前后缀进行解析
+
+3、默认效果：
+insert的公共片段在div标签中，如果不想多一层外层div 可以使用th:replace
+如果使用th:insert等属性进行引入，可以不用写~{}：
+行内写法可以加上：[[~{}]];[(~{})]；
+
+```
+
+三种引入公共片段的th属性：
+
+**th:insert**：将公共片段整个插入到声明引入的元素中
+
+**th:replace**：将声明引入的元素替换为公共片段
+
+**th:include**：将被引入的片段的内容包含进这个标签中
+
+三种引入方式的区别：
+
+```html
+<footer th:fragment="copy">
+&copy; 2011 The Good Thymes Virtual Grocery
+</footer>
+ 
+引入方式
+<div th:insert="footer :: copy"></div>
+<div th:replace="footer :: copy"></div>
+<div th:include="footer :: copy"></div>
+ 
+效果
+<div>
+    <footer>
+    &copy; 2011 The Good Thymes Virtual Grocery
+    </footer>
+</div>
+ 
+<footer>
+&copy; 2011 The Good Thymes Virtual Grocery
+</footer>
+ 
+<div>
+&copy; 2011 The Good Thymes Virtual Grocery
+</div>
+```
+
+两种方式实现引入
+
+```html
+<nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0" th:fragment="topbar">
+<nav class="col-md-2 d-none d-md-block bg-light sidebar" id="sideBar">
+ 
+引入：
+<!--  引入topbar -->
+<div th:replace="dashboard :: topbar"></div>
+ 
+<!-- 引入侧边栏 -->
+<div th:replace="dashboard::#sideBar"></div>
+ 
+```
+
+![img](https://img-blog.csdnimg.cn/20190819072535252.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
 
 ### P39 web开发-【实验】-员工列表-链接高亮&列表完成
 
+#### 1.链接高亮
 
+引入片段的时候，传入参数（官方文档，参数化的片段签名）
+
+```html
+ <a class="nav-link active" href="#" th:href="@{/main.html}">
+ <a class="nav-link active" th:href="@{/emps}">
+```
+
+
+
+#### 2.高亮某一个选中显示的页面
+
+1）、把sideBar和topBar公共部分抽取成一个bar.html
+
+```html
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>bar</title>
+</head>
+<body>
+<!-- topBar -->
+<nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0" th:fragment="topbar">
+    <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="http://getbootstrap.com/docs/4.0/examples/dashboard/#">[[${session.loginUser}]]</a>
+    <input class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search">
+    <ul class="navbar-nav px-3">
+        <li class="nav-item text-nowrap">
+            <a class="nav-link" href="http://getbootstrap.com/docs/4.0/examples/dashboard/#">Sign out</a>
+        </li>
+    </ul>
+</nav>
+ 
+<!-- sidebar -->
+<nav class="col-md-2 d-none d-md-block bg-light sidebar" id="sideBar">
+    <div class="sidebar-sticky">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link active"
+                   href="#" th:href="@{/main.html}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-home">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    Dashboard <span class="sr-only">(current)</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="http://getbootstrap.com/docs/4.0/examples/dashboard/#">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file">
+                        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                        <polyline points="13 2 13 9 20 9"></polyline>
+                    </svg>
+                    Orders
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" th:href="@{/emps}" href="#">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-users">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    员工管理
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="http://getbootstrap.com/docs/4.0/examples/dashboard/#">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-bar-chart-2">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    Reports
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="http://getbootstrap.com/docs/4.0/examples/dashboard/#">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-layers">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                        <polyline points="2 17 12 22 22 17"></polyline>
+                        <polyline points="2 12 12 17 22 12"></polyline>
+                    </svg>
+                    Integrations
+                </a>
+            </li>
+        </ul>
+ 
+        <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+            <span>Saved reports</span>
+            <a class="d-flex align-items-center text-muted" href="http://getbootstrap.com/docs/4.0/examples/dashboard/#">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-plus-circle"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+            </a>
+        </h6>
+        <ul class="nav flex-column mb-2">
+            <li class="nav-item">
+                <a class="nav-link" href="http://getbootstrap.com/docs/4.0/examples/dashboard/#">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    Current month
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="http://getbootstrap.com/docs/4.0/examples/dashboard/#">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    Last quarter
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="http://getbootstrap.com/docs/4.0/examples/dashboard/#">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    Social engagement
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="http://getbootstrap.com/docs/4.0/examples/dashboard/#">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    Year-end sale
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+  
+</body>
+</html>
+```
+
+2）、利用三重条件判断来判断当前时哪个页面并且高亮
+
+```html
+  <a class="nav-link active" href="#" th:href="@{/main.html}"
+     th:class="${activeUri=='main.html'?'nav-link active':'nav-link'}">
+ 
+  <a class="nav-link active" th:href="@{/emps}"
+     href="#" th:class="${activeUri=='emps'?'nav-link active':'nav-link'}">
+```
+
+3)、Dashboard页面  变量如何传入
+
+```html
+	<!-- 引入sidebar -->
+	<div th:replace="commons/bar::#sideBar(activeUri='main.html')"></div>
+```
+
+4）、list页面  变量如何传入
+
+```html
+<!-- 引入侧边栏 -->
+<div th:replace="commons/bar::#sideBar(activeUri='emps')"></div>
+```
+
+#### 3.遍历取出员工数据
+
+现状是现在的员工列表时写死在html中的
+
+![img](https://img-blog.csdnimg.cn/20190822073131341.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
+现在要实时取出数据
+
+```html
+<thead>
+	<tr>
+	  <th>id</th>
+	  <th>lastName</th>
+	  <th>email</th>
+	  <th>gender</th>
+	  <th>department</th>
+	  <th>birth</th>
+	 </tr>
+</thead>
+<tbody>
+	<tr th:each="emp:${emps}">
+		<td th:text="${emp.id}"></td>
+		<td>[[${emp.lastName}]]</td>  <!-- 行内写法 -->
+		<td th:text="${emp.email}"></td>
+		<td th:text="${emp.gender}==0?'女':'男'"></td>
+		<td th:text="${emp.department.departmentName}"></td>
+		<td th:text="${emp.birth}"></td>
+        <td>
+            <button class="btn btn-sm btn-primary">编辑</button>
+            <button class="btn btn-sm btn-danger">删除</button>
+        </td>
+	</tr>
+</tbody>
+```
+
+暂时不访问数据库，从内存中构造数据
+
+```java
+	static{
+		employees = new HashMap<Integer, Employee>();
+ 
+		employees.put(1001, new Employee(1001, "E-AA", "aa@163.com", 1, new Department(101, "D-AA")));
+		employees.put(1002, new Employee(1002, "E-BB", "bb@163.com", 1, new Department(102, "D-BB")));
+		employees.put(1003, new Employee(1003, "E-CC", "cc@163.com", 0, new Department(103, "D-CC")));
+		employees.put(1004, new Employee(1004, "E-DD", "dd@163.com", 0, new Department(104, "D-DD")));
+		employees.put(1005, new Employee(1005, "E-EE", "ee@163.com", 1, new Department(105, "D-EE")));
+	}
+```
+
+![img](https://img-blog.csdnimg.cn/2019082207410082.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
+#### 4.日期格式化
+
+```
+${#dates.fromate(emp.birth, 'yyyy-MM-dd HH:mm')}
+```
+
+![img](https://img-blog.csdnimg.cn/20190822074219830.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
+#### 5.添加，编辑和删除按钮
+
+```html
+<h2>员工列表 <button class="btn btn-sm btn-success">添加</button></h2>
+ 
+<td>
+	<button class="btn btn-sm btn-primary">编辑</button>
+	<button class="btn btn-sm btn-danger">删除</button>
+</td>
+```
+
+![img](https://img-blog.csdnimg.cn/20190822075107824.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
 
 ### P40 web开发-【实验】-员工添加-来到添加页面
 
+点击“员工添加”按钮来到员工添加页面，页面应该是form表单形式，添加员工信息，然后点击“保存”按钮
 
+#### 0. 列表页，添加按钮 增加href
+
+```html
+<h2>员工列表 <a class="btn btn-sm btn-success" href="emp" th:href="@{/emp}">添加</a></h2>
+```
+
+
+
+#### 1.“员工添加”按钮：/emp，get请求
+
+```java
+    //来到员工添加页面
+    @GetMapping(value = "/emp")
+    public String getAddEmp(Model model){
+        //查出所有部门
+        Collection<Department> departments = departmentDao.getDepartments();
+        model.addAttribute("depts", departments);
+        return "emp/add";
+    }
+```
+
+
+
+```html
+<form>
+    <div class="form-group">
+        <label>LastName</label>
+        <input type="text" class="form-control" placeholder="zhangsan">
+    </div>
+    <div class="form-group">
+        <label>Email</label>
+        <input type="email" class="form-control" placeholder="zhangsan@atguigu.com">
+    </div>
+    <div class="form-group">
+        <label>Gender</label><br/>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="gender"  value="1">
+            <label class="form-check-label">男</label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="gender"  value="0">
+            <label class="form-check-label">女</label>
+        </div>
+    </div>
+    <div class="form-group">
+        <label>department</label>
+        <select class="form-control">
+	        <option th th:value="${dept.id}" th:each="dept:${depts}">[[${dept.departmentName}]]</option>  
+        </select>
+    </div>
+    <div class="form-group">
+        <label>Birth</label>
+        <input type="text" class="form-control" placeholder="zhangsan">
+    </div>
+    <button type="submit" class="btn btn-primary">添加</button>
+</form>
+```
 
 ### P41 web开发-【实验】-员工添加-添加完成
+
+#### 2.“保存”按钮：/emp，post请求
+
+```java
+ //添加员工
+    //SpringMvc自动将请求参数和入参对象的属性进行一一绑定，
+    // 要求请求参数的名字和javaBean入参的对象的属性名保持一致
+    @PostMapping("/emp")
+    public String addEmp(Employee employee){
+ 
+        System.out.println("保存的员工信息"+employee);
+        employeeDao.save(employee);
+        //redirect:表示重定向到一个地址，/代表当前项目路径
+        //forward：表示转发到一个地址
+        //直接return "/emp"; thymeleaf默认就会拼接字符串 使用模板引擎 找/templates/emps.html 并不能把req数据放入页面
+        //原理可以查看ThymeleafView具体源码 了解thymeleaf是如何解析视图的
+	    //classpath：/templates/xxx.html    xxx=emp/list
+        return "redirect:/emps";
+    }
+```
+
+#### 3.解决遇到的问题
+
+##### 3.1 日期格问题
+
+添加信息后报400错误，查看日志报错
+
+```
+“Field error in object 'employee' on field 'birth': rejected value [2019-08-23]; codes [typeMismatch.employee.birth,typeMismatch.birth,typeMismatch.java.util.Date,typeMismatch]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [employee.birth,birth]; arguments []; default message [birth]]; default message [Failed to convert property value of type 'java.lang.String' to required type 'java.util.Date' for property 'birth'; nested exception is org.springframework.core.convert.ConversionFailedException: Failed to convert from type [java.lang.String] to type [java.util.Date] for value '2019-08-23'; nested exception is java.lang.IllegalArgumentException]]”
+```
+
+添加页面最容易遇到的问题：
+
+提交的数据格式不对：特别是日期、时间格式等；不支持2019-08-23这种格式，只支持2017/12/12这种格式吗
+
+日期的格式化；SpringMVC将页面提交的值需要转换为指定的类型；涉及类型转换和日期格式
+
+默认日期是按照/的方式；
+
+在application.properties配置文件中配置数据格式方式
+
+```properties
+spring.mvc.date-format=yyyy-MM-dd
+```
+
+查看源码： 
+
+```java
+WebMvcAutoConfiguration.java
+ 
+@Bean
+@ConditionalOnProperty(
+    prefix = "spring.mvc",
+    name = {"date-format"}
+)
+public Formatter<Date> dateFormatter() {
+   return new DateFormatter(this.mvcProperties.getDateFormat());
+}
+ 
+ 
+WebMvcProperties.java
+//默认格式 yyyy/MM/dd
+public String getDateFormat() {
+   return this.dateFormat;
+}
+```
+
+![img](https://img-blog.csdnimg.cn/20190824081857330.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
+![img](https://img-blog.csdnimg.cn/20190824081923240.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
+##### 3.2 数据未保存成功问题
+
+![img](https://img-blog.csdnimg.cn/20190824072013966.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
+
+
+在添加员工信息的时候之后，点击添加没有成功跳转到员工列表页，员工信息也没有添加成功
+
+![img](https://img-blog.csdnimg.cn/2019082407223472.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
+看标题像是请求了一个get方法，检查代码也没有检查出来问题，debug发现是添加信息之后的后续操作action没有添加，默认是get方法，应为post提交
+
+```html
+<form>
+	<div class="form-group">
+		<label>LastName</label>
+		<input name="lastName" type="text" class="form-control" placeholder="zhangsan">
+	</div>
+	<div class="form-group">
+		<label>Email</label>
+ 
+修改成.....
+ 
+<form th:action="@{/emp}"  method ="post">
+	<div class="form-group">
+		<label>LastName</label>
+		<input name="lastName" type="text" class="form-control" placeholder="zhangsan">
+	</div>
+```
 
 
 
 ### P42 web开发-【实验】-员工修改-重用页面&修改完成
 
+点击某个员工的#编辑#按钮，进入修改员工页面（/emp/{id}，get），修改员工信息，然后点击#保存#按钮(返回到员工列表页，put)
+
+##### 列表页list.html  修改编辑按钮 添加链接
+
+```html
+<button class="btn btn-sm btn-primary">编辑</button>
+改为	
+<a class="btn btn-sm btn-primary" th:href="@{/epm/}+${emp.id}">编辑</a>
+```
+
+##### 修改员工信息页
+
+修改添加二合一表单 add.html
+
+```html
+<!--需要区分是员工修改还是添加；-->
+<form th:action="@{/emp}" method="post">
+    <!--发送put请求修改员工数据-->
+    <!--
+1、SpringMVC中配置HiddenHttpMethodFilter;（SpringBoot自动配置好的）
+2、页面创建一个post表单
+3、创建一个input项，name="_method";值就是我们指定的请求方式
+-->
+    <input type="hidden" name="_method" value="put" th:if="${emp!=null}"/>
+    <input type="hidden" name="id" th:if="${emp!=null}" th:value="${emp.id}">
+    <div class="form-group">
+        <label>LastName</label>
+        <input name="lastName" type="text" class="form-control" placeholder="zhangsan" th:value="${emp!=null}?${emp.lastName}">
+    </div>
+    <div class="form-group">
+        <label>Email</label>
+        <input name="email" type="email" class="form-control" placeholder="zhangsan@atguigu.com" th:value="${emp!=null}?${emp.email}">
+    </div>
+    <div class="form-group">
+        <label>Gender</label><br/>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="gender" value="1" th:checked="${emp!=null}?${emp.gender==1}">
+            <label class="form-check-label">男</label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="gender" value="0" th:checked="${emp!=null}?${emp.gender==0}">
+            <label class="form-check-label">女</label>
+        </div>
+    </div>
+    <div class="form-group">
+        <label>department</label>
+        <!--提交的是部门的id-->
+        <select class="form-control" name="department.id">
+            <option th:selected="${emp!=null}?${dept.id == emp.department.id}" th:value="${dept.id}" th:each="dept:${depts}" th:text="${dept.departmentName}">1</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>Birth</label>
+        <input name="birth" type="text" class="form-control" placeholder="zhangsan" th:value="${emp!=null}?${#dates.format(emp.birth, 'yyyy-MM-dd HH:mm')}">
+    </div>
+    <button type="submit" class="btn btn-primary" th:text="${emp!=null}?'修改':'添加'">添加</button>
+</form>
+```
+
+##### 查询员工信息Controller
+
+```java
+ 
+    //来到修改页面，查出当前员工，在页面回显
+    @GetMapping("/emp/{id}")
+    public String toEditPage(@PathVariable("id") Integer id, Model model) {
+        Employee employee = employeeDao.get(id);
+        model.addAttribute("emp", employee);
+ 
+        //页面要显示所有的部门列表
+        Collection<Department> departments = departmentDao.getDepartments();
+        model.addAttribute("depts", departments);
+        //回到修改页面（add是一个修改添加二合一页面）
+        return "/emp/add";
+    }
+ 
+    //员工修改,并保存员工信息
+    @PutMapping("/emp")  //处理put请求
+    public String updateEmployee (Employee employee){
+        System.out.println("修改的员工数据，"+employee);
+        employeeDao.save(employee);
+        return "redirect:/emps";
+    }
+```
+
+##### 修改页面表单为put请求
+
+表单如何发送put请求
+
+```
+发送put请求修改员工数据
+    
+1、SpringMVC中配置HiddenHttpMethodFilter;（SpringBoot自动配置好的） 将请求转为指定的方式发送
+2、页面创建一个post表单
+3、创建一个input项，name="_method";值就是我们指定的请求方式
+```
+
+```html
+<input type="hidden" name="_method" value="put" th:if="${emp!=null}"/>
+```
+
+```html
+value="put" put 不区分大小写
+```
+
+##### 修改时提交员工id
+
+```html
+<input type="hidden" name="id" th:if="${emp!=null}" th:value="${emp.id}">
+```
+
+![img](https://img-blog.csdnimg.cn/20190825163752890.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
+![img](https://img-blog.csdnimg.cn/20190825163832895.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
 
 
 ### P43 web开发-【实验】-员工删除-删除完成
 
+#### 删除员工
 
+##### 列表删除按钮
+
+点击某个员工的#删除#按钮，发送delete请求，删除员工，然后返回到员工列表页面
+
+```html
+<td>
+    <a class="btn btn-sm btn-primary" th:href="@{/epm/}+${emp.id}">编辑</a>
+    <form th:action="@{/emp}+${emp.id}" method="post">
+        <input type="hidden" naem="_method" value="delete" />  <!--发送delete请求-->
+        <button type="submit" class="btn btn-sm btn-danger">删除</button> <!--提交表单-->
+    </form>
+</td>
+```
+
+每一个按钮 都要写一个表单，这样太麻烦，并且，表单会积压按钮换行
+
+##### 改进
+
+1- 将表单移动到表格之外
+
+2-使用js方式触发表单提交
+
+```html
+ 	<body>
+		<!--  引入topbar -->
+		<div th:replace="commons/bar::topbar"></div>
+ 
+		<div class="container-fluid">
+			<div class="row">/
+				<!-- 引入侧边栏 -->
+				<div th:replace="commons/bar::#sideBar(activeUri='emps')"></div>
+ 
+				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+					<h2>员工列表 <a class="btn btn-sm btn-success" href="/emp" th:href="@{/emp}">添加</a></h2>
+					<div class="table-responsive">
+						<table class="table table-striped table-sm">
+							<thead>
+								<tr>
+									<th>id</th>
+									<th>lastName</th>
+									<th>email</th>
+									<th>gender</th>
+									<th>department</th>
+									<th>birth</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr th:each="emp:${emps}">
+									<td th:text="${emp.id}"></td>
+									<td>[[${emp.lastName}]]</td>
+									<td th:text="${emp.email}"></td>
+									<td th:text="${emp.gender}==0?'女':'男'"></td>
+									<td th:text="${emp.department.departmentName}"></td>
+									<td th:text="${#dates.format(emp.birth,'yyyy-MM-dd HH:mm')}"></td>
+									<td>
+										<a class="btn btn-sm btn-primary" th:href="@{/emp/}+${emp.id}">编辑</a>
+										<button th:attr="deleteUri = @{/emp/}+${emp.id}" class="btn btn-sm btn-danger deletebtn">删除</button>
+ 
+									</td>
+								</tr>
+ 
+							</tbody>
+						</table>
+					</div>
+				</main>
+                <!-- 将表单移动到这里 防止页面变形 ———————————————————————————————————————————————————————— -->
+				<form id="deleteEmpForm" method="post">
+					<input type="hidden" name="_method" value="delete"/>
+				</form>
+			</div>
+		</div>
+ 
+		<!-- Bootstrap core JavaScript
+    ================================================== -->
+		<!-- Placed at the end of the document so the pages load faster -->
+		<script type="text/javascript" src="asserts/js/jquery-3.2.1.slim.min.js"></script>
+		<script type="text/javascript" src="asserts/js/popper.min.js"></script>
+		<script type="text/javascript" src="asserts/js/bootstrap.min.js"></script>
+ 
+		<!-- Icons -->
+		<script type="text/javascript" src="asserts/js/feather.min.js"></script>
+		<script>
+			feather.replace()
+		</script>
+ 
+		<!-- Graphs -->
+		<script type="text/javascript" src="asserts/js/Chart.min.js"></script>
+		<script>
+			var ctx = document.getElementById("myChart");
+			var myChart = new Chart(ctx, {
+				type: 'line',
+				data: {
+					labels: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+					datasets: [{
+						data: [15339, 21345, 18483, 24003, 23489, 24092, 12034],
+						lineTension: 0,
+						backgroundColor: 'transparent',
+						borderColor: '#007bff',
+						borderWidth: 4,
+						pointBackgroundColor: '#007bff'
+					}]
+				},
+				options: {
+					scales: {
+						yAxes: [{
+							ticks: {
+								beginAtZero: false
+							}
+						}]
+					},
+					legend: {
+						display: false,
+					}
+				}
+			});
+		</script>
+	<script>
+		$(".deletebtn").click(function () {
+			//删除当前员工
+			$("#deleteEmpForm").attr("action",$(this).attr("deleteUri")).submit();
+			return false;
+		})
+	</script> 
+	</body> 
+</html>
+```
+
+
+
+##### 删除员工的controller
+
+```java
+   //员工删除
+    @DeleteMapping("/emp/{id}")
+    public String deleteEmp(@PathVariable("id") Integer id){
+        employeeDao.delete(id);
+        return "redirect:/emps";
+    }
+```
+
+![img](https://img-blog.csdnimg.cn/201908260717304.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
+![img](https://img-blog.csdnimg.cn/20190826071800804.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
 
 ### P44 web开发-错误处理原理&定制错误页面
 
+#### 7. 错误处理原理
 
+#### 7.1 SpringBoot默认的错误处理机制
+
+##### 1、**错误处理默认效果：**
+
+1）浏览器访问，返回一个默认的错误页面
+
+![img](https://img-blog.csdnimg.cn/20190827065844321.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
+ 浏览器发送请求的请求头：
+
+![img](https://img-blog.csdnimg.cn/20190827065914179.png)
+
+使用postman模拟发送客户端请求
+
+2）如果是其他客户端，默认响应一个json数据
+
+![img](https://img-blog.csdnimg.cn/20190827065949553.png)
+
+​    客户端发送请求的请求头：
+
+![img](https://img-blog.csdnimg.cn/20190827070022770.png)
+
+
+
+##### 2、**错误处理原理：**
+
+可以参照ErrorMvcAutoConfiguration；错误处理的自动配置；
+
+给容器中添加了以下组件
+
+**1）、ErrorPageCustomizer：**
+
+```java
+	@Value("${error.path:/error}")
+	private String path = "/error";  //出现错误以后来到error请求进行处理；（相当于spring时期 web.xml注册的错误页面规则）
+```
+
+**2）、BasicErrorController：处理默认/error请求**
+
+```java
+@Controller
+//使用顺续“server.error.path;error.path;/error
+@RequestMapping("${server.error.path:${error.path:/error}}")
+public class BasicErrorController extends AbstractErrorController {
+    
+    @RequestMapping(produces = "text/html")//产生html类型的数据；浏览器发送的请求来到这个方法处理
+	public ModelAndView errorHtml(HttpServletRequest request,
+			HttpServletResponse response) {
+		HttpStatus status = getStatus(request);
+		Map<String, Object> model = Collections.unmodifiableMap(getErrorAttributes(
+				request, isIncludeStackTrace(request, MediaType.TEXT_HTML)));
+		response.setStatus(status.value());
+        
+        //去哪个页面作为错误页面；包含页面地址和页面内容
+		ModelAndView modelAndView = resolveErrorView(request, response, status, model);
+		return (modelAndView == null ? new ModelAndView("error", model) : modelAndView);
+	}
+ 
+	@RequestMapping
+	@ResponseBody    //产生json数据，其他客户端来到这个方法处理；
+	public ResponseEntity<Map<String, Object>> error(HttpServletRequest request) {
+		Map<String, Object> body = getErrorAttributes(request,
+				isIncludeStackTrace(request, MediaType.ALL));
+		HttpStatus status = getStatus(request);
+		return new ResponseEntity<Map<String, Object>>(body, status);
+	}
+```
+
+**3）、DefaultErrorViewResolver：**
+
+```java
+@Override
+	public ModelAndView resolveErrorView(HttpServletRequest request, HttpStatus status,
+			Map<String, Object> model) {
+		ModelAndView modelAndView = resolve(String.valueOf(status), model);
+		if (modelAndView == null && SERIES_VIEWS.containsKey(status.series())) {
+			modelAndView = resolve(SERIES_VIEWS.get(status.series()), model);
+		}
+		return modelAndView;
+	}
+ 
+	private ModelAndView resolve(String viewName, Map<String, Object> model) {
+        //默认SpringBoot可以去找到一个页面？  error/404
+		String errorViewName = "error/" + viewName;
+        
+        //模板引擎可以解析这个页面地址就用模板引擎解析
+		TemplateAvailabilityProvider provider = this.templateAvailabilityProviders
+				.getProvider(errorViewName, this.applicationContext);
+		if (provider != null) {
+            //模板引擎可用的情况下返回到errorViewName指定的视图地址
+			return new ModelAndView(errorViewName, model);
+		}
+        //模板引擎不可用，就在静态资源文件夹下找errorViewName对应的页面   error/404.html
+		return resolveResource(errorViewName, model);
+	}
+```
+
+**4）、DefaultErrorAttributes：**
+
+​	作用：帮我们在页面共享信息；
+
+```java
+帮我们在页面共享信息；
+@Override
+	public Map<String, Object> getErrorAttributes(RequestAttributes requestAttributes,
+			boolean includeStackTrace) {
+		Map<String, Object> errorAttributes = new LinkedHashMap<String, Object>();
+		errorAttributes.put("timestamp", new Date());
+		addStatus(errorAttributes, requestAttributes);
+		addErrorDetails(errorAttributes, requestAttributes, includeStackTrace);
+		addPath(errorAttributes, requestAttributes);
+		return errorAttributes;
+	}
+```
+
+
+
+##### 3、**错误处理步骤：**
+
+一但系统出现4xx或者5xx之类的错误；ErrorPageCustomizer就会生效（定制错误的响应规则）；就会来到/error请求；就会被**BasicErrorController**处理；
+
+1）响应页面；去哪个页面是由**DefaultErrorViewResolver**解析得到的；
+
+```java
+protected ModelAndView resolveErrorView(HttpServletRequest request,
+      HttpServletResponse response, HttpStatus status, Map<String, Object> model) {
+    //所有的ErrorViewResolver得到ModelAndView
+   for (ErrorViewResolver resolver : this.errorViewResolvers) {
+      ModelAndView modelAndView = resolver.resolveErrorView(request, status, model);
+      if (modelAndView != null) {
+         return modelAndView;
+      }
+   }
+   return null;
+}
+```
+
+
+
+#### 7.2 如何定制错误响应：
+
+##### 1、如何定制错误的页面；
+
+**1）、有模板引擎的情况下；error/状态码;** 【将错误页面命名为 错误状态码.html 放在模板引擎文件夹里面的 **error文件夹下**】，发生此状态码的错误就会来到 对应的页面；
+
+我们可以使用4xx和5xx作为错误页面的文件名来匹配这种类型的所有错误，精确优先（优先寻找精确的状态码.html）；
+
+页面能获取的信息，（从**DefaultErrorAttributes**中的getErrorAttributes获取信息）：
+
+​		timestamp：时间戳
+
+​		status：状态码
+
+​		error：错误提示
+
+​		exception：异常对象
+
+​		message：异常消息
+
+​		errors：JSR303数据校验的错误都在这里
+
+![img](https://img-blog.csdnimg.cn/20190828070339367.png)（优先寻找404.html）
+
+![img](https://img-blog.csdnimg.cn/20190828070237314.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
+![img](https://img-blog.csdnimg.cn/20190828070303232.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
+404.html  页面中添加状态码、时间戳：
+
+```html
+<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+	<h1>status:[[${status}]]</h1>
+	<h2>timestamp:[[${timestamp}]]</h2>
+    <h2>error:[[${error}]]</h2>
+</main>
+```
+
+![img](https://img-blog.csdnimg.cn/20190828071232549.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
+**2）、没有模板引擎**（模板引擎找不到这个错误页面），静态资源文件夹下找；
+
+![img](https://img-blog.csdnimg.cn/20190828071503698.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
+**3）、没有模板引擎也没有错误码html文件时** 以上都没有错误页面，就是默认来到SpringBoot默认的错误提示页面；
+
+```java
+ public ModelAndView errorHtml(HttpServletRequest request, HttpServletResponse response) {
+        HttpStatus status = this.getStatus(request);
+        Map<String, Object> model = Collections.unmodifiableMap(this.getErrorAttributes(request, this.isIncludeStackTrace(request, MediaType.TEXT_HTML)));
+        response.setStatus(status.value());
+        ModelAndView modelAndView = this.resolveErrorView(request, response, status, model);
+//modelAndView为null的时候返回new ModelAndView("error", model)，error在ErrorMvcAutoConfiguration中的render定义了默认的返回格式
+        return modelAndView != null ? modelAndView : new ModelAndView("error", model);
+    }
+ 
+  
+  @Bean( name = {"error"})
+  @ConditionalOnMissingBean(name = {"error"})
+  public void render(Map<String, ?> model, HttpServletRequest request, HttpServletResponse response) throws Exception {
+ 
+      builder.append("<html><body><h1>Whitelabel Error Page</h1>").append("<p>This application has no explicit mapping for /error, so you are seeing this as a fallback.</p>").append("<div id='created'>").append(timestamp).append("</div>").append("<div>There was an unexpected error (type=").append(this.htmlEscape(model.get("error"))).append(", status=").append(this.htmlEscape(model.get("status"))).append(").</div>");
+                if (message != null) {
+                    builder.append("<div>").append(this.htmlEscape(message)).append("</div>");
+                }
+ 
+                if (trace != null) {
+                    builder.append("<div style='white-space:pre-wrap;'>").append(this.htmlEscape(trace)).append("</div>");
+                }
+ 
+                builder.append("</body></html>");
+                response.getWriter().append(builder.toString());
+            }
+```
+
+##### 2、如何定制错误的json数据响应
 
 ### P45 web开发-定制错误数据
 
+##### 定制错误页面总结
 
+在模板引擎文件夹下或静态资源文件夹下，放置一个error文件夹、在这里面存放错误状态码对应的页面（可以每个错误码对应一个页面，也可以使用4xx.html 5xx.html 存放一类错误页面），在页面中还可以取出相关错误信息
+
+浏览器访问返回一个页面，postman或客户端访问返回json数据
+
+##### 自定义异常
+
+```java
+    @ResponseBody
+    @RequestMapping("/hello")
+    public String hello(@RequestParam("user") String user) {
+        if (user.equals("aaa")) {
+            throw new UserNotExistException();
+        }
+        return "Hello World";
+    }
+ 
+//自定义异常类
+public class UserNotExistException extends RuntimeException{
+    public UserNotExistException(){
+        super("用户不存在");
+    }
+}
+```
+
+![img](https://img-blog.csdnimg.cn/20190829071606396.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
+
+
+客户端访问时
+
+![img](https://img-blog.csdnimg.cn/20190829071725866.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
+#### 如何定制错误的返回的JSON数据
+
+##### 1、通过定义异常处理器，返回自定义异常json数据
+
+```java
+@ControllerAdvice
+public class MyExceptionHandler {
+ 
+    //浏览器和客户端返回的都是json
+    @ResponseBody
+    @ExceptionHandler(UserNotExistException.class)
+    public Map<String,Object> handleException(Exception e){
+        Map<String,Object> map = new HashMap<>();
+        map.put("code","user.notexist");
+        map.put("message",e.getMessage());
+        return map;
+    }
+}
+//没有自适应效果... 无论是浏览器还是客户端都返回json数据，浏览器不能返回错误页面
+```
+
+![img](https://img-blog.csdnimg.cn/20190829072123603.png)
+
+##### 2、通过转发到/error，进行自适应响应效果处理
+
+```java
+    @ExceptionHandler(UserNotExistException.class)
+    public String handleException(Exception e, HttpServletRequest request){
+        Map<String,Object> map = new HashMap<>();
+        //传入我们自己的错误状态码  4xx 5xx，否则就不会进入定制错误页面的解析流程
+        /**
+         * Integer statusCode = (Integer) request
+         .getAttribute("javax.servlet.error.status_code");
+         */
+        request.setAttribute("javax.servlet.error.status_code",500);
+        map.put("code","user.notexist");
+        map.put("message",e.getMessage());
+        //转发到/error
+        return "forward:/error";
+    }
+```
+
+![img](https://img-blog.csdnimg.cn/20190829072659228.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
+##### 3、转发到/error进行自适应响应效果处理
+
+出现错误以后，会来到/error请求，会被BassicController处理，响应出去的请求可以获取的数据是由GetErrorAttributes得到的（是AbstractErrorController规定的方法）；
+
+完全编写一个ErrorController的实现类【或者是编写AbstractErrorController的子类】，放入容器中；
+
+```java
+@ExceptionHandler(UserNotExistException.class)
+    public String handleException(Exception e, HttpServletRequest request){
+        Map<String,Object> map = new HashMap<>();
+        //传入我们自己的错误状态码  4xx 5xx，否则就不会进入定制错误页面的解析流程
+        /**
+         * Integer statusCode = (Integer) request
+         .getAttribute("javax.servlet.error.status_code");
+         */
+        request.setAttribute("javax.servlet.error.status_code",500);
+        map.put("code","user.notexist");
+        map.put("message",e.getMessage());
+        //转发到/error
+        return "forward:/error";
+    }
+```
+
+![img](https://img-blog.csdnimg.cn/20190829072659228.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
+##### 4、将我们的定制数据携带出去；
+
+出现错误以后，会来到/error请求，会被BasicErrorController处理，响应出去可以获取的数据是由getErrorAttributes得到的（是AbstractErrorController（ErrorController）规定的方法）；
+
+1、完全来编写一个ErrorController的实现类【或者是编写AbstractErrorController的子类】，放在容器中；
+
+2、页面上能用的数据，或者是json返回能用的数据都是通过errorAttributes.getErrorAttributes得到；
+
+容器中DefaultErrorAttributes.getErrorAttributes()；默认进行数据处理的；
+
+自定义ErrorAttributes
+
+```java
+//给容器中加入我们自己定义的ErrorAttributes
+@Component
+public class MyErrorAttributes extends DefaultErrorAttributes {
+ 
+     @Override
+    public Map<String, Object> getErrorAttributes(WebRequest webRequest, boolean includeStackTrace) {
+        Map<String, Object> map = super.getErrorAttributes(webRequest, includeStackTrace);
+        map.put("company", "atguigu");
+        //我们的异常处理器携带的数据
+        Map<String, Object> map1 = (Map<String, Object>) webRequest.getAttribute("ext", 0);
+        map.put("ext", map1);
+        return map;
+    }
+}
+```
+
+最终的效果：响应是自适应的，可以通过定制ErrorAttributes改变需要返回的内容，
+
+![img](https://img-blog.csdnimg.cn/20190829074851992.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
+![img](https://img-blog.csdnimg.cn/20190829074914785.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
 
 ### P46 web开发-嵌入式Servlet容器配置修改
 
+#### 四、配置嵌入式Servlet容器
 
+SpringBoot默认使用Tomcat作为嵌入式的Servlet容器；
+
+![img](https://img-blog.csdnimg.cn/20190830070510710.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
+##### 4.1、如何定制和修改Servlet容器的相关配置；
+
+1、修改和server有关的配置（ServerProperties【也是EmbeddedServletContainerCustomizer】底层原理是一样的）；
+
+```properties
+server.port=8081
+server.context-path=/crud
+
+server.tomcat.uri-encoding=UTF-8
+
+//通用的Servlet容器设置
+server.xxx
+//Tomcat的设置
+server.tomcat.xxx
+```
+
+2、编写一个**EmbeddedServletContainerCustomizer**：嵌入式的Servlet容器的定制器；来修改Servlet容器的配置
+
+```java
+@Configureation
+public class MyMvcConfig extends WebMvcCOnfigurerAdapter{
+
+    @Bean
+    //一定要将这个定制器加入到容器中
+    public EmbeddedServletContainerCustomizer embeddedServletContainerCustomizer(){
+        return new EmbeddedServletContainerCustomizer() {
+            //定制嵌入式的Servlet容器相关的规则
+            @Override
+            public void customize(ConfigurableEmbeddedServletContainer container) {
+                container.setPort(8083);
+            }
+        };
+    }
+
+ 
+     @Bean
+    //一定要将这个定制器加入到容器中
+    public WebServerFactoryCustomizer<ConfigurableWebServerFactory> webServerFactoryCustomizer() {
+        return new WebServerFactoryCustomizer<ConfigurableWebServerFactory>() {
+            //定制嵌入式的Servlet容器相关的规则
+            @Override
+            public void customize (ConfigurableWebServerFactory configurableWebServerFactory）{
+               configurableWebServerFactory.setPort(8099);
+            }
+         };
+    }                               
+}                             
+```
+
+springBoot2.0及以上版本没有EmbeddedServletContainerCustomizer类
+使用WebServerFactoryCustomizer接口替换EmbeddedServletContainerCustomizer组件完成对嵌入式Servlet容器的配置
+在WebServerFactoryCustomizer接口中使用ConfigurableWebServerFactory对象实现对customize()方法的转换，从而实现对嵌入式servlet容器的配置。
+
+![img](https://img-blog.csdnimg.cn/20190830074345627.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
 
 ### P47 web开发-注册servlet三大组件
 
+#### 4.17 注册Servlet三大组件【Servlet、Filter、Listener】
 
+由于SpringBoot默认是以jar包的方式启动嵌入式的Servlet容器来启动SpringBoot的web应用，而不是标准的web目录结构，因此没有web.xml文件（以前注册servlet三大组件都是在该xml文件中进行的，但是现在可以通过以下方式）。
+
+注册三大组件用以下方式
+
+**ServletRegistrationBean**
+
+**FilterRegistrationBean**
+
+**ServletListenerRegistrationBean**
+
+##### 1）、ServletRegistrationBean
+
+MyServlet:
+
+```java
+
+public class MyServlet extends HttpServlet {
+ 
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        doPost(req, resp);
+    }
+ 
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resp.getWriter().write("hello, MyServlet");
+    }
+}
+```
+
+```java
+    //注册三大组件Servlet
+    @Bean
+    public ServletRegistrationBean myServlet() {
+        ServletRegistrationBean registrationBean = new ServletRegistrationBean(new Myservlet(), "/myServlet");
+        registrationBean.setLoadOnStartup(1);
+        return registrationBean;
+    }
+```
+
+![img](https://img-blog.csdnimg.cn/20190831195745844.png)
+
+##### 2）、FilterRegistrationBean
+
+```java
+public class MyFilter implements Filter {
+ 
+    @Override
+    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+        System.out.println("MyFilter progress ...");
+        filterChain.doFilter(servletRequest,servletResponse);
+    }
+}
+```
+
+```java
+  @Bean
+    public FilterRegistrationBean myFilter() {
+        FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean();
+        filterRegistrationBean.setFilter(new MyFilter());
+        filterRegistrationBean.setUrlPatterns(Arrays.asList("/hello", "/myServlet"));
+        return filterRegistrationBean;
+    }
+```
+
+![img](https://img-blog.csdnimg.cn/20190831200835722.png)
+
+##### 3）、ServletListenerRegistrationBean
+
+```java
+public class MyListener implements ServletContextListener {
+ 
+    @Override
+    public void contextInitialized(ServletContextEvent sce) {
+        System.out.println("contextInitialized ...web应用启动");
+    }
+ 
+    @Override
+    public void contextDestroyed(ServletContextEvent sce) {
+        System.out.println("contextDestroyed...当前web项目销毁");
+    }
+}
+```
+
+```java
+ @Bean
+    public ServletListenerRegistrationBean myListener(){
+        ServletListenerRegistrationBean<MyListener> registrationBean = new ServletListenerRegistrationBean<>(new MyListener());
+        return registrationBean;
+    }
+```
+
+![img](https://img-blog.csdnimg.cn/20190831201522778.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
+SpringBoot帮我们自动SpringMVC的时候，自动的注册SpringMVC的前端控制器；DIspatcherServlet；
+
+DispatcherServletAutoConfiguration中：
+
+```java
+@Bean(name = DEFAULT_DISPATCHER_SERVLET_REGISTRATION_BEAN_NAME)
+@ConditionalOnBean(value = DispatcherServlet.class, name = DEFAULT_DISPATCHER_SERVLET_BEAN_NAME)
+public ServletRegistrationBean dispatcherServletRegistration(
+      DispatcherServlet dispatcherServlet) {
+   ServletRegistrationBean registration = new ServletRegistrationBean(
+         dispatcherServlet, this.serverProperties.getServletMapping());
+    //默认拦截： /  所有请求；包静态资源，但是不拦截jsp请求；   /*会拦截jsp
+    //可以通过server.servletPath来修改SpringMVC前端控制器默认拦截的请求路径
+    
+   registration.setName(DEFAULT_DISPATCHER_SERVLET_BEAN_NAME);
+   registration.setLoadOnStartup(
+         this.webMvcProperties.getServlet().getLoadOnStartup());
+   if (this.multipartConfig != null) {
+      registration.setMultipartConfig(this.multipartConfig);
+   }
+   return registration;
+}
+```
 
 ### P48 web开发-切换其他嵌入式Servlet容器
+
+使用其他Servlet容器
+
+Jetty（更适合开发长连接的应用，Web聊天）
+
+Undertow（不支持JSp,高性能非阻塞的Servlet容器，并发性能非常好）
+
+
+
+![img](https://img-blog.csdnimg.cn/2019090108181918.png)
+
+
+
+默认支持：
+
+Tomcat（默认使用）
+
+```xml
+<dependency>
+   <groupId>org.springframework.boot</groupId>
+   <artifactId>spring-boot-starter-web</artifactId>
+   <!-- 引入web模块默认就是使用嵌入式的Tomcat作为Servlet容器；-->
+</dependency>
+```
+
+Jetty
+
+```xml
+<!-- 引入web模块 -->
+<dependency>
+   <groupId>org.springframework.boot</groupId>
+   <artifactId>spring-boot-starter-web</artifactId>
+   <exclusions>
+      <exclusion>
+         <artifactId>spring-boot-starter-tomcat</artifactId>
+         <groupId>org.springframework.boot</groupId>
+      </exclusion>
+   </exclusions>
+</dependency>
+
+<!-- 引入其他的Servlet容器-jetty -->
+<dependency>
+   <artifactId>spring-boot-starter-jetty</artifactId>
+   <groupId>org.springframework.boot</groupId>
+</dependency>
+```
+
+Undertow
+
+```xml
+<!-- 引入web模块 -->
+<dependency>
+   <groupId>org.springframework.boot</groupId>
+   <artifactId>spring-boot-starter-web</artifactId>
+   <exclusions>
+      <exclusion>
+         <artifactId>spring-boot-starter-tomcat</artifactId>
+         <groupId>org.springframework.boot</groupId>
+      </exclusion>
+   </exclusions>
+</dependency>
+
+<!-- 引入其他的Servlet容器-undertow -->
+<dependency>
+   <artifactId>spring-boot-starter-undertow</artifactId>
+   <groupId>org.springframework.boot</groupId>
+</dependency>
+```
 
 
 
 ### P49 web开发-嵌入式Servlet容器自动配置原理
 
+EmbeddedServletContainerAutoConfiguration：嵌入式的Servlet容器自动配置类
 
+```java
+@AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)
+@Configuration
+@ConditionalOnWebApplication
+@Import(BeanPostProcessorsRegistrar.class)
+//导入BeanPostProcessorsRegistrar：Spring注解版；给容器中导入一些组件
+//导入了EmbeddedServletContainerCustomizerBeanPostProcessor：
+//后置处理器：bean初始化前后（创建完对象，还没进行赋值）执行初始化工作
+public class EmbeddedServletContainerAutoConfiguration {
+    
+    @Configuration
+	@ConditionalOnClass({ Servlet.class, Tomcat.class })//判断当前是否引入了Tomcat依赖；
+	@ConditionalOnMissingBean(value = EmbeddedServletContainerFactory.class, search = SearchStrategy.CURRENT)//判断当前容器没有用户自己定义EmbeddedServletContainerFactory：嵌入式的Servlet容器工厂；作用：创建嵌入式的Servlet容器
+	public static class EmbeddedTomcat {
+ 
+		@Bean
+		public TomcatEmbeddedServletContainerFactory tomcatEmbeddedServletContainerFactory() {
+			return new TomcatEmbeddedServletContainerFactory();
+		} 
+	}
+    
+    /**
+	 * Nested configuration if Jetty is being used.
+	 */
+	@Configuration
+	@ConditionalOnClass({ Servlet.class, Server.class, Loader.class,
+			WebAppContext.class })
+	@ConditionalOnMissingBean(value = EmbeddedServletContainerFactory.class, search = SearchStrategy.CURRENT)
+	public static class EmbeddedJetty {
+ 
+		@Bean
+		public JettyEmbeddedServletContainerFactory jettyEmbeddedServletContainerFactory() {
+			return new JettyEmbeddedServletContainerFactory();
+		} 
+	}
+ 
+	/**
+	 * Nested configuration if Undertow is being used.
+	 */
+	@Configuration
+	@ConditionalOnClass({ Servlet.class, Undertow.class, SslClientAuthMode.class })
+	@ConditionalOnMissingBean(value = EmbeddedServletContainerFactory.class, search = SearchStrategy.CURRENT)
+	public static class EmbeddedUndertow {
+ 
+		@Bean
+		public UndertowEmbeddedServletContainerFactory undertowEmbeddedServletContainerFactory() {
+			return new UndertowEmbeddedServletContainerFactory();
+		}
+ 
+	}
+```
+
+1）、EmbeddedServletContainerFactory（嵌入式Servlet容器工厂）
+
+```java
+public interface EmbeddedServletContainerFactory {
+ 
+   //获取嵌入式的Servlet容器
+   EmbeddedServletContainer getEmbeddedServletContainer(
+         ServletContextInitializer... initializers);
+ 
+}
+```
+
+![img](https://img-blog.csdnimg.cn/2019090108225822.png)
+
+
+
+2）、EmbeddedServletContainer：（嵌入式的Servlet容器）
+
+![img](https://img-blog.csdnimg.cn/20190901082328442.png)
+
+3）、以**TomcatEmbeddedServletContainerFactory**为例
+
+```java
+@Override
+public EmbeddedServletContainer getEmbeddedServletContainer(
+      ServletContextInitializer... initializers) {
+    //创建一个Tomcat
+   Tomcat tomcat = new Tomcat();
+    
+    //配置Tomcat的基本环境
+   File baseDir = (this.baseDirectory != null ? this.baseDirectory
+         : createTempDir("tomcat"));
+   tomcat.setBaseDir(baseDir.getAbsolutePath());
+   Connector connector = new Connector(this.protocol);
+   tomcat.getService().addConnector(connector);
+   customizeConnector(connector);
+   tomcat.setConnector(connector);
+   tomcat.getHost().setAutoDeploy(false);
+   configureEngine(tomcat.getEngine());
+   for (Connector additionalConnector : this.additionalTomcatConnectors) {
+      tomcat.getService().addConnector(additionalConnector);
+   }
+   prepareContext(tomcat.getHost(), initializers);
+    
+    //将配置好的Tomcat传入进去，返回一个EmbeddedServletContainer；并且启动Tomcat服务器
+   return getTomcatEmbeddedServletContainer(tomcat);
+}
+```
+
+4）、我们对嵌入式容器的配置修改是怎么生效？
+
+```
+两种方法：ServerProperties、EmbeddedServletContainerCustomizer
+```
+
+**EmbeddedServletContainerCustomizer**：定制器帮我们修改了Servlet容器的配置
+
+怎么修改的原理？
+
+5）、容器中导入了**EmbeddedServletContainerCustomizerBeanPostProcessor** 嵌入式的Servlet容器定制器的后置处理器
+
+```java
+//初始化之前
+@Override
+public Object postProcessBeforeInitialization(Object bean, String beanName)
+      throws BeansException {
+    //如果当前初始化的是一个ConfigurableEmbeddedServletContainer类型的组件
+   if (bean instanceof ConfigurableEmbeddedServletContainer) {
+      postProcessBeforeInitialization((ConfigurableEmbeddedServletContainer) bean);
+   }
+   return bean;
+}
+ 
+private void postProcessBeforeInitialization(
+			ConfigurableEmbeddedServletContainer bean) {
+    //获取所有的定制器，调用每一个定制器的customize方法来给Servlet容器进行属性赋值；
+    for (EmbeddedServletContainerCustomizer customizer : getCustomizers()) {
+        customizer.customize(bean);
+    }
+}
+ 
+private Collection<EmbeddedServletContainerCustomizer> getCustomizers() {
+    if (this.customizers == null) {
+        // Look up does not include the parent context
+        this.customizers = new ArrayList<EmbeddedServletContainerCustomizer>(
+            this.beanFactory
+            //从容器中获取所有这个类型的组件：EmbeddedServletContainerCustomizer
+            //定制Servlet容器，给容器中可以添加一个EmbeddedServletContainerCustomizer类型的组件
+            .getBeansOfType(EmbeddedServletContainerCustomizer.class,
+                            false, false)
+            .values());
+        Collections.sort(this.customizers, AnnotationAwareOrderComparator.INSTANCE);
+        this.customizers = Collections.unmodifiableList(this.customizers);
+    }
+    return this.customizers;
+}
+ 
+//ServerProperties也是定制器
+```
+
+步骤：
+
+1）、SpringBoot根据导入的依赖情况，给容器中添加相应的EmbeddedServletContainerFactory【TomcatEmbeddedServletContainerFactory】
+
+2）、容器中某个组件要创建对象就会惊动后置处理器；EmbeddedServletContainerCustomizerBeanPostProcessor；
+
+只要是嵌入式的Servlet容器工厂，后置处理器就工作；
+
+3）、后置处理器，从容器中获取所有的**EmbeddedServletContainerCustomizer**，调用定制器的定制方法
 
 ### P50 web开发-嵌入式Servlet容器启动原理
+
+***什么时候创建嵌入式的Servlet容器工厂？什么时候获取嵌入式的Servlet容器并启动Tomcat；\***
+
+获取嵌入式的Servlet容器工厂：
+
+1）、SpringBoot应用启动运行run方法
+
+2）、refreshContext(context);SpringBoot刷新IOC容器【创建IOC容器对象，并初始化容器，创建容器中的每一个组件】；如果是web应用创建**AnnotationConfigEmbeddedWebApplicationContext**，否则：**AnnotationConfigApplicationContext**
+
+3）、refresh(context);刷新刚才创建好的ioc容器；
+
+```java
+public void refresh() throws BeansException, IllegalStateException {
+   synchronized (this.startupShutdownMonitor) {
+      // Prepare this context for refreshing.
+      prepareRefresh();
+ 
+      // Tell the subclass to refresh the internal bean factory.
+      ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
+ 
+      // Prepare the bean factory for use in this context.
+      prepareBeanFactory(beanFactory);
+ 
+      try {
+         // Allows post-processing of the bean factory in context subclasses.
+         postProcessBeanFactory(beanFactory);
+ 
+         // Invoke factory processors registered as beans in the context.
+         invokeBeanFactoryPostProcessors(beanFactory);
+ 
+         // Register bean processors that intercept bean creation.
+         registerBeanPostProcessors(beanFactory);
+ 
+         // Initialize message source for this context.
+         initMessageSource();
+ 
+         // Initialize event multicaster for this context.
+         initApplicationEventMulticaster();
+ 
+         // Initialize other special beans in specific context subclasses.
+         onRefresh();
+ 
+         // Check for listener beans and register them.
+         registerListeners();
+ 
+         // Instantiate all remaining (non-lazy-init) singletons.
+         finishBeanFactoryInitialization(beanFactory);
+ 
+         // Last step: publish corresponding event.
+         finishRefresh();
+      }
+ 
+      catch (BeansException ex) {
+         if (logger.isWarnEnabled()) {
+            logger.warn("Exception encountered during context initialization - " +
+                  "cancelling refresh attempt: " + ex);
+         }
+ 
+         // Destroy already created singletons to avoid dangling resources.
+         destroyBeans();
+ 
+         // Reset 'active' flag.
+         cancelRefresh(ex);
+ 
+         // Propagate exception to caller.
+         throw ex;
+      }
+ 
+      finally {
+         // Reset common introspection caches in Spring's core, since we
+         // might not ever need metadata for singleton beans anymore...
+         resetCommonCaches();
+      }
+   }
+}
+```
+
+4）、 onRefresh(); web的ioc容器重写了onRefresh方法
+
+5）、web IOC容器会创建嵌入式的Servlet容器；**createEmbeddedServletContainer**();
+
+6）、获取嵌入式的Servlet容器工厂：
+
+EmbeddedServletContainerFactory containerFactory = getEmbeddedServletContainerFactory();
+
+从ioc容器中获取EmbeddedServletContainerFactory 组件；**TomcatEmbeddedServletContainerFactory**创建对象，后置处理器一看是这个对象，就获取所有的定制器来先定制Servlet容器的相关配置；
+
+7）、使用容器工厂获取嵌入式的Servlet容器：
+
+this.embeddedServletContainer = containerFactory .getEmbeddedServletContainer(getSelfInitializer());
+
+8）、嵌入式的Servlet容器创建对象并启动Servlet容器；先启动嵌入式的Servlet容器，再将ioc容器中剩下没有创建出的对象获取出来；
+
+**总结：IOC容器启动创建嵌入式的Servlet容器**
+
+![img](https://img-blog.csdnimg.cn/20190902065828560.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
+
 
 
 
 ### P51 web开发-使用外部Servlet容器&JSP支持
 
+##### 1.***嵌入式Servlet容器***：
+
+应用打成可执行的jar
+
+优点：简单、便捷；
+
+缺点：默认不支持JSP、优化定制比较复杂（使用定制器【ServerProperties、自定义EmbeddedServletContainerCustomizer】，自己编写嵌入式Servlet容器的创建工厂【EmbeddedServletContainerFactory】）；
+
+##### 2.***外置的Servlet容器***：
+
+外面安装Tomcat---应用war包的方式打包；
+
+##### 3.***配置外部servlet步骤：***
+
+1）、必须创建一个war项目；（利用idea创建好目录结构）
+
+2）、将嵌入式的Tomcat指定为provided；
+
+```xml
+<dependency>
+   <groupId>org.springframework.boot</groupId>
+   <artifactId>spring-boot-starter-tomcat</artifactId>
+   <scope>provided</scope>
+</dependency>
+```
+
+3）、必须编写一个**SpringBootServletInitializer**的子类，并调用configure方法
+
+```java
+public class ServletInitializer extends SpringBootServletInitializer {
+ 
+   @Override
+   protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
+       //传入SpringBoot应用的主程序
+      return application.sources(SpringBoot04WebJspApplication.class);
+   } 
+}
+```
+
+4）、启动服务器就可以使用；
+
+5）、配置jsp视图解析解器
+
+```properties
+spring.mvc.view.prefix=/WEB-INF/
+spring.mvc.view.suffix=.jsp
+```
+
+##### 4.***实践\***
+
+新建项目结构：
+
+![img](https://img-blog.csdnimg.cn/20190903071235108.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
+生成webapp目录
+
+​	Project Structure ==> Modules ==> Web ==> Web Resoure Directories 双击路径 提示路径存在 是否需要创建
+
+​	在上面的Deployment Descriptors 点击右侧的加号 添加web.xml，主要放到 webapp\WEB-INF\web.xml
+
+配置tomcat：
+
+![img](https://img-blog.csdnimg.cn/20190903071348950.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
+![img](https://img-blog.csdnimg.cn/20190903071413699.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
+![img](https://img-blog.csdnimg.cn/20190903073747882.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
+##### 5.***错误解决方法：\***
+
+**5.1 控制台乱码**
+
+打开idea的安装路径，进入bin目录
+用文本文件打开idea64.exe.vmoptions（如果安装的是32位系统选择idea.exe.vmoptions）
+在最下面一行添加-Dfile.encoding=UTF-8
+
+![img](https://img-blog.csdnimg.cn/20190903071018902.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2JhaWR1XzE1ODczNTUx,size_16,color_FFFFFF,t_70)
+
+最后关闭idea然后重新启动即可
+
+5.2 tomcat启动报错”java.lang.IllegalStateException: ContainerBase.addChild: start: org.apache.catalina.LifecycleExcepti“
+
+是jdk和tomcat的版本不一致导致，使用tomcat8即可
+
 
 
 ### P52 web开发-外部Servlet容器启动SpringBoot应用原理
+
+#### 4.21 使用外置servlet容器启动原理
+
+jar包：执行SpringBoot主类的main方法，启动ioc容器，创建嵌入式的Servlet容器；
+
+war包：启动服务器，**服务器启动SpringBoot应用**【SpringBootServletInitializer】，启动ioc容器；
+
+servlet3.0（Spring注解版）：
+
+8.2.4 Shared libraries / runtimes pluggability 共享库和运行时插件
+
+ 
+
+##### 规则：
+
+1）、服务器启动（web应用启动）会创建当前web应用里面每一个jar包里面ServletContainerInitializer实例：
+
+2）、ServletContainerInitializer的实现放在jar包的META-INF/services文件夹下，有一个名为javax.servlet.ServletContainerInitializer的文件，内容就是ServletContainerInitializer的实现类的全类名
+
+3）、还可以使用@HandlesTypes，在应用启动的时候加载我们感兴趣的类；
+
+ 
+
+##### 流程：
+
+1）、启动Tomcat
+
+2）、org\springframework\spring-web\4.3.14.RELEASE\spring-web-4.3.14.RELEASE.jar!\META-INF\services\javax.servlet.ServletContainerInitializer：
+
+Spring的web模块里面有这个文件：**org.springframework.web.SpringServletContainerInitializer**
+
+3）、SpringServletContainerInitializer将@HandlesTypes(WebApplicationInitializer.class)标注的所有这个类型的类都传入到onStartup方法的Set<Class<?>>；为这些WebApplicationInitializer类型的类创建实例；
+
+4）、每一个WebApplicationInitializer都调用自己的onStartup；
+
+![img](https://img-blog.csdnimg.cn/20190904071310635.png)
+
+5）、相当于我们的SpringBootServletInitializer的类会被创建对象，并执行onStartup方法
+
+6）、SpringBootServletInitializer实例执行onStartup的时候会createRootApplicationContext；创建容器
+
+```java
+protected WebApplicationContext createRootApplicationContext(
+      ServletContext servletContext) {
+    //1、创建SpringApplicationBuilder
+   SpringApplicationBuilder builder = createSpringApplicationBuilder();
+   StandardServletEnvironment environment = new StandardServletEnvironment();
+   environment.initPropertySources(servletContext, null);
+   builder.environment(environment);
+   builder.main(getClass());
+   ApplicationContext parent = getExistingRootWebApplicationContext(servletContext);
+   if (parent != null) {
+      this.logger.info("Root context already created (using as parent).");
+      servletContext.setAttribute(
+            WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE, null);
+      builder.initializers(new ParentContextApplicationContextInitializer(parent));
+   }
+   builder.initializers(
+         new ServletContextApplicationContextInitializer(servletContext));
+   builder.contextClass(AnnotationConfigEmbeddedWebApplicationContext.class);
+    
+    //调用configure方法，子类重写了这个方法，将SpringBoot的主程序类传入了进来
+   builder = configure(builder);
+    
+    //使用builder创建一个Spring应用
+   SpringApplication application = builder.build();
+   if (application.getSources().isEmpty() && AnnotationUtils
+         .findAnnotation(getClass(), Configuration.class) != null) {
+      application.getSources().add(getClass());
+   }
+   Assert.state(!application.getSources().isEmpty(),
+         "No SpringApplication sources have been defined. Either override the "
+               + "configure method or add an @Configuration annotation");
+   // Ensure error pages are registered
+   if (this.registerErrorPageFilter) {
+      application.getSources().add(ErrorPageFilterConfiguration.class);
+   }
+    //启动Spring应用
+   return run(application);
+}
+```
+
+7）、Spring的应用就启动并且创建IOC容器
+
+```java
+public ConfigurableApplicationContext run(String... args) {
+   StopWatch stopWatch = new StopWatch();
+   stopWatch.start();
+   ConfigurableApplicationContext context = null;
+   FailureAnalyzers analyzers = null;
+   configureHeadlessProperty();
+   SpringApplicationRunListeners listeners = getRunListeners(args);
+   listeners.starting();
+   try {
+      ApplicationArguments applicationArguments = new DefaultApplicationArguments(
+            args);
+      ConfigurableEnvironment environment = prepareEnvironment(listeners,
+            applicationArguments);
+      Banner printedBanner = printBanner(environment);
+      context = createApplicationContext();
+      analyzers = new FailureAnalyzers(context);
+      prepareContext(context, environment, listeners, applicationArguments,
+            printedBanner);
+       
+       //刷新IOC容器
+      refreshContext(context);
+      afterRefresh(context, applicationArguments);
+      listeners.finished(context, null);
+      stopWatch.stop();
+      if (this.logStartupInfo) {
+         new StartupInfoLogger(this.mainApplicationClass)
+               .logStarted(getApplicationLog(), stopWatch);
+      }
+      return context;
+   }
+   catch (Throwable ex) {
+      handleRunFailure(context, listeners, analyzers, ex);
+      throw new IllegalStateException(ex);
+   }
+}
+```
+
+**==启动Servlet容器，再启动SpringBoot应用==**
 
 
 
