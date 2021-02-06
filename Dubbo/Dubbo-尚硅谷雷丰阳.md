@@ -40,7 +40,7 @@
 
 ### 1.3 RPC
 
-![](https://ss3.bdstatic.com/70cFv8Sh_Q1YnxGkpoWK1HF6hhy/it/u=962964185,1176401230&fm=11&gp=0.jpg)
+![img](https://ss3.bdstatic.com/70cFv8Sh_Q1YnxGkpoWK1HF6hhy/it/u=962964185,1176401230&fm=11&gp=0.jpg)
 
 - 什么是RPC
 
@@ -467,7 +467,7 @@ public class MainApplication {
 
 简单的监控中心，用于监控服务调用等信息。
 
-Dubbo-OPS
+Dubbo-OPS  Dubbo运维相关
 
 mva package 打包
 
@@ -485,6 +485,10 @@ mva package 打包
 
 ##### 1、创建模块
 
+boot-user-service-provider 用户模块 服务提供者
+
+boot-order-service-consumer 订单模块 服务消费者
+
 ##### 2、导入依赖
 
 - dubbo-starter
@@ -498,46 +502,111 @@ mva package 打包
 	</dependency>
 ```
 
+配置application.properties
+
+```properties
+#配置应用名称
+dubbo.application.name=user-service-provider
+#配置注册中心
+dubbo.registry.address=127.0.0.1:2181
+dubbo.registry.protocol=zookeeper
+#通信协议
+dubbo.protocol.name=dubbo
+dubbo.protocol.port=20880
+#连接监控中心
+dubbo,monitor.protocol=registry
+```
+
+在服务提供者端的服务上 添加@Service 暴露服务
+
+```java
+@Service  //@com.alibaba.dubbo.config.annotation.Service
+@Service //@org.sprongframework.stereotype.Service //两个冲突 可以将spring的@Service改为 @Componet
+public class UserServiceImpl implements UserService{
+    
+}
+```
+
+在服务消费者端的服务商 添加@Reference远程调用服务
+
+```java
+@Service //这里是spring的@Service
+public class OrderServiceImpl implements OrderService{
+	@Reference
+    private UserService userService;
+    
+    public List<UserAddress> initOrder(String userId){
+        List<UseAddress> addressList = userService.getUserAddressList(userId);
+        return addressList;
+    }
+}
+```
+
+
 
 ##### 3、主程序中启动
 
-​		开启dubbo
+主程序启动类上开启基于注解的Dubbo功能
+
+```java
+@EnableDubbo //开启基于注解的Dubbo功能
+@SpringBootApplication
+public class BootUserServicePrividerApplication{
+	public static void manin(String[] args){
+        SpringApplication.run(BootUserServicePrividerApplication.class,args);
+    }
+}
+```
+
+
 
 ##### 4、配置映射规则
 
 ##### 5、属性覆盖策略
 
 - 虚拟机参数配置： -Dubbo.protocol.port=20880
+
 - XML文件配置：dubbo.xml
+
+  ```xml
+  <dobbo:protocol port="30880"/>
+  ```
+
 - Properties属性配置：dubbo.properties
+
+  ```properties
+  dobbo.protocol.port=20880
+  ```
+
+  
 
 # 二、Dubbo配置
 
-### 1、启动时检查
+## 1、启动时检查
 
 #### 通过spring配置文件配置
 
 关闭某个消费者启动时检查
 
-```
+```xml
 <dubbo:reference interface="xx" check="false"></dubbo:reference>
 ```
 
 关闭所有消费者的启动时检查(统一规则)
 
-```
+```xml
 <dubbo:consumer check="false"></dubbo:consumer>
 ```
 
 关闭注册中心启动时检查
 
-```
+```xml
 <dubbo:registry check="false" />
 ```
 
 #### 通过dubbo.properties配置
 
-```
+```properties
 dubbo.refenence.com.xx.XXService.check=false
 dubbo.reference.check=false
 dubbo.consumer.check=false
@@ -546,7 +615,7 @@ dubbo.registry.check=false
 
 #### 通过虚拟机-D参数进行配置
 
-```
+```properties
 java -Dubbo.dubbo.refenence.com.xx.XXService.check=false
 java -Dubbo.reference.check=false
 java -Dubbo.consumer.check=false
@@ -555,29 +624,29 @@ java -Dubbo.registry.check=false
 
 
 
-### 2、超时检查
+## 2、超时检查
 
 接口上设置超时时间
 
-```
+```xml
 <dubbo:reference interface="xx" timeout=3000 ></dubbo:reference>
 ```
 
 消费者统一设置
 
-```
+```xml
 <dubbo:consumer timeout=3000 > </dubbo:consumer>
 ```
 
 提供者统一设置
 
-```
+```xml
 <dubbo:consumer timeout="300"><dubbo:consumer>
 ```
 
 方法上配置超时时间
 
-```
+```xml
 <dubbo:methord timeout="1000">
 ```
 
@@ -592,11 +661,11 @@ java -Dubbo.registry.check=false
 - 多版本
 - 本地存根
 
-### 3、重试次数
+## 3、重试次数
 
 重试次数 不包含第一次调用
 
-```
+```xml
 <dubbo:reference retries="3" timeout="3000">
 ```
 
@@ -608,7 +677,7 @@ java -Dubbo.registry.check=false
 
 非幂等：retries=0 不重试
 
-### 4、多版本
+## 4、多版本
 
 一个接口  有两个或者两个以上版本的实现版本
 
@@ -628,7 +697,7 @@ java -Dubbo.registry.check=false
 <dubbo:reference interface="XXService" version="*">  #同时上线
 ```
 
-### 5、本地存根
+## 5、本地存根
 
 在服务消费方，写一个远程接口的本地接口实现（存根实现）
 
@@ -680,7 +749,7 @@ public class UserServiceStub implements UserService {
 
 
 
-### 6、SpringBoot方式配置
+## 6、SpringBoot方式配置
 
 ```java
 @Service(timeout="3000" retries="3")
@@ -773,7 +842,7 @@ public class MyDobboConfig {
 
 # 三、Dubbo高可用
 
-### 1、Zookeeper宕机与Dubbo直连
+## 1、Zookeeper宕机与Dubbo直连
 
 zookeeper注册中心宕机后，消费方仍可以使用dubbo暴露的服务
 
@@ -794,7 +863,7 @@ public class OrderServiceImpl implements OrderService{}
 }
 ```
 
-### 2、集群下Dubbo 负载均衡配置
+## 2、集群下Dubbo 负载均衡配置
 
 #### 2.1 四种负载均衡机制
 
@@ -846,7 +915,7 @@ public class OrderServiceImpl implements OrderService{}
 
 
 
-### 3、Dubbo服务降级
+## 3、Dubbo服务降级
 
 #### 什么是服务降级
 
@@ -867,7 +936,7 @@ public class OrderServiceImpl implements OrderService{}
 
 ​	容错：在调用失败后，返回为空，在dubbo-admin 消费者侧 点击 容错按钮
 
-### 4、集群容错
+## 4、集群容错
 
 #### 4.1 Dubbo支持的集群容错
 
@@ -900,7 +969,7 @@ public class OrderServiceImpl implements OrderService{}
 
 
 
-### 5、整合Hystrix服务容错
+## 5、整合Hystrix服务容错
 
 ##### 1、配置spring-cloud-starter-netflix-hystrix
 
@@ -953,7 +1022,7 @@ public List<UserAddress> initOrderFallback(String userId){
 
 # 四、DUbbo原理
 
-#### 1、RPC原理
+## 1、RPC原理
 
 ![](https://images2015.cnblogs.com/blog/522490/201510/522490-20151003120412386-363334260.png)
 
@@ -977,7 +1046,7 @@ public List<UserAddress> initOrderFallback(String userId){
 
 9）服务消费方得到最终结果。
 
-#### 2、Netty通信原理
+## 2、Netty通信原理
 
 Netty是一个异步事件驱动的网络应用程序框架，用于快速开发可维护的高性能协议服务器和客户端，它极大地简化并简化了TCP和UDP套接字服务等网络编程。
 
@@ -1003,7 +1072,7 @@ Selector 一般称为选择器 也可以翻译为 多路复用器
 
 
 
-#### 3、Dubbo原理
+## 3、Dubbo原理
 
 ##### 3.1 Dubbo原理 -框架设计
 
