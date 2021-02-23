@@ -68,3 +68,18 @@ Realms 域
 
 
 
+## 02 Shiro.ini文件
+
+## 03 Shiro实现认证
+
+## 04 自定义Realm实现认证
+
+## 05 散列算法+凭证配置
+
+## 06 shiro.ini实现授权
+
+## 07 自定义Realm实现授权
+
+## 08 springmvc+shiro+shiro.ini+ea
+
+## 09 ssm+shiro+Realm实现集成

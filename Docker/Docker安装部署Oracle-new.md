@@ -31,6 +31,9 @@ launchctl stop com.docker.docker.39764
 
 ```
 docker run -dp 9090:8080 -p 1521:1521 registry.cn-hangzhou.aliyuncs.com/helowin/oracle_11g
+
+#再来一个
+docker run -dp 9091:8080 -p 1522:1521 registry.cn-hangzhou.aliyuncs.com/helowin/oracle_11g
 ```
 
 #### 6、使用navicat建立连接

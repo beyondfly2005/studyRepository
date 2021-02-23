@@ -23,7 +23,11 @@
 
 ### 1、什么是权限
 
-权限管理，异步指根据系统设置的安全规则或者安全策略，用户可以访问而且只能访问自己被授权的资源，不多不少，权限管理几乎出现在任何系统里面，只要有用户和密码的系统。
+#### 1.1 权限管理
+
+权限管理，一般指根据系统设置的安全规则或者安全策略，用户可以访问而且只能访问自己被授权的资源，不多不少，权限管理几乎出现在任何系统里面，只要有用户和密码的系统。
+
+#### 1.2 权限管理分类
 
 权限管理一般在系统中一部分为：
 
@@ -51,7 +55,7 @@
 
 用户名密码身份认证流程：
 
-![img](https://imgconvert.csdnimg.cn/aHR0cHM6Ly91cGxvYWQtaW1hZ2VzLmppYW5zaHUuaW8vdXBsb2FkX2ltYWdlcy8xNjU5ODMwNy1lNjk1MjRkYzFiMmE3NDc4LnBuZw?x-oss-process=image/format,png)
+![1596509769431_授权流程01.jpg](http://www.itheima.com/images/newslistPIC/1596509769431_%E6%8E%88%E6%9D%83%E6%B5%81%E7%A8%8B01.jpg)
 
 #### 2.3 关键对象
 
@@ -2021,31 +2025,83 @@ sh_role_resource:  角色资源中间表
 sh_user
 
 ```sql
-CREATE TABLE `sh_user` (  `ID` varchar(36) NOT NULL COMMENT '主键',  `LOGIN_NAME` varchar(36) DEFAULT NULL COMMENT '登录名称',  `REAL_NAME` varchar(36) DEFAULT NULL COMMENT '真实姓名',  `NICK_NAME` varchar(36) DEFAULT NULL COMMENT '昵称',  `PASS_WORD` varchar(150) DEFAULT NULL COMMENT '密码',  `SALT` varchar(36) DEFAULT NULL COMMENT '加密因子',  `SEX` int(11) DEFAULT NULL COMMENT '性别',  `ZIPCODE` varchar(36) DEFAULT NULL COMMENT '邮箱',  `ADDRESS` varchar(36) DEFAULT NULL COMMENT '地址',  `TEL` varchar(36) DEFAULT NULL COMMENT '固定电话',  `MOBIL` varchar(36) DEFAULT NULL COMMENT '电话',  `EMAIL` varchar(36) DEFAULT NULL COMMENT '邮箱',  `DUTIES` varchar(36) DEFAULT NULL COMMENT '职务',  `SORT_NO` int(11) DEFAULT NULL COMMENT '排序',  `ENABLE_FLAG` varchar(18) DEFAULT NULL COMMENT '是否有效',  PRIMARY KEY (`ID`)) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='用户表';
+CREATE TABLE `sh_user` (  
+    `ID` varchar(36) NOT NULL COMMENT '主键',  
+    `LOGIN_NAME` varchar(36) DEFAULT NULL COMMENT '登录名称',  
+    `REAL_NAME` varchar(36) DEFAULT NULL COMMENT '真实姓名',  
+    `NICK_NAME` varchar(36) DEFAULT NULL COMMENT '昵称',  
+    `PASS_WORD` varchar(150) DEFAULT NULL COMMENT '密码',  
+    `SALT` varchar(36) DEFAULT NULL COMMENT '加密因子',  
+    `SEX` int(11) DEFAULT NULL COMMENT '性别',  
+    `ZIPCODE` varchar(36) DEFAULT NULL COMMENT '邮箱',  
+    `ADDRESS` varchar(36) DEFAULT NULL COMMENT '地址',  
+    `TEL` varchar(36) DEFAULT NULL COMMENT '固定电话',  
+    `MOBIL` varchar(36) DEFAULT NULL COMMENT '电话',  
+    `EMAIL` varchar(36) DEFAULT NULL COMMENT '邮箱',  
+    `DUTIES` varchar(36) DEFAULT NULL COMMENT '职务',  
+    `SORT_NO` int(11) DEFAULT NULL COMMENT '排序',  
+    `ENABLE_FLAG` varchar(18) DEFAULT NULL COMMENT '是否有效',  
+    PRIMARY KEY (`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='用户表';
 ```
 
 sh_role
 
 ```sql
-CREATE TABLE `sh_role` (  `ID` varchar(36) NOT NULL COMMENT '主键',  `ROLE_NAME` varchar(36) DEFAULT NULL COMMENT '角色名称',  `LABEL` varchar(36) DEFAULT NULL COMMENT '角色标识',  `DESCRIPTION` varchar(200) DEFAULT NULL COMMENT '角色描述',  `SORT_NO` int(36) DEFAULT NULL COMMENT '排序',  `ENABLE_FLAG` varchar(18) DEFAULT NULL COMMENT '是否有效',  PRIMARY KEY (`ID`)) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='用户角色表';
+CREATE TABLE `sh_role` (  
+    `ID` varchar(36) NOT NULL COMMENT '主键',  
+    `ROLE_NAME` varchar(36) DEFAULT NULL COMMENT '角色名称',  
+    `LABEL` varchar(36) DEFAULT NULL COMMENT '角色标识',  
+    `DESCRIPTION` varchar(200) DEFAULT NULL COMMENT '角色描述',  
+    `SORT_NO` int(36) DEFAULT NULL COMMENT '排序',  
+    `ENABLE_FLAG` varchar(18) DEFAULT NULL COMMENT '是否有效',  
+    PRIMARY KEY (`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='用户角色表';
 ```
 
 sh_resource
 
 ```sql
-CREATE TABLE `sh_resource` (  `ID` varchar(36) NOT NULL COMMENT '主键',  `PARENT_ID` varchar(36) DEFAULT NULL COMMENT '父资源',  `RESOURCE_NAME` varchar(36) DEFAULT NULL COMMENT '资源名称',  `REQUEST_PATH` varchar(200) DEFAULT NULL COMMENT '资源路径',  `LABEL` varchar(200) DEFAULT NULL COMMENT '资源标签',  `ICON` varchar(20) DEFAULT NULL COMMENT '图标',  `IS_LEAF` varchar(18) DEFAULT NULL COMMENT '是否叶子节点',  `RESOURCE_TYPE` varchar(36) DEFAULT NULL COMMENT '资源类型',  `SORT_NO` int(11) DEFAULT NULL COMMENT '排序',  `DESCRIPTION` varchar(200) DEFAULT NULL COMMENT '描述',  `SYSTEM_CODE` varchar(36) DEFAULT NULL COMMENT '系统code',  `IS_SYSTEM_ROOT` varchar(18) DEFAULT NULL COMMENT '是否根节点',  `ENABLE_FLAG` varchar(18) DEFAULT NULL COMMENT '是否有效',  PRIMARY KEY (`ID`)) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='资源表';
+CREATE TABLE `sh_resource` (
+    `ID` varchar(36) NOT NULL COMMENT '主键',  
+    `PARENT_ID` varchar(36) DEFAULT NULL COMMENT '父资源',  
+    `RESOURCE_NAME` varchar(36) DEFAULT NULL COMMENT '资源名称',  
+    `REQUEST_PATH` varchar(200) DEFAULT NULL COMMENT '资源路径',  
+    `LABEL` varchar(200) DEFAULT NULL COMMENT '资源标签',  
+    `ICON` varchar(20) DEFAULT NULL COMMENT '图标',  
+    `IS_LEAF` varchar(18) DEFAULT NULL COMMENT '是否叶子节点',  
+    `RESOURCE_TYPE` varchar(36) DEFAULT NULL COMMENT '资源类型',  
+    `SORT_NO` int(11) DEFAULT NULL COMMENT '排序',  
+    `DESCRIPTION` varchar(200) DEFAULT NULL COMMENT '描述',  
+    `SYSTEM_CODE` varchar(36) DEFAULT NULL COMMENT '系统code',  
+    `IS_SYSTEM_ROOT` varchar(18) DEFAULT NULL COMMENT '是否根节点',  
+    `ENABLE_FLAG` varchar(18) DEFAULT NULL COMMENT '是否有效',  
+    PRIMARY KEY (`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='资源表';
 ```
 
 sh_role_resource
 
 ```sql
-CREATE TABLE `sh_role_resource` (  `ID` varchar(36) NOT NULL,  `ENABLE_FLAG` varchar(18) DEFAULT NULL,  `ROLE_ID` varchar(36) DEFAULT NULL,  `RESOURCE_ID` varchar(36) DEFAULT NULL,  PRIMARY KEY (`ID`)) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='角色资源表';
+CREATE TABLE `sh_role_resource` (  
+    `ID` varchar(36) NOT NULL,  
+    `ENABLE_FLAG` varchar(18) DEFAULT NULL,  
+    `ROLE_ID` varchar(36) DEFAULT NULL,  
+    `RESOURCE_ID` varchar(36) DEFAULT NULL,  
+    PRIMARY KEY (`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='角色资源表';
 ```
 
 sh_user_role
 
 ```sql
-CREATE TABLE `sh_user_role` (  `ID` varchar(36) NOT NULL,  `ENABLE_FLAG` varchar(18) DEFAULT NULL,  `USER_ID` varchar(36) DEFAULT NULL,  `ROLE_ID` varchar(36) DEFAULT NULL,  PRIMARY KEY (`ID`)) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='用户角色表';
+CREATE TABLE `sh_user_role` (  
+    `ID` varchar(36) NOT NULL,  
+    `ENABLE_FLAG` varchar(18) DEFAULT NULL,  
+    `USER_ID` varchar(36) DEFAULT NULL,  
+    `ROLE_ID` varchar(36) DEFAULT NULL,  
+    PRIMARY KEY (`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT COMMENT='用户角色表';
 ```
 
 ### 3、项目骨架
@@ -2073,32 +2129,178 @@ CREATE TABLE `sh_user_role` (  `ID` varchar(36) NOT NULL,  `ENABLE_FLAG` varchar
 ```java
 package com.itheima.shiro.core;
 import org.apache.shiro.authc.AuthenticationInfo;
-import org.apache.shiro.authc.AuthenticationToken;import org.apache.shiro.authz.AuthorizationInfo;import org.apache.shiro.realm.AuthorizingRealm;import org.apache.shiro.subject.PrincipalCollection;import javax.annotation.PostConstruct;/** * * @Description shiro自定义realm */public abstract class ShiroDbRealm extends AuthorizingRealm {    /**     * @Description 认证     * @param authcToken token对象     * @return      */    public abstract AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authcToken) ;    /**     * @Description 鉴权     * @param principals 令牌     * @return     */    public abstract AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals);    /**     * @Description 密码匹配器     */    @PostConstruct    public abstract void initCredentialsMatcher() ;}
+import org.apache.shiro.authc.AuthenticationToken;import org.apache.shiro.authz.AuthorizationInfo;import org.apache.shiro.realm.AuthorizingRealm;import org.apache.shiro.subject.PrincipalCollection;import javax.annotation.PostConstruct;
+/** 
+* 
+* @Description shiro自定义realm 
+*/
+public abstract class ShiroDbRealm extends AuthorizingRealm {    
+    /**     
+    * @Description 认证     
+    * @param authcToken token对象     
+    * @return      
+    */    
+    public abstract AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authcToken) ;    
+    /**     
+    * @Description 鉴权     
+    * @param principals 令牌     
+    * @return     
+    */    
+    public abstract AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals);    
+    /**     
+    * @Description 密码匹配器     
+    */    
+    @PostConstruct    
+    public abstract void initCredentialsMatcher() ;
+}
 ```
 
 ##### 4.3.2 ShiroDbRealmImpl
 
 ```java
-package com.itheima.shiro.core.impl;import com.itheima.shiro.constant.SuperConstant;import com.itheima.shiro.core.base.ShiroUser;import com.itheima.shiro.core.base.SimpleToken;import com.itheima.shiro.core.ShiroDbRealm;import com.itheima.shiro.core.bridge.UserBridgeService;import com.itheima.shiro.pojo.User;import com.itheima.shiro.utils.BeanConv;import com.itheima.shiro.utils.DigestsUtil;import com.itheima.shiro.utils.EmptyUtil;import org.apache.shiro.authc.AuthenticationInfo;import org.apache.shiro.authc.AuthenticationToken;import org.apache.shiro.authc.SimpleAuthenticationInfo;import org.apache.shiro.authc.UnknownAccountException;import org.apache.shiro.authc.credential.HashedCredentialsMatcher;import org.apache.shiro.authz.AuthorizationInfo;import org.apache.shiro.subject.PrincipalCollection;import org.apache.shiro.util.ByteSource;import org.springframework.beans.factory.annotation.Autowired;/** * @Description：自定义shiro的实现 */public class ShiroDbRealmImpl extends ShiroDbRealm {    @Autowired    private UserBridgeService userBridgeService;    /**     * @Description 认证方法     * @param authcToken 校验传入令牌     * @return AuthenticationInfo     */    @Override    public AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authcToken) {        SimpleToken token = (SimpleToken)authcToken;        User user  = userBridgeService.findUserByLoginName(token.getUsername());        if(EmptyUtil.isNullOrEmpty(user)){            throw new UnknownAccountException("账号不存在");        }        ShiroUser shiroUser = BeanConv.toBean(user, ShiroUser.class);        shiroUser.setResourceIds(userBridgeService.findResourcesIdsList(user.getId()));        String salt = user.getSalt();        String password = user.getPassWord();        return new SimpleAuthenticationInfo(shiroUser, password, ByteSource.Util.bytes(salt), getName());    }    /**     * @Description 授权方法     * @param principals SimpleAuthenticationInfo对象第一个参数     * @return     */    @Override    public AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {        ShiroUser shiroUser = (ShiroUser) principals.getPrimaryPrincipal();        return userBridgeService.getAuthorizationInfo(shiroUser);    }    /**     * @Description 加密方式     */    @Override    public void initCredentialsMatcher() {        HashedCredentialsMatcher matcher = new HashedCredentialsMatcher(SuperConstant.HASH_ALGORITHM);        matcher.setHashIterations(SuperConstant.HASH_INTERATIONS);        setCredentialsMatcher(matcher);    }}
+package com.itheima.shiro.core.impl;
+import com.itheima.shiro.constant.SuperConstant;
+import com.itheima.shiro.core.base.ShiroUser;
+import com.itheima.shiro.core.base.SimpleToken;
+import com.itheima.shiro.core.ShiroDbRealm;
+import com.itheima.shiro.core.bridge.UserBridgeService;
+import com.itheima.shiro.pojo.User;
+import com.itheima.shiro.utils.BeanConv;
+import com.itheima.shiro.utils.DigestsUtil;
+import com.itheima.shiro.utils.EmptyUtil;
+import org.apache.shiro.authc.AuthenticationInfo;
+import org.apache.shiro.authc.AuthenticationToken;
+import org.apache.shiro.authc.SimpleAuthenticationInfo;
+import org.apache.shiro.authc.UnknownAccountException;
+import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
+import org.apache.shiro.authz.AuthorizationInfo;
+import org.apache.shiro.subject.PrincipalCollection;
+import org.apache.shiro.util.ByteSource;
+import org.springframework.beans.factory.annotation.Autowired;
+/** * @Description：自定义shiro的实现 */
+public class ShiroDbRealmImpl extends ShiroDbRealm {
+    @Autowired
+    private UserBridgeService userBridgeService;    
+    /**
+    * @Description 认证方法
+    * @param authcToken 校验传入令牌
+    * @return AuthenticationInfo
+    */
+    @Override
+    public AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authcToken) {
+        SimpleToken token = (SimpleToken)authcToken;
+        User user  = userBridgeService.findUserByLoginName(token.getUsername());
+        if(EmptyUtil.isNullOrEmpty(user)){
+            throw new UnknownAccountException("账号不存在");
+        }
+        ShiroUser shiroUser = BeanConv.toBean(user, ShiroUser.class);
+        shiroUser.setResourceIds(userBridgeService.findResourcesIdsList(user.getId()));
+        String salt = user.getSalt();
+        String password = user.getPassWord();
+        return new SimpleAuthenticationInfo(shiroUser, password, ByteSource.Util.bytes(salt), getName());
+    }
+    /**
+    * @Description 授权方法
+    * @param principals SimpleAuthenticationInfo对象第一个参数
+    * @return
+    */
+    @Override
+    public AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
+        ShiroUser shiroUser = (ShiroUser) principals.getPrimaryPrincipal();
+        return userBridgeService.getAuthorizationInfo(shiroUser);
+    }
+    /**
+    * @Description 加密方式
+    */
+    @Override
+    public void initCredentialsMatcher() {
+        HashedCredentialsMatcher matcher = new HashedCredentialsMatcher(SuperConstant.HASH_ALGORITHM);
+        matcher.setHashIterations(SuperConstant.HASH_INTERATIONS);
+        setCredentialsMatcher(matcher);
+    }}
 ```
 
 ##### 4.3.3 SimpleToken
 
-```
+```java
 package com.itheima.shiro.core.base;
 import org.apache.shiro.authc.UsernamePasswordToken;
-/** * @Description 自定义tooken */
+
+/**
+* @Description 自定义tooken
+*/
 public class SimpleToken extends UsernamePasswordToken {
-/** serialVersionUID */    private static final long serialVersionUID = -4849823851197352099L;    private String tokenType;    private String quickPassword;    /**     * Constructor for SimpleToken     * @param tokenType     */    public SimpleToken(String tokenType, String username,String password) {        super(username,password);        this.tokenType = tokenType;    }    public SimpleToken(String tokenType, String username,String password,String quickPassword) {        super(username,password);        this.tokenType = tokenType;        this.quickPassword = quickPassword;    }    public String getTokenType() {        return tokenType;    }    public void setTokenType(String tokenType) {        this.tokenType = tokenType;    }    public String getQuickPassword() {        return quickPassword;    }    public void setQuickPassword(String quickPassword) {        this.quickPassword = quickPassword;    }}
+	/** serialVersionUID */    
+    private static final long serialVersionUID = -4849823851197352099L;    
+    private String tokenType;    private String quickPassword;    
+    /**     
+    * Constructor for SimpleToken     
+    * @param tokenType     
+    */
+    public SimpleToken(String tokenType, String username,String password) {
+        super(username,password);
+        this.tokenType = tokenType;
+    }
+    public SimpleToken(String tokenType, String username,String password,String quickPassword) {
+        super(username,password);
+        this.tokenType = tokenType;
+        this.quickPassword = quickPassword;
+    }
+    public String getTokenType() {
+        return tokenType;
+    }
+    public void setTokenType(String tokenType) {
+        this.tokenType = tokenType;
+    }
+    public String getQuickPassword() {
+        return quickPassword;
+    }
+    public void setQuickPassword(String quickPassword) {
+        this.quickPassword = quickPassword;
+    }}
 ```
 
 ### 4、ShiroDbRealm定义
 
+```java
+public abstract class ShiroDbRealm extends AuthorizingRealm {  
+        
+    /**
+    * @Description认证方法
+    * @param 
+    * @return
+    */
+    protected abstract AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationExcepion;
+    
+    /**授权方法
+      @param principals 令牌对象
+      @return 授权信息
+    */
+    protected abstract AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals);
+    
+    /**
+      @Description 自定义密码比较器
+    */
+    public abstract void initCredentialsMatcher();
+
+}
+```
+
+```java
+public class ShiroRealmImpl extends ShirDbRealm{
+	 protected abstract AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationExcepion{
+         
+     }
+}
+```
+
+
+
 ### 5、ShiroConfig配置
 
-5.1 图解
+##### 5.1 图解
 
-5.2 原理分析
+##### 5.2 原理分析
 
 （1）、创建SimpleCookie，访问项目时，会在客户端中的cookie中存放ShiroSession的对
 
@@ -2130,4 +2332,8 @@ public class SimpleToken extends UsernamePasswordToken {
 
 
 
-### 第十章 Springboot+Shiro+Jwt前后端分离鉴权
+## 第十章 Springboot+Shiro+Jwt前后端分离鉴权
+
+
+
+## 第十一章 分布式统一权限系统
