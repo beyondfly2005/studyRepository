@@ -41,3 +41,33 @@ public class SwaggerConfig {
 }
 ```
 
+#### 3、在spring中配置
+
+```xml
+    <bean class="com.ac.intellsecurity.config.SwaggerConfig"/>
+    <!-- 配置swagger -->
+    <mvc:resources mapping="swagger-ui.html"location="classpath:/META-INF/resources/" />
+    <mvc:resources mapping="/webjars/**" location="classpath:/META-INF/resources/webjars/" />
+	<bean id="swagger2Config" class="springfox.documentation.swagger2.configuration.Swagger2DocumentationConfiguration" />
+```
+
+#### 4、Swagger常用属性
+
+##### @Api (value="xxx模块")
+
+标记在类上，标识这个类是swagger资源  value  tags 
+
+##### @ApiOperation(value="xx方法")
+
+标记在方法上，表示一个http请求的操作  value  tags 
+
+##### @ApiParam
+
+标记在方法上法，表示对参数添加元数据（说明或是否必填）参数：字段说明  
+
+@ApiParam(hidden=true)
+
+##### @ApiModel()
+
+标记在类上，标示对类进行说明，用于参数用实体类接收
+
