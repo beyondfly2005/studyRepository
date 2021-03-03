@@ -89,20 +89,20 @@ https://blog.51cto.com/13416247/2308248
 
 
 
-#### 4、fetching resource list XXX  , Please wait
+#### 6、fetching resource list XXX  , Please wait
 
 spring 版本问题 建议升级Spring版本
 
 > 参考文档：https://blog.csdn.net/weixin_41846320/article/details/82963246
 
-#### 5、Swagger不能使用，可能与拦截器相关
+#### 7、Swagger不能使用，可能与拦截器相关
 
 ```
 https://www.cnblogs.com/niugang0920/p/12186446.html
 https://blog.csdn.net/qq_39597203/article/details/84937032
 ```
 
-#### 6、Swagger多分组配置
+#### 8、Swagger多分组配置
 
 ```
 https://blog.csdn.net/dongchan1847/article/details/101849290
@@ -112,7 +112,7 @@ https://www.iteye.com/blog/tllyf-2432452
 
 
 
-#### 6、将spring从4.2.9 升级为5.0.1 遇到的问题：Log4jConfigListener找不到类 ，类过期问题
+#### 9、将spring从4.2.9 升级为5.0.1 遇到的问题：Log4jConfigListener找不到类 ，类过期问题
 
 参考文档：
 
@@ -124,7 +124,7 @@ https://blog.csdn.net/zhiyuzhe/article/details/78850238
 
 
 
-#### 5、将spring从4.2.9 升级为5.0.1 遇到的问题：jackson版本
+#### 10、将spring从4.2.9 升级为5.0.1 遇到的问题：jackson版本
 
 ```
 com/fasterxml/jackson/databind/exc/InvalidDefinitionException
@@ -154,7 +154,7 @@ jackson-databind 版本冲突，升级为新版本 ，或改为一致的版本�
          </dependency>-->
 ```
 
-#### 6、接口同时显示POST、GET、 PUT、DELETE、UPDETE等方法
+#### 11、接口同时显示POST、GET、 PUT、DELETE、UPDETE等方法
 
 原因分析：
 
@@ -173,7 +173,7 @@ jackson-databind 版本冲突，升级为新版本 ，或改为一致的版本�
 
 
 
-#### 7、以HttpSession HttpSevletRequest为参数的接口，参数过多
+#### 12、以HttpSession HttpSevletRequest为参数的接口，参数过多
 
 将HttpSession内置的属性，全部加载为参数，导致接口加载速度过慢
 
@@ -220,7 +220,7 @@ servletContext.classLoader
 
 
 
-#### 8、Swagger加载很慢，Controller过多 控制器中的接口过多
+#### 13、Swagger加载很慢，Controller过多 控制器中的接口过多
 
 解决方法：采用Swagger分组
 
@@ -234,60 +234,148 @@ servletContext.classLoader
 
 ​     按业务模块进行分组 每次看文档 只能选择一个分组 （一个业务模块），查看分组中的接口 文档
 
-#### 9、Swagger中隐藏请求参数
+#### 14、Swagger 分组策略
+
+分组策略为按包名称分组，另一个是按请求路径进行分组
+
+```java
+@Configuration
+@EnableSwagger2
+public class SwaggerConfiguration {
+
+
+//设置显示状态，value是在pom中配置的
+@Value("${meinergy.config.swagger:false}")
+    private boolean swaggerShow;
+
+    @Bean
+    public Docket createRestApiForAll() {
+        return new Docket(DocumentationType.SWAGGER_2).enable(swaggerShow).apiInfo(apiInfo()).select()
+                .apis(RequestHandlerSelectors.basePackage("com.tyut.controller"))
+                .paths(PathSelectors.any()).build().groupName("所有api").pathMapping("/");
+    }
+
+	//根据包进行分组
+
+    @Bean
+    public Docket createRestApiForAuth() {
+        return new Docket(DocumentationType.SWAGGER_2).enable(swaggerShow).apiInfo(apiInfo()).select()
+                .apis(RequestHandlerSelectors.basePackage("com.tyut.controller.auth"))
+                .paths(PathSelectors.any()).build().groupName("用户管理").pathMapping("/");
+    }
+
+    @Bean
+    public Docket createRestApiForCs() {
+        return new Docket(DocumentationType.SWAGGER_2).enable(swaggerShow).apiInfo(apiInfo()).select()
+                .apis(RequestHandlerSelectors.basePackage("com.tyut.controller.cs"))
+                .paths(PathSelectors.any()).build().groupName("客户满意度").pathMapping("/");
+    }
+    
+	// 按照路径进行分组
+	@Bean
+    public Docket web_api_admin() {
+        return new Docket(DocumentationType.SWAGGER_2)
+                .apiInfo(apiInfo("admin-api", "系统管理员", "1.0"))
+                .select()
+                .apis(RequestHandlerSelectors.any())
+                .paths(PathSelectors.ant("/api/admin/**"))
+                .build()
+                .groupName("系统管理员")
+                .pathMapping("/");
+    }
+
+
+    private ApiInfo apiInfo() {
+        return new ApiInfoBuilder().title("[项目名称]").description("[项目描述]").version("1.0.0").build();
+    }
+}
+
+```
+
+参考文档：
+
+```
+https://blog.csdn.net/qq_41973154/article/details/105708285
+```
+
+
+
+#### 15、Swagger中隐藏请求参数
 
 ```
 https://segmentfault.com/q/1010000006720980#
 ```
 
-#### 10、Swagger注解-@ApiModel 和 @ApiModelProperty
+#### 15、Swagger注解-@ApiModel 和 @ApiModelProperty
 
 ```
 https://blog.csdn.net/dejunyang/article/details/89527348
 ```
 
-#### 11、@ApiModelProperty用法
+#### 16、@ApiModelProperty用法
 
 ```
 https://www.cnblogs.com/huanghuanghui/p/9086860.html
 ```
 
-#### 12、@ApiImplicitParam注解
+#### 17、@ApiImplicitParam注解
 
 ```
 https://www.cnblogs.com/fengli9998/p/7921601.html
 ```
 
-#### 13、Swagger使用教程
+#### 18、Swagger使用教程
 
 ```
 https://blog.csdn.net/pzq915981048/article/details/82864872
 https://zhuanlan.zhihu.com/p/92002503
 ```
 
-#### 14、Swagger绑定Session里的值
+#### 19、Swagger绑定Session里的值
 
 ```
 https://blog.csdn.net/sayyy/article/details/108624137
 https://www.cnblogs.com/winclpt/articles/7218086.html
 ```
 
-#### 15、Swagger常用注解
+#### 20、Swagger常用注解
 
 ```
 https://www.jianshu.com/p/12f4394462d5
 https://blog.csdn.net/wyb880501/article/details/79576784
 ```
 
-#### 16、Gradle方式 SSM集成Swagger2
+#### 21、Gradle方式 SSM集成Swagger2
 
 ```
 https://www.jianshu.com/p/a8cbfadf1289
 ```
 
-#### 18、Swagger-UI github地址
+#### 22、Swagger-UI github地址
 
 ```
 https://github.com/swagger-api/swagger-ui
+```
+
+#### 23、SSM整合Swagger最良心的帖子
+
+- swagger 要求url-pattern 配置 /  springMVC要拦截.do请求 放行静态文件
+- 前端UI版本冲突 也有说明
+- jackson-databind 使用的版本 以及可能遇到的冲突
+
+```
+https://blog.csdn.net/weixin_42719412/article/details/84401914
+```
+
+#### 24、SSM整合Swagger最良心的帖子之二
+
+```
+https://blog.csdn.net/WangSir_/article/details/102796904
+```
+
+#### 25、BoootStarap版的 UI
+
+```
+
 ```
 
