@@ -54,7 +54,7 @@ $ yum list docker-ce --showduplicates | sort -r
 ###### ⑦ 安装docker
 
 ```bash
-sudo yum install -y docker-ce     
+sudo yum install -y docker-ce
 #由于repo中默认只开启stable仓库，故这里安装的是最新稳定版18.03.1
 sudo yum install -y docker-ce docker-ce-cli containerd.io  
 #安装最新版本的 Docker Engine-Community 和 containerd

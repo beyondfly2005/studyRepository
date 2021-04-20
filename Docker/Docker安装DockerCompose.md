@@ -15,11 +15,71 @@ CentOS 7 安装 docker-compose
 	multi-container Docker applications）」，其前身是开源项目 Fig。
 
 ##### 2. centos 7 下使用 python-pip 安装 docker-compose
-	首先检查 Linux 有没有安装 python-pip 包：yum install python-pip。
-	没有 python-pip 包就执行：yum install epel-release -y 命令。
-	执行成功之后，再次执行：yum install python -y。
-	对安装好的 pip 进行升级：pip install --upgrade pip。
-	升级完 pip 工具之后，使用：pip install docker-compose 安装 docker-compose。
+
+首先检查 Linux 有没有安装 python-pip 包：
+
+```
+yum install python-pip
+```
+
+没有 python-pip 包就执行命令：
+
+```
+yum install epel-release -y 
+```
+
+执行成功之后，再次执行：
+
+```bash
+yum install python -y
+```
+
+对安装好的 pip 进行升级：
+
+```
+pip install --upgrade pip
+```
+
+升级完 pip 工具之后，使用如下命令安装 docker-compose：
+
+```bash
+## 安装 docker-compose
+pip install docker-compose 
+```
+
+**报错**
+
+```
+File "/usr/lib/python2.7/site-packages/pip/_internal/cli/main.py", line 60
+    sys.stderr.write(f"ERROR: {exc}")
+```
+
+**解决办法:**
+
+```
+yum remove python-pip
+
+cd /usr/local/src
+wget https://bootstrap.pypa.io/pip/2.7/get-pip.py
+python get-pip.py
+
+pip -V
+
+```
+
+python2.7想升级pip的话,注意版本要小于21.0
+
+```bash
+pip install --upgrade "pip < 21.0"
+```
+
+**再次执行安装docker-compose**
+
+```bash
+pip install docker-compose 
+```
+
+
 
 ##### 3. 国内的 epel 和 pip 源镜像
 
