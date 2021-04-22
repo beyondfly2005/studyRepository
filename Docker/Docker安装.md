@@ -38,11 +38,44 @@ $ yum remove docker docker-common docker-selinux docker-engine
 $ yum install -y yum-utils device-mapper-persistent-data lvm2
 ```
 
+安装yum-util和yum-config-manager时遇到问题yum [Errno 256] No more mirrors to try 解决方法：
+
+系统信息：CentOS release 6.6 (Final)
+
+```bash
+yum clean all
+
+yum makecache
+
+yum update 
+```
+
+以上命令执行完毕，再执行安装
+
+```bash
+yum install -y yum-utils device-mapper-persistent-data lvm2
+```
+
+
+
 ###### ⑤ 设置yum源
 
 ```bash
+# 官方源(比较慢)
 $ yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 ```
+
+```bash
+# 阿里云源
+$ sudo yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+```
+
+```bash
+# 清华大学源
+$ sudo yum-config-manager --add-repo https://mirrors.tuna.tsinghua.edu.cn/docker-ce/linux/centos/docker-ce.repo
+```
+
+
 
 ###### ⑥ 选择版本
 
@@ -372,3 +405,49 @@ runoob@runoob:~/tomcat$ docker images|grep tomcat
 docker ps 
 
 ```
+
+### 6、 安装docker-compose
+
+###### 	1、准备docker-compose安装文件
+
+
+
+###### 	2、上传docker-compose到/usr/local/bin/
+
+```bash
+cd /usr/local/bin/
+# 上传 docker-compose
+```
+
+###### 	3、设置docker-compose执行权限
+
+```bash
+chmod +x /usr/local/bin/docker-compose
+```
+
+###### 	4、测试安装是否成功
+
+```bash
+docker-compose --version
+```
+
+###### 	5、准备docker-compose.yaml文件
+
+```
+
+```
+
+###### 	6、创建docker-compose容器
+
+```bash
+docker-compose up 
+# 必须在包含有docker-compose.yaml文件的目录中执行
+```
+
+###### 	7、启动容器
+
+```bash
+# 以上容器默认以前台方式启动 ctl+c 停掉之后，执行以下命令
+docker-compose start
+```
+

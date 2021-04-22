@@ -98,6 +98,8 @@ sudo systemctl restart docker
 
 ```bash
 sudo curl -L https://github.com/docker/compose/releases/download/1.25.5/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
+
+sudo curl -L "https://github.com/docker/compose/releases/download/1.25.5/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 ```
 
 如果下载不下来，可以手动下载，然后上传服务器
@@ -216,6 +218,26 @@ secrets
 
 
 #### Docker Compose 实战MySQL
+
+```yaml
+version: "3.7"
+services:
+  mysql:
+    image: mysql:5.7.27
+    container_name: mysql
+    ports:
+      - 3306:3306
+    volumes:
+      - /data/mysql/data:/var/lib/mysql
+      - /etc/localtime:/etc/localtime
+      - /data/mysql/my.cnf:/etc/mysql.conf.d/server.cnf
+    environment:
+      - MYSQL_ROOT_PASSWORD=dxjc@2021
+      - MYSQL_USER=tykj
+      - MYSQL_PASSWORD=tykj
+      - MYSQL_DATABASE=tykj
+   
+```
 
 
 
