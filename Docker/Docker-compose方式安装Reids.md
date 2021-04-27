@@ -95,13 +95,13 @@ docker-compose exec redis bash
 docker-compose run redis bash
 ```
 
-###### 4、查看日志
+##### 4、查看日志
 
 ```
 docker-compose  logs -f
 ```
 
-5、设置为可远程访问
+##### 5、设置为可远程访问
 
 ```
 redis.conf配置文件：（注释掉bind:127.0.0.1）和修改保护模式为no
