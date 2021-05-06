@@ -108,6 +108,14 @@ curl -L "https://github.com/docker/compose/releases/download/1.25.5/docker-compo
 
 https://github.com/docker/compose/releases
 
+```
+cd /usr/local/bin/
+
+## 上传docker-compose到服务器的/usr/local/bin/目录
+```
+
+
+
 > 给docker-compose执行权限
 
 ```bash
