@@ -6,6 +6,9 @@
 
 ```bash
 $ docker version
+
+# 查看centos版本
+cat /etc/redhat-release
 ```
 
 ##### Docker在 CentOS7上的安装
@@ -20,7 +23,7 @@ $ uname -r
 ###### ② 更新yum
  使用 root 权限登录 Centos。确保 yum 包更新到最新
 ```bash
-$ yum -y update
+$ sudo yum -y update
 ```
 
 ###### ③ 卸载旧版本
