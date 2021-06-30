@@ -33,6 +33,39 @@ $ sudo yum -y update
 $ yum remove docker docker-common docker-selinux docker-engine
 ```
 
+如果没有可用的源
+
+**安装配置yum源**
+
+```bash
+####首先备份/etc/yum.repos.d/CentOS-Base.repo
+
+mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.backup
+```
+
+下载对应版本repo文件, 放入/etc/yum.repos.d/(操作前请做好相应备份)
+
+- [CentOS7](http://mirrors.163.com/.help/CentOS7-Base-163.repo)
+- [CentOS6](http://mirrors.163.com/.help/CentOS6-Base-163.repo)
+- [CentOS5](http://mirrors.163.com/.help/CentOS5-Base-163.repo)
+
+运行以下命令生成缓存
+
+```bash
+yum clean all
+yum makecache
+```
+
+**安装rz**
+
+如果不能上传 需要安装 rz
+
+```bash
+yum install lrzsz-0.12.20-27.1.el6.x86_64.rpm -y
+```
+
+
+
 ###### ④ 安装需要的软件包
 
  yum-util 提供yum-config-manager功能，另外两个是devicemapper驱动依赖的
