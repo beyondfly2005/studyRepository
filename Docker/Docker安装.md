@@ -487,3 +487,13 @@ docker-compose up
 docker-compose start
 ```
 
+### 7 、常见问题的解决
+
+
+
+```
+docker exec -it [容器名] bash -c "cd [目录名1] && cd [目录名2] && ls"
+docker exec -it tomcat bash -c "cd /usr && cd local && ls"
+
+```
+
