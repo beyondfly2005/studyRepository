@@ -497,3 +497,29 @@ public void testPage(){
 }
 ```
 
+### P11、删除操作
+
+```java
+@Test
+public void testDeleteById(){
+    userMapper.deleteById
+    userMapper.deleteBatchIds(集合);
+    userMapper.deleteByMap(map);
+    userMapper.delete(wapper); //条件构造器删除
+}
+```
+
+### P12、逻辑删除
+
+
+
+### P13、性能分析插件
+
+
+
+### P14、条件构造器
+
+
+
+### P15、代码生成器
+
