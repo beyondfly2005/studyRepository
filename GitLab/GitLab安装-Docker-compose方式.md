@@ -43,6 +43,47 @@ services:
         - /uer/local/docker/gitlab/logs:/var/log/gitlab
 ```
 
+```yaml
+version: '3'
+services:
+  gitlab:
+    image: 'twang2218/gitlab-ce-zh'  #可以指定版本 :9.4
+    restart: always
+    #restart: unless-stopped
+    container_name: 'gitlab'
+    privileged: true
+    hostname: '192.168.44.129'
+    environment:
+      TZ: 'Asia/Shanghai'
+      GITLAB_OMNIBUS_CONFIG: |
+      external_url 'http://192.168.44.129:8085' #或者域名
+      gitlab_rails['time_zone'] = 'Asia/Shanghai'
+      # 需要配置到 gitlab.rb 中的配置可以在这里配置，每个配置一行，注意缩进。
+      # 比如下面的电子邮件的配置：以163邮箱为例
+      gitlab_rails['smtp_enable'] = true
+      gitlab_rails['smtp_address'] = "smtp.163.com"
+      gitlab_rails['smtp_port'] = 465
+      gitlab_rails['smtp_user_name'] = "xxx@163.com"
+      gitlab_rails['smtp_password'] = "xxx"
+      gitlab_rails['smtp_domain'] = "163.com"
+      gitlab_rails['smtp_authentication'] = "login"
+      gitlab_rails['smtp_enable_starttls_auto'] = true
+      gitlab_rails['smtp_tls'] = true
+      gitlab_rails['gitlab_email_from'] = 'xxx@163.com'
+      gitlab_rails['gitlab_shell_ssh_port'] = 220
+      unicorn['port'] = 8888     #gitlab 内部端口
+      nginx['listen_port'] = 8085
+    ports:
+      - '8085:80'
+      - '8443:443'
+      - '220:22'
+    volumes:
+      - /uer/local/docker/gitlab/config:/etc/gitlab
+      - /uer/local/docker/gitlab/data:/var/opt/gitlab
+      - /uer/local/docker/gitlab/logs:/var/log/gitlab
+
+
+```
 
 
 

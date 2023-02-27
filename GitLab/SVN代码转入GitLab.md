@@ -7,8 +7,6 @@
 - 
 
 
-
-
 ### 方法一
 ``` bash
 #svn地址： svn://192.168.1.254/www/Project/Source/acTool
@@ -39,8 +37,8 @@ svn log URL -q | awk -F '|' '/^r/ {sub("^ ", "", $2); sub(" $", "", $2); print $
 svn log svn://192.168.1.254/www/Project/Source/acTool -q | awk -F '|' '/^r/ {sub("^ ", "", $2); sub(" $", "", $2); print $2" = "$2" <"$2">"}' | sort -u > users.txt
 
 
-
 git svn clone svn://192.168.1.254/www/Project/Source/acTool --trunk="trunk" --tags="tags" --branches="branches" --authors-file=./users.txt --no-metadata 
+
 
 git svn clone svn://192.168.1.254/www/Project/Source/acTool --no-metadata --authors-file=users.txt GitProject
 
@@ -50,12 +48,14 @@ git svn clone svn://192.168.1.254/www/Project/Source/acTool --no-metadata --auth
 cd AcTool
 
 # 关联远程仓库
+
 git remote add origin ssh:git@192.168.1.252:220/root/AcTool.git
 git remote add origin git@192.168.1.252:220/gaolongfei/AcTool.git
 git remote add origin ssh://git@192.168.1.252:220/root/AcTool.git
 
 git remote -v
 git remote -v
+
 # 显示如下
 # origin  git@192.168.1.252:220/root/AcTool.git (fetch)
 # origin  git@192.168.1.252:220/root/AcTool.git (push)
@@ -65,7 +65,6 @@ git remote rm origin
 
 
 ```
-
 
 
 > 参考文档 
@@ -107,9 +106,6 @@ $ svn log svn://192.168.1.254/www/研发企业版/04源代码/trunk/IntellSecuri
 
 
 ```
-
-
-
 
 
 > Arch linux 安装 git

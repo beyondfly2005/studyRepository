@@ -1,4 +1,4 @@
-# GitLab
+# GitLab安装及使用
 
 
 
@@ -144,7 +144,7 @@ git config --global user.name
 
 
 
-# 使用SSH方式拉取和推送项目
+## 使用SSH方式拉取和推送项目
 
 
 
