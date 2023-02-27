@@ -500,7 +500,7 @@ create_date
 update_date
 ```
 
-```java
+```sql
 create table t_user(
     id int(11),
      user_name varchar(20),
