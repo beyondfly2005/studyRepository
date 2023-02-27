@@ -1,8 +1,13 @@
+# CRM项目系统管理-后台管理项目完整版
 
 
-> https://www.bilibili.com/video/BV1sp4y1z7Jf?p=2&spm_id_from=pageDriver
+> > https://www.bilibili.com/video/BV1sp4y1z7Jf
 >
-> 2021版：https://www.bilibili.com/video/BV1tK411g7VV
+> 2021版：
+>
+> https://www.bilibili.com/video/BV1tK411g7VV
+>
+> 最新文档已经转到 语雀
 
 ### 1、学习目标
 
