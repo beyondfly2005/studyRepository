@@ -1,4 +1,4 @@
-### Linux LVM扩容记录
+# Linux LVM扩容
 
 #### 虚拟机实验过程
 

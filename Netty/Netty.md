@@ -234,7 +234,7 @@ public class DiscardServer {
 
 使用telnet 来充当client使用
 
-```java
+```bash
 #命令行 输入 
 telnet 127.0.0.1 8084 
 #启动telnet 连接服务器
