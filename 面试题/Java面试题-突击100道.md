@@ -60,7 +60,7 @@ student = new Student(); //不可用 改变了指向
 
 ```
 
-##### 6 String StringBuffer StringBuilder
+##### 5 String StringBuffer StringBuilder
 
 String 与另外两个类的区别是
 > String 是final类型，每次声明的都是不可变的对象，
@@ -101,7 +101,7 @@ StringBuffer的每个方法的源码 都加入了synchronized修饰符
 
 HashMap ArrayList StringBuilder 都是线程不安全的 但是在Service中的方法中大量使用 它是没有问题的 不用考虑线程安全。
 
-##### 7 接口和抽象类的区别
+##### 6 接口和抽象类的区别
 
 语法区别 
 
@@ -126,8 +126,8 @@ JDK
 从单体架构 分层开发
 
 
-##### 8 递归必回题目
-###### 8.1算法题：求N的阶乘
+##### 7 递归必回题目
+###### 7.1算法题：求N的阶乘
 
 1、什么是递归
 > 递归 就是方法内部调用方法自身
@@ -148,7 +148,7 @@ public static int getResult(int n){
 }
 ```
 
-###### 8.2 斐波那契数列/不死神兔
+###### 7.2 斐波那契数列/不死神兔
 数字规律：1,1,2,3,5,8,13
 
 ```java
@@ -167,7 +167,7 @@ public static int getFiBo(int n){
 }
 ```
 
-##### 9 Integer int 缓存和自动装箱拆箱
+##### 8 Integer int 缓存和自动装箱拆箱
 JDK 1.5之后 自动装箱
 Integer i=126 ;
 Integer.valueOf(126);
@@ -177,3 +177,28 @@ Integer.valueOf(126);
 IntegerCache.Low 默认值为-128
 IntegerCache.HEIGHT 默认值 127
 
+##### 9 重写和重载的区别
+- 重载：发生在一个类里面，方法名相同，参数列表不同（混淆点：跟返回类型没有关系）
+> 以下不构成重载
+> public double add(int a,int b)
+> public int add(int a,int b)
+- 重写：发生在父类子类之间，方法名相同，参数列表相同
+
+##### 10 List Set的区别 Collection Collections
+###### 10.1 List Set的区别
+- List 有序 可重复  ArrayList LinkedList
+- Set 无序 不可重复 HashSet TreeSet 
+  - 无序 不等于不可排序
+  - 无序的意思：加进去的顺序 不等于输出的顺序 
+
+###### 10.2 Collection Collections区别
+Java工具类的命名 一般都是以+s结尾
+
+- Collection 是一个集合接口
+  Collection，提供了对集合对象进行基本操作的通用接口方法，所有集合都是它的子类，比如 List、Set 等。
+
+- Collections 是一个包装类
+  Collections，是一个工具类，它包含了很多静态方法，不能被实例化，比如排序方法： Collections. sort(list)等。
+
+
+##### 11 ArrayList和LinkedList区别
