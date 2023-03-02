@@ -151,11 +151,11 @@ Lamdba是一个匿名函数（方法），我们可以把Lambda表达式理解�
 ```java
 package com.beyondsoft.java8;
 
-public class TestLambda{
+public class TestLambda {
     
     //原来的匿名内部类
     @Test
-    public void test1(){
+    public void test1() {
         //匿名内部类
         Comparator<Integer> com = new Comparator<Integer>(){
             @Override
@@ -176,10 +176,10 @@ public class TestLambda{
     
     //需求：获取当前公司中 年龄大于35的员工信息
     List<Employee> employees = Arrays.asList(
-        new Employee("张三"，19,9999.99),
-        new Employee("张三"，19,9999.99),
-        new Employee("张三"，19,9999.99),
-        new Employee("张三"，19,9999.99)
+        new Employee("张三",19,9999.99),
+        new Employee("张三",19,9999.99),
+        new Employee("张三",19,9999.99),
+        new Employee("张三",19,9999.99)
     );
     
     @Test
@@ -236,14 +236,14 @@ public class TestLambda{
     //优化3 匿名内部类 改为lambda表达式
     @Test
     public void test6(){
-        List<Employee> list = filterEMployee(employees,(e)-> e.getSalary <=5000);
+        List<Employee> list = filterEMployee(employees,(e)-> e.getSalary <= 5000);
         list.forEach(System.out::println);
     }
     
     //优化方式4 
     @Test
     public void test7(){
-        employees.steam().filter((e)->e.getSalary()5000)
+        employees.steam().filter((e)->e.getSalary() <= 5000)
             .limit(2) //取前两个
             .forEach(System.out::println);
         
@@ -258,7 +258,7 @@ public class TestLambda{
 
 // 员工对象
 publicclass Employee{
-    private 
+    private ;
 }
     
 ```
