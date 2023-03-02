@@ -1,10 +1,11 @@
+# Git常见问题处理
+
 ## 解决Git终端Git Bash中中文乱码（不显示中文）问题
 
+> https://blog.csdn.net/qq_17229141/article/details/105160211
 
-https://blog.csdn.net/qq_17229141/article/details/105160211
 
-
-#### 1、第一步 设置本地字符集
+#### 1、设置本地字符集
 
 最好先设置一下我们的终端显示的编码（大概是这么叫吧）
 

@@ -56,7 +56,7 @@
   * [GAT-1400相关国标技术规范](GA1400/GAT-1400相关国标技术规范.md)
   * [GAT1400-视图库标准](GA1400/GAT1400-视图库标准.md)
 * Git
-  * [Git Bash中文显示问题](Git/Git Bash中文显示问题.md)
+  * [GitBash中文显示问题](Git/GitBash中文显示问题.md)
   * [Git-分支管理](Git/Git-分支管理.md)
   * [Git与SVN](Git/Git与SVN.md)
   * [Git使用详解-互联网人都该懂点Git](Git/Git使用详解-互联网人都该懂点Git.md)
