@@ -1,11 +1,7 @@
-
-
 #### Docker 方式安装Nacos
 
+> 参考文档
 > https://www.jianshu.com/p/3d3e17bc629f
-
-
-
 
 
 #### Docker Compose方式安装Nacos
