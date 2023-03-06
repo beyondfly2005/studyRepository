@@ -88,7 +88,7 @@
     * [Java网络](Java/7-网络编程/Java网络.md)
     * [Java网络编程](Java/7-网络编程/Java网络编程.md)
     * [Java网络编程实例](Java/7-网络编程/Java网络编程实例.md)
-  * [Java Log日志输出的三种方式](Java/Java Log日志输出的三种方式.md)
+  * [Java Log日志输出的三种方式](Java/Java-Log日志输出的三种方式.md)
   * [Java](Java/Java.md)
   * Java8
     * [Java8新特性-尚硅谷](Java/Java8/Java8新特性-尚硅谷.md)
@@ -120,9 +120,9 @@
   * [Kubernetes学习](K8S/Kubernetes学习.md)
   * [SpringCloud+K8s](K8S/SpringCloud+K8s.md)
 * Kafka
-  * [Kafka-千锋](Kafka/Kafka-千锋.md)
-  * [Kafka-黑马2019版](Kafka/Kafka-黑马2019版.md)
-  * [Kafka-黑马2020版](Kafka/Kafka-黑马2020版.md)
+  * [Kafka-千锋](docs/studyRepository/MQ/Kafka/Kafka-千锋.md)
+  * [Kafka-黑马2019版](docs/studyRepository/MQ/Kafka/Kafka-黑马2019版.md)
+  * [Kafka-黑马2020版](docs/studyRepository/MQ/Kafka/Kafka-黑马2020版.md)
 * LibreOffice
   * [Linux安装LibreOffice](LibreOffice/Linux安装LibreOffice.md)
 * Linux
@@ -232,7 +232,7 @@
   * [Redis如何安装](Redis/Redis如何安装.md)
   * [Redis系统教程-黑马](Redis/Redis系统教程-黑马.md)
 * Registry
-  * [Docker Registry](Registry/Docker Registry.md)
+  * [Docker Registry](Registry/Registry-Docker方式部署.md)
   * [Registry](Registry/Registry.md)
 * ShardingSphere
   * [ShaddingSphere-马士兵](ShardingSphere/ShaddingSphere-马士兵.md)
