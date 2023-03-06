@@ -84,8 +84,10 @@
 * Java
   * 1-java基础
     * [Java](Java/1-java基础/Java.md)
-  * [2-面向对象](Java/2-面向对象)
-  * [3-集合](Java/3-集合)
+  * 2-面向对象
+    * [Java面向对象](Java/2-面向对象/Java面向对象.md)
+  * 3-集合
+    * [Java-集合](Java/3-集合/Java-集合.md)
   * [4-IO](Java/4-IO)
   * [5-多线程与并发](Java/5-多线程与并发)
   * [6-异常](Java/6-异常)
