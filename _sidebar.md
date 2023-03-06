@@ -96,14 +96,14 @@
     * [Java网络编程实例](Java/7-网络编程/Java网络编程实例.md)
   * [Java-Log日志输出的三种方式](Java/Java-Log日志输出的三种方式.md)
   * Java-Web
-    * [Cookie](Java/Java Web/Cookie)
-    * [EL表达式](Java/Java Web/EL表达式)
-    * [Filter](Java/Java Web/Filter)
-    * [JSP](Java/Java Web/JSP)
-    * [JSTL](Java/Java Web/JSTL)
-    * [Listener](Java/Java Web/Listener)
-    * [Servlet](Java/Java Web/Servlet)
-    * [Session](Java/Java Web/Session)
+    * [Cookie](Java/Java-Web/Cookie)
+    * [EL表达式](Java/Java-Web/EL表达式)
+    * [Filter](Java/Java-Web/Filter)
+    * [JSP](Java/Java-Web/JSP)
+    * [JSTL](Java/Java-Web/JSTL)
+    * [Listener](Java/Java-Web/Listener)
+    * [Servlet](Java/Java-Web/Servlet)
+    * [Session](Java/Java-Web/Session)
   * [Java](Java/Java.md)
   * Java8
     * [Java8新特性-尚硅谷](Java/Java8/Java8新特性-尚硅谷.md)
@@ -142,10 +142,6 @@
   * [Kubernetes-黑马](K8S/Kubernetes-黑马.md)
   * [Kubernetes学习](K8S/Kubernetes学习.md)
   * [SpringCloud+K8s](K8S/SpringCloud+K8s.md)
-* Kafka
-  * [Kafka-千锋](docs/studyRepository/MQ/Kafka/Kafka-千锋.md)
-  * [Kafka-黑马2019版](docs/studyRepository/MQ/Kafka/Kafka-黑马2019版.md)
-  * [Kafka-黑马2020版](docs/studyRepository/MQ/Kafka/Kafka-黑马2020版.md)
 * LibreOffice
   * [Linux安装LibreOffice](LibreOffice/Linux安装LibreOffice.md)
 * Linux
@@ -181,6 +177,9 @@
     * [ActiveMQ-线上部署](MQ/ActiveMQ/ActiveMQ-线上部署.md)
     * [ActiveMQ-马士兵教育张一明](MQ/ActiveMQ/ActiveMQ-马士兵教育张一明.md)
   * Kafka
+    * [Kafka-千锋](MQ/Kafka/Kafka-千锋.md)
+    * [Kafka-黑马2019版](MQ/Kafka/Kafka-黑马2019版.md)
+    * [Kafka-黑马2020版](MQ/Kafka/Kafka-黑马2020版.md)
     * [Kafka](MQ/Kafka/Kafka.md)
   * RabbitMQ
     * [RabbitMQ-尚硅谷](MQ/RabbitMQ/RabbitMQ-尚硅谷.md)
@@ -255,7 +254,7 @@
   * [Redis如何安装](Redis/Redis如何安装.md)
   * [Redis系统教程-黑马](Redis/Redis系统教程-黑马.md)
 * Registry
-  * [Docker Registry](Registry/Registry-Docker方式部署.md)
+  * [Registry-Docker方式部署](Registry/Registry-Docker方式部署.md)
   * [Registry](Registry/Registry.md)
 * ShardingSphere
   * [ShaddingSphere-马士兵](ShardingSphere/ShaddingSphere-马士兵.md)
