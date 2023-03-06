@@ -254,6 +254,7 @@
 * Redis
   * [Java基础课程Redis入门到精通-黑马](Redis/Java基础课程Redis入门到精通-黑马.md)
   * [Redis如何安装](Redis/Redis如何安装.md)
+  * [Redis实战课-黑马-2022版](Redis/Redis实战课-黑马-2022版.md)
   * [Redis系统教程-黑马](Redis/Redis系统教程-黑马.md)
 * Registry
   * [Registry-Docker方式部署](Registry/Registry-Docker方式部署.md)
@@ -464,6 +465,7 @@
   * [1-JVM.面试](面试题/1-JVM.面试.md)
   * [2-多线程面试](面试题/2-多线程面试.md)
   * [3-网络面试](面试题/3-网络面试.md)
+  * [Java面试300集-图灵](面试题/Java面试300集-图灵.md)
   * [Java面试题-突击100道](面试题/Java面试题-突击100道.md)
   * [Java面试题](面试题/Java面试题.md)
   * [jvm底层原理课程-尚硅谷周阳](面试题/jvm底层原理课程-尚硅谷周阳.md)
