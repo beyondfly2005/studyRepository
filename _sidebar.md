@@ -13,7 +13,8 @@
     * [EhCahce教程](Cache/EhCache/EhCahce教程.md)
   * Memcache
     * [MemCached教程](Cache/Memcache/MemCached教程.md)
-  * [Redis](Cache/Redis)
+  * Redis
+    * [Redis缓存](Cache/Redis/Redis缓存.md)
 * dataX
   * [DataX-Migration数据迁移工具](dataX/DataX-Migration数据迁移工具.md)
   * [DataX-尚硅谷](dataX/DataX-尚硅谷.md)
