@@ -56,6 +56,7 @@
 * GA1400
   * [GAT-1400相关国标技术规范](GA1400/GAT-1400相关国标技术规范.md)
   * [GAT1400-视图库标准](GA1400/GAT1400-视图库标准.md)
+* [GB28181](GB28181)
 * Git
   * [Git-分支管理](Git/Git-分支管理.md)
   * [GitBash中文显示问题](Git/GitBash中文显示问题.md)
@@ -142,10 +143,6 @@
   * [Kubernetes-黑马](K8S/Kubernetes-黑马.md)
   * [Kubernetes学习](K8S/Kubernetes学习.md)
   * [SpringCloud+K8s](K8S/SpringCloud+K8s.md)
-* Kafka
-  * [Kafka-千锋](docs/studyRepository/MQ/Kafka/Kafka-千锋.md)
-  * [Kafka-黑马2019版](docs/studyRepository/MQ/Kafka/Kafka-黑马2019版.md)
-  * [Kafka-黑马2020版](docs/studyRepository/MQ/Kafka/Kafka-黑马2020版.md)
 * LibreOffice
   * [Linux安装LibreOffice](LibreOffice/Linux安装LibreOffice.md)
 * Linux
@@ -181,6 +178,9 @@
     * [ActiveMQ-线上部署](MQ/ActiveMQ/ActiveMQ-线上部署.md)
     * [ActiveMQ-马士兵教育张一明](MQ/ActiveMQ/ActiveMQ-马士兵教育张一明.md)
   * Kafka
+    * [Kafka-千锋](MQ/Kafka/Kafka-千锋.md)
+    * [Kafka-黑马2019版](MQ/Kafka/Kafka-黑马2019版.md)
+    * [Kafka-黑马2020版](MQ/Kafka/Kafka-黑马2020版.md)
     * [Kafka](MQ/Kafka/Kafka.md)
   * RabbitMQ
     * [RabbitMQ-尚硅谷](MQ/RabbitMQ/RabbitMQ-尚硅谷.md)
@@ -255,7 +255,7 @@
   * [Redis如何安装](Redis/Redis如何安装.md)
   * [Redis系统教程-黑马](Redis/Redis系统教程-黑马.md)
 * Registry
-  * [Docker Registry](Registry/Registry-Docker方式部署.md)
+  * [Registry-Docker方式部署](Registry/Registry-Docker方式部署.md)
   * [Registry](Registry/Registry.md)
 * ShardingSphere
   * [ShaddingSphere-马士兵](ShardingSphere/ShaddingSphere-马士兵.md)
