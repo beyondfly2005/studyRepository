@@ -1,14 +1,17 @@
-# Spring Security
-> 黑马教程
-> https://www.bilibili.com/video/BV1fE411i7jt?seid=6782538689930778907
+# SpringSecurity 
 
+> 黑马教程 
+> 
+> https://www.bilibili.com/video/BV1fE411i7jt?seid=6782538689930778907
 
 
 ##### P1、 Spring Security介绍 
 
 Spring Security 是一款强大的高度可定制的，认证、授权的框架
 
-官网：https://spring.io/projects/spring-security
+> 官网：
+> 
+> https://spring.io/projects/spring-security
 
 ##### P2、案例介绍
 
@@ -94,7 +97,7 @@ sprign-security-taglibs.jar
 
 使用maven
 
-```xml
+```pom
 <dependency>
 	<artifactId>org.springframework.security</artifactId>
     <groupId>spring-security-config</groupId>
@@ -113,7 +116,7 @@ sprign-security-taglibs.jar
 
 配置springsecurity核心过滤器链
 
-```xml
+```pom
 <filter>
    <filter-name>springSecurityFilterChain></filter-name>
     <filter-clas>org.springframework.web.filter.DelegatingFilterProxy</filter-clas>
@@ -125,7 +128,7 @@ sprign-security-taglibs.jar
 
 spring-security.xml
 
-```xml
+```pom
 <beans>
 
     <!--配置springsecurity-->
@@ -159,7 +162,7 @@ SpringBoot2.1.3 SpringSecurity
 
 ###### 导入SpringBoot的tomcat启动插件jar包
 
-```
+```pom
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-tomcat</artifactId>
