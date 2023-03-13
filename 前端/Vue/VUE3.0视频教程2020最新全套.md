@@ -1,3 +1,5 @@
+# Vue
+
 >  https://www.bilibili.com/video/BV1op4y1U7Bz?p=1
 
 #### Vue-cli4脚手架搭建
@@ -10,7 +12,7 @@ node 版本10.0以上
 
 ##### 2、安装cnpm
 
-```js
+```shell
 # 查看cnpm是否安装
 cnpm -v
 
