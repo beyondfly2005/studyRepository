@@ -328,6 +328,8 @@ CQL：Cassandra Query Language和关系数据库SQL很类似，一些关键词�
 | DROP INDEX      |                       |
 
 #### 4.4.1 数据定义名
+|     |      |
+|-----|------|
 USE
 ALTER KEYSPACE
 DROP KEYSPACE
@@ -337,15 +339,19 @@ TRUNCATE
 CREATE INDEX
 
 #### 4.4.2 数据操作命令
+| |      |
+| --- |------|
 INSET
 UPDATE
 DELETE
 BATCH
 
 #### 4.4.3 查询指令
-SELECT
-WHERE
-ORDERBY
+| |      |
+| --- |------|
+|SELECT| |
+| WHERE | |
+|ORDERBY| |
 
 
 ## 五 基本操作
@@ -371,3 +377,447 @@ DESCRIBE KEYSPACES;
 
 ### 5.7 批量操作
 
+
+## P24
+
+## 六、Java操作Cassandra
+
+### 6.1 Java客户端介绍
+
+- Netflix astyanax 
+- datastx 的java-driver
+- hector-client
+- spring-data-cassandra
+
+6.2 datastax的java-driver
+
+```pom
+<dependency>
+com.datasta
+</dependenvy>
+```
+
+```java
+public class TestKeySpace{
+    
+    private Session session;
+    
+    @Before
+    public void init(){
+        //服务器地址
+        String host ="192.168.137..131";
+        int port =9042;
+        //连接服务端 获取会话
+        Cluster cluster = Cluster.builder()
+          .addContactPoint(host)
+          .withPort(port)
+          .build();
+        session = cluster.connect();
+    }
+    
+    
+    @Test
+    public void findKeySpace(){
+        List<KeySpace> kespaces = session.getCluster().getMetadata().getKeySpaces();
+        for(KeySpace keySpace: keyspaces){
+          System.out.println(keySpace.getName());
+        }
+    }
+    
+    
+    public void createKeySpace(){
+        //使用cql来创建
+        session.execute("create keyspace school with replication = {'class':'SimpleStrategy', 'replication_factor': 3};");
+        //面向对象的方式
+      Map<String,Object> replication = new HashMap<>;
+        KeySpaceOption  options=SchemaBuilder.createKeySpace("school")
+          .ifNotExists()
+          .with()
+          .replication(replication);
+        session.execute(options);
+    }
+    
+    @Test
+    public void deleteKeySpace(){
+        //使用cql
+        //面向兑现方式
+      DropKeuySpace dropKeySpace = SchemaBuilder.dropKeyspace("school").ifExists();
+      session.execute(dropKeSpace);
+    }
+
+    @Test
+    public void alterKeySpace(){
+        Map<String,Object> options = new HashMap<>;
+    SchemaBuilder.alerKeyspace("school").alerKeyspace("school")
+      .with()
+      .replication(options);
+    }
+}
+
+```
+
+TestTable.java
+
+```java
+
+public class TestTable{
+    
+    private Session session;
+    @Before
+    public void init(){
+        String address="192.168.1.1";
+        int port;
+        Cluster cluster = Cluster.builder()
+        .addDContactPoint(address).withPort(port)
+        .build();
+        session = cluster.connect();
+    }
+}
+
+```
+
+### 6.3 SpringData Cassandra
+
+
+
+### Spring Data Cassandra
+
+环境要求
+- Cassandra 2.0以上
+- JDK 1.8及以上
+- Spring 5.2.7.RELEASE 及以上
+
+
+#### 6.3.2 创建Maven工程
+
+##### 引入依赖
+```pom
+
+<dependency>
+   <> spring-data-cassandra
+</dependency>
+
+```
+
+配置文件
+```properties
+cassandra.contactpoints=192.168.1.1
+cassandra.port=9042
+cassandra.keyspace=school
+```
+
+springContext.xml
+
+```xml
+<beans>
+<!-- 引入properties配置文件 -->
+<context:property-placeholder location="class:cassandra.properties">
+<!--配置IP -->
+  <context:cluster contact-points="${cassandra.keyspace}" port="${cassandra.port}" />
+  <!--配置映射 -->
+<cassandra:mapping />
+  <!--配置转换器 -->
+<cassandra:converter />
+  <!--模板-->
+  <cassandra:repositories base-package="com.beyond.springcass.repository" />
+    <!--扫描-->
+    <context:component-scan base-package="com.beyond"/>
+</beans>
+```
+
+pojo
+
+```java
+
+@Data
+@AllargConstructor
+@NorgConstructor
+@Table
+public class Student{
+   @PrimKey
+  private Long id;
+}
+
+```
+
+Repository
+
+```Java
+
+//提供简单的CRUD方法
+
+@Repository
+public interface StudentRepository extends CassandraRepository<Studennt,Long>{
+    
+}
+```
+测试
+
+```Java
+public class TestCass {
+  
+    
+    private StudentServie studentService; 
+    
+    @Before
+  public void init() {
+      //读取配置文件  初始化spring
+      //ClasssPathXmlApplicationContext classsPathXmlApplicationContext = new ClasssPathXmlApplicationContext("springContext.xml");
+      ConfigurableApplicationContext ctx = new ClasssPathXmlApplicationContext("springContext.xml");
+    StuddentService studdentService = (StudentService)ctx.getBean("studentService");
+      
+  }
+  
+  //查询方法
+  @Test
+    public void findAll(){
+        List<Student> studentList = studentService.queryAll();
+        for (Student student: studentList) {
+          System.out.println(student.getName());
+          System.out.println("-------------------------");
+        }
+  }
+}
+
+
+```
+service
+```java
+
+@Service
+public class StudentService{
+    
+}
+```
+
+
+#### 6.3.2 SpringBoot集成Cassandra
+pom
+```pom
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-cassandra</artifactId>
+</dependency>
+```
+
+yml配置
+
+```yaml
+
+spring:
+  data:
+    cassandra:
+      keyspace-name: spacenametest
+      #entity-base-packages:
+      contact-points: 集群地址用逗号分隔
+      port: 9042
+      cluster-name: Test Cluster
+      username: cass用户名
+      password: cass密码
+      consistency-level: ONE
+      serial-consistency-level: ONE
+```
+
+配置类CassandraConfig.java
+
+```java
+
+package com.config;
+ 
+ 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.cassandra.config.AbstractCassandraConfiguration;
+import org.springframework.data.cassandra.config.CqlSessionFactoryBean;
+ 
+@Configuration
+public class CassandraConfig extends AbstractCassandraConfiguration {
+ 
+    //空间名称
+    @Value("${spring.data.cassandra.keyspace-name}")
+    private String keyspaceName;
+ 
+    //节点IP（连接的集群节点IP）
+    @Value("${spring.data.cassandra.contact-points}")
+    private String contactPoints;
+ 
+    @Value("${spring.data.cassandra.username}")
+    private String username;
+ 
+    @Value("${spring.data.cassandra.password}")
+    private String password;
+ 
+//    @Value("${spring.data.cassandra.session-name}")
+//    private String sessionName;
+ 
+    public String getKeyspaceName() {
+        return keyspaceName;
+    }
+ 
+    public String getContactPoints() {
+        return contactPoints;
+    }
+ 
+//    @Override
+//    public String getSessionName() {
+//        return sessionName;
+//    }
+ 
+//    @Override
+//    public String getLocalDataCenter() {
+//        return "datacenter1";
+//    }
+ 
+    @Override
+    public CqlSessionFactoryBean cassandraSession() {
+        CqlSessionFactoryBean cqlSessionFactoryBean = super.cassandraSession();
+        cqlSessionFactoryBean.setPassword(password);
+        cqlSessionFactoryBean.setUsername(username);
+        return cqlSessionFactoryBean;
+    }
+ 
+}
+```
+
+Student映射Pojo类
+```java
+package com.cas4.entity;
+ 
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.data.cassandra.core.cql.PrimaryKeyType;
+import org.springframework.data.cassandra.core.mapping.Column;
+import org.springframework.data.cassandra.core.mapping.PrimaryKeyColumn;
+import org.springframework.data.cassandra.core.mapping.Table;
+ 
+@Setter
+@Getter
+@Table(value = "student")
+public class Student {
+ 
+//@PrimaryKeyColumn(value = "id", type = PrimaryKeyType.CLUSTERED)
+    @PrimaryKeyColumn(value = "id", type = PrimaryKeyType.PARTITIONED)
+    private int id;
+    @Column("name")
+    private String name;
+    @Column("age")
+    private int age;
+ 
+}
+
+```
+
+Service类调用
+```java
+package com.cas4.service;
+ 
+import com.cas4.entity.Student;
+import org.springframework.data.cassandra.core.CassandraTemplate;
+import org.springframework.stereotype.Service;
+ 
+import javax.annotation.Resource;
+import java.util.List;
+ 
+@Service
+public class ServiceImpl {
+ 
+    @Resource
+    private CassandraTemplate cassandraTemplate;
+ 
+    //自定义sql语句
+    public Student findByTenantIdAndSequenceId(String tenantId, String sequenceId) {
+        String cql = String.format("select * from master_order where tenant_id = '%s' and sequence_id='%s'", tenantId, sequenceId);
+        Student student = cassandraTemplate.selectOne(cql, Student.class);
+        return student;
+    }
+ 
+    public void insert(Student masterOrderDO) {
+        //插入
+        cassandraTemplate.insert(masterOrderDO);
+        //删除
+//        cassandraTemplate.delete(masterOrderDO);
+    }
+ 
+    public void find(Student student) {
+        //插入
+        List<Student> list  = cassandraTemplate.select("select * from spacenametest.student where v='"+ student.getV()+"'", Student.class);
+        System.out.println("总条数:"+list.size());
+    }
+ 
+}
+
+```
+cassandra 建表语句
+
+```bash
+bin]# ./cqlsh x.x.x.x 9042 -u cass用户名 -p cass密码
+
+use spacenametest;
+```
+
+建表语句
+```sql
+CREATE TABLE student(
+  id int,
+  name text,
+  age int,
+  PRIMARY KEY (id,name)  --多个主键
+)
+```
+或者
+```sql
+CREATE TABLE student(
+  id int PRIMARY KEY,  --一个主键
+  name text,
+  age int,
+  PRIMARY KEY 
+)
+
+```
+
+
+
+## P37 集群搭建
+
+三台CentOS7 系统 
+设置静态IP 重启虚拟机 不会变化IP
+seed 种子节点
+
+种子节点的作用：
+> 一个新阶段加入集群时，需通过种子节点来发现集群中其他节点，需要至少一个活跃的种子节点可以连接
+> 一旦节点加入这个集群，知道了集群中的其他节点，这个几点在下次启动的时候就不需要种子节点了
+> 对应种子节点没有特殊要求，可以设置任何一个节点为种子。
+> 
+> 
+```shell
+cd conf
+
+vim cassandra.yaml
+```
+
+```yaml
+## 修改集群名称
+cluster_name: 'Test Cluster'
+
+seed_provitor:
+  paramters:
+    - seeds: 192.168.137.31
+
+
+rpc_address: 192.168.
+
+```
+
+## 八 Cassandra的数据存储
+
+> 分为三种
+> CommitLog：
+> Memtable：
+> SSTable：
+
+### 8.1 CommitLog数据格式
+数据将会被持久化到磁盘中，
+
+### 8.2 Memtable内存中数据结构
+
+### 8.3 SSTable
