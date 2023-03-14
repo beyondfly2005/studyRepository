@@ -445,7 +445,8 @@
   * [敏捷开发模式](敏捷开发/敏捷开发模式.md)
   * [敏捷开发绩效管理](敏捷开发/敏捷开发绩效管理.md)
 * 数据库
-  * [MongoDB](数据库/MongoDB)
+  * MongoDB
+    * [MongoDB](数据库/MongoDB/MongoDB.md)
   * MS-SQL
     * [MS-SQL](数据库/MS-SQL/MS-SQL.md)
   * MySQL
@@ -454,8 +455,13 @@
     * [Neo4j-图数据库](数据库/Neo4j/Neo4j-图数据库.md)
   * Oracle
     * [Oracle](数据库/Oracle/Oracle.md)
-  * [Sybase](数据库/Sybase)
+  * PostgreSQL
+    * [PostgreSQL+MADlib分析](数据库/PostgreSQL/PostgreSQL+MADlib分析.md)
+    * [PostgreSQL](数据库/PostgreSQL/PostgreSQL.md)
+  * Sybase
+    * [Sybase](数据库/Sybase/Sybase.md)
   * TDengine
+    * [TDengine-SinkConnector](数据库/TDengine/TDengine-SinkConnector.md)
     * [TDengine](数据库/TDengine/TDengine.md)
 * 数据结构与算法
   * [Java数据结构与算法-尚硅谷](数据结构与算法/Java数据结构与算法-尚硅谷.md)
@@ -499,6 +505,8 @@
   * [jvm底层原理课程-尚硅谷周阳](面试题/jvm底层原理课程-尚硅谷周阳.md)
   * [MyBatis](面试题/MyBatis.md)
   * [互联网大厂高频面试题-尚硅谷周阳](面试题/互联网大厂高频面试题-尚硅谷周阳.md)
+* 音视频
+  * [音视频相关](音视频/音视频相关.md)
 * 项目实战
   * [CRM系统-Boot](项目实战/CRM系统-Boot.md)
   * [乐优商城-黑马](项目实战/乐优商城-黑马.md)
