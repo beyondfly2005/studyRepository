@@ -6,6 +6,8 @@
   * [Activiti6整合RuoYi4.x](Activiti/Activiti6整合RuoYi4.x.md)
 * Ansible
   * [运维自动化之Ansible](Ansible/运维自动化之Ansible.md)
+* API
+  * [OpenAPI](API/OpenAPI.md)
 * Apollo
   * [Appllo-黑马](Apollo/Appllo-黑马.md)
 * Cache
@@ -473,6 +475,8 @@
 * 模块拆分
   * [拆分步骤记录](模块拆分/拆分步骤记录.md)
   * [模块拆分-智慧安监平台](模块拆分/模块拆分-智慧安监平台.md)
+* 物联网
+  * [物联网面试题](物联网/物联网面试题.md)
 * 简历
   * [超级简历](简历/超级简历.md)
 * 编程规约

@@ -672,6 +672,7 @@ http://blog.csdn.net/vking_wang/article/details/9952063
 
 Synchronized底层是通过监视器的enter和exit实现 
 
+> Java 并发编程：Synchronized 及其实现原理
 > https://my.oschina.net/cnarthurs/blog/847801
 >
 > http://blog.csdn.net/a314773862/article/details/54095819

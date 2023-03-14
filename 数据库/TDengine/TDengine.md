@@ -52,7 +52,8 @@ CREATE DATABASE `test` BUFFER 96 CACHEMODEL 'none' COMP 2 DURATION 14400m WAL_FS
 
 ### docker-compose 方式启动TDengine
 > https://blog.csdn.net/weixin_43915643/article/details/127512586
-
+> docker-compose启动Tdengine
+> https://blog.csdn.net/weixin_43915643/article/details/127512586
 
 ### TDengine在线文档
 > https://docs.taosdata.com/get-started/
@@ -77,7 +78,10 @@ CREATE DATABASE `test` BUFFER 96 CACHEMODEL 'none' COMP 2 DURATION 14400m WAL_FS
 > 
 
 ### 集群搭建
-https://blog.csdn.net/firewater23/article/details/125793627
+> Docker Compose搭建TDengine集群
+> https://blog.csdn.net/firewater23/article/details/125793627
+> 
+
 
 
 ### 集成kafka裂变存储
@@ -86,11 +90,11 @@ https://blog.csdn.net/firewater23/article/details/125793627
 > 
 
 
-### TDengin 3.0
+### TDengin 3.0学习和使用经验
 > https://blog.51cto.com/u_15641375/5967969
 > 
-> 
-> 
+> TDengine涛思(taos)使用以及踩坑
+> https://blog.csdn.net/MinggeQingchun/article/details/124553960
 > 
 ### 创建超级表 并通过 超级表插入数据
 ```sql
@@ -104,3 +108,38 @@ CREATE STABLE meters(ts TIMESTAMP, current FLOAT, voltage INT, phase FLOAT) TAGS
 INSERT INTO d21001 USING meters (groupId) TAGS (2) VALUES ('2021-07-13 14:06:33.196', 10.15, 217, 0.33)
 
 ```
+
+#### TDengineGUI图形管理工具
+https://github.com/arielyang/TDengineGUI/blob/main/
+
+
+#### 数据类型
+> https://docs.taosdata.com/taos-sql/data-type/
+
+> TDengine 如何进行数据建模
+> 
+> https://baijiahao.baidu.com/s?id=1737779447394199506
+
+> TDengine 表设计及SQL
+> https://blog.csdn.net/u013545439/article/details/125439962
+> 
+> 
+> tdengine的超级表设计
+> http://www.manongjc.com/detail/62-ihuwakhailizurm.html
+> 
+> 
+> TDengine基本概念和建模思路
+> https://blog.csdn.net/weixin_42599091/article/details/128674166
+
+
+> TDengine从安装到与SpringBoot项目集成使用
+> https://blog.csdn.net/Ninjaturtle88/article/details/122493176
+> Springboot整合TDengine3.0
+> https://blog.csdn.net/worldTi6/article/details/126798103
+> TDengine3.0全方位安装体验与数据订阅进阶功能实践
+> https://blog.csdn.net/u013810234/article/details/128525908
+> 
+> 
+> 
+> TDengine竟然无法修改、删除数据
+> https://blog.csdn.net/u013810234/article/details/119166861
