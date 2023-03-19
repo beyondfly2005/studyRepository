@@ -293,3 +293,336 @@ Data Stream API批流统一，
 
 
 
+## P14 Flink快速上手（三） 流处理（二） 无界流处理WordCount
+使用netcat //linux 执行 nc命令 在7777 端口进行输出 
+```bash
+nc -lk 7777
+```
+
+##### 修改硬编码的主机名和端口号 为外部参数传入
+
+```java
+public static void main(String[]args){
+  ParameterTool parameterTool = ParameterTool.fromArgs(args);
+  String hostname = parameterTool.get("host");
+  Integer port parameterTool.get("port");
+  }
+```
+Idea 运行时, 配置Program arguments
+```java
+--host hadoop02 --port 7777
+```
+
+
+P15
+
+
+## 第3章 Flink部署
+
+开发环境中 由引入的jar包 模拟了一个集群环境
+
+关键组件
+- 客户端Client
+- 作业管理器 JobManager
+- 任务管理器 TaskManager
+
+
+我们的代码由客户端进行获取和转换，
+
+
+### 3.1 快速启动一个Flink集群
+#### 3.1.1 环境配置
+三台Linux机器
+- CentOS7.5
+- Java8
+- 安装Hadoop集群 建议2.7.5  为了使用Yarn的调度 扩充TaskManager节点
+- 节点1 192.168.10.102 名为hadoop102
+- 节点2 192.168.10.103 名为hadoop103
+- 节点3 192.168.10.104 名为hadoop104
+
+
+### 3.1.2 本地启动
+最简单的方式 不搭建集群  本地启动
+flink-1.13.2-scale_2.12.tgz
+
+
+
+
+flink-conf.yaml
+```yaml
+jobmanager.rpc.address: hadoop102
+jobmanager.rpc.port: 6123
+
+jobmanager.
+
+taskmanager.numberOftaskSlots: 1 #任务槽 默认1
+parallelism.default: 1 # 并行度1
+
+## 高可用配置
+
+## Fault 容错配置检查点
+
+##
+```
+###### masters 
+cat masters
+
+
+
+###### workers
+cat conf/workers
+
+启动
+```shell
+cd flink-1.13.0
+bin/start-cluster.sh
+
+jps 
+
+```
+start-cluster
+stop-cluster
+
+### 集群部署
+集群节点的角色
+JobManager hadoop102
+TaskManager hadoop103
+TaskManager hadoop104
+
+
+修改集群配置
+- 修改conf/flink-conf.yaml文件 修改 jobmanager.rpc.address 为hadoop102
+- 修改works文件 将另外两天节点服务器添加为当前Flink集群的TaskManager节点
+
+
+web-ui
+> http://hadoop102:8081/
+
+
+##### TaskManagers
+##### JobManager
+##### Submit New Job 作业信息
+
+
+#### 3、向集群提交作业
+Add New  上传jar包
+
+打包工具 maven-assembly-plugin
+```pom
+<build>
+  <plugins>
+    <plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-assembly-plugin</artifactId>
+      <configuration>
+          <!--   这个是assembly 所在位置；${basedir}是指项目的的根路径  -->
+          <descriptors>
+              descriptor>${basedir}/src/main/assembly/assembly.xml</descriptor>
+          </descriptors>
+          <!--打包解压后的目录名；${project.artifactId}是指：项目的artifactId-->
+          <finalName>${project.artifactId}</finalName>
+          <!-- 打包压缩包位置-->
+          <outputDirectory>${project.build.directory}/release</outputDirectory>
+          <!-- 打包编码 -->
+          <encoding>UTF-8</encoding>
+      </configuration>
+      <executions>
+        <execution><!-- 配置执行器 -->
+            <id>make-assembly</id>
+            <phase>package</phase><!-- 绑定到package生命周期阶段上 -->
+            <goals>
+                <goal>single</goal><!-- 只运行一次 --> 
+            </goals>
+        </execution>
+    </executions>
+
+    </plugin>
+  </plugins>
+</build
+```
+
+上传jar包
+
+指定运行参数
+- 指定入口类
+- Parallelism: 并行度
+- Program Arguments 运行参数
+- Savepoint Path 保存点
+- Show Plan 显示执行计划
+  - 并行度 部分操作的并行度 是无法调高的 ，例如读取流的操作
+- 提交任务
+
+- 任务失败 查看log
+  - 连接失败， nc 并未启动
+  - 没有输出 nc中 需要输入 文本 
+- 执行结果
+  - JobManager Stdout 控制台
+  - TaskManager Stdout 控制台 输出到 TaskManager 是Worker 真正执行的服务
+- 停止任务
+  - Cancel Job 按钮
+
+#### 命令行 方式 进行任务提交
+
+先上传jar包 ftp上传到hadoop102
+```shell
+
+# 在本机执行
+./bin/flink run -c com.beyond.wordcount.StreamWordCount -p 2 ../FlinkTutorial-1.0-SNAPSHOT.jar
+# 在其他服务器执行
+./bin/flink run -m hadoop102:8081 -c com.beyond.wordcount.StreamWordCount -p 2 ../FlinkTutorial-1.0-SNAPSHOT.jar
+```
+
+取消任务 需要通过web页面 Cancel Job
+如果再次提交 会提示 没有可用的资源，只有一个 
+
+命令行 取消操作
+```shell
+./bin.flink cancel JOB-ID
+```
+
+
+### 3.2 部署模式
+三种不同的模式
+- 会话模式 Session Mod
+- 单作业
+
+#### 3.2.1 会话模式Session MOd
+需要先启动一个集群，保持一个会话，在这个会话中通过客户端提交作业，
+
+- 回话模式 比较适合于 打个规模比较小，执行时间段的大量作业
+
+#### 3.2.2 单作业模式
+会话因为资源共享会导致很多问题，索引为了更好的隔离资源，我们可以考虑为每个提交的作业启动一个集群
+
+单作业模式
+
+
+
+#### 3.2.3 应用模式Application Mode
+前面两种模式下，应用代码都是在客户端上执行
+
+跟单作业模式
+
+作业与集群一对一
+应用jar包 与集群一对一
+
+
+### 3.3 独立模式 Standalone
+独立模式 是部署Flink最基本也是最简单的方式，所需要的所有FLink组件 都只是操作系统上运行的JVM
+
+#### 3.3.1 毁坏模式部署
+
+#### 3.3.2 单作业模式部署
+没有
+
+#### 3.3.3 应用模式部署
+ 很少使用
+
+````bash
+./binstandalon-job.sh start --job-classname com.beyond.wordcount.StreamWordCount
+
+./bin taskmanager.sh start
+
+./bin task
+````
+
+### 3.4 YARN模式
+ 最常用的资源管理平台是YARN
+YARN上部署的过是：客户段把Flink应用提交给Yarn的ResourceManager，Yarn的ResourceManage会项目NodeManager申请容器，在这些容器上,Flink
+会部署JobManager 和TskManager
+
+
+1.8之前，Flink部署在YARN上，需要Hadoop
+1.8之后，Fink 需要自行下载
+
+Flink安装目录的 lib目录下
+
+
+1.11 之后 ，只需要配置环境变量
+
+
+（3） 启动Hadoop集群
+
+（4） 
+```shell
+./bin/yarn-session.
+```
+
+#### 3.4.1 相关准备和配置
+#### 3.4.2 会话模式部署
+
+从Flink 1.11.0版本之后 -n - 两个参数
+
+./bin/flink run -c com.beyond.wc.Stream
+
+
+
+#### 3.4.3 单作业模式的部署
+在YARN环境中，由于有了外部平台做资源调度，所以我们可以使用直接诶想YARN 一个单独的作业，从而启动一个Flink
+集群
+（1）执行命令提交作业
+樱花园模式同样
+
+
+#### 3.4.4 
+
+
+#### 3.5 K8S模式
+
+容器化不是事如今业界
+
+
+## Flink运行时架构
+- 系统架构
+![img.png](./images/system-architecture.png)
+- 作业提交流程
+- 
+
+
+作业管理器JobManage
+控制一个应用程序的主进程，是Flink集群中任务管理和调度的核心
+- Jobmaster
+  - JobMaster是JobManager最核心的组件，负责处理单独的作业Job
+  - 在作业提交时，JobMaster会现接受到要执行应用，一般是由客户端提价来的，包括：Jar包，数据流图dataflow graph 和作用和图JobGraph
+  - JobMaster 回吧JobGraph转换为换一个物理层面的数据流图，这个图呗叫做执行图
+- 资源管理器ResourceManager
+  - ResourceManager主要负责资源的分配和关联，在Flink集群中只有一个，所谓 资源 主要是指TaskManager的任务槽 task slots 。任务槽就是Flink集群中的资源调配单元，包含了机器用来执行计算的一组CPU和内存资源。每一个任务Task都要分配到一个slot上执行。
+- 分发器Dispatcher
+
+
+任务管理Taskmanaager
+- Flink中的工作进程，通常自带Flink中会有多个TaskManger运行，每一个TaskManager都包含了一定数量的插槽
+- 启动了
+
+
+##### 作业提交流程
+![img.png](./images/task-submint-flow.png)
+概括的提交流程 
+比较抽象的提交流程 ，不考虑提交模式的情况下
+
+Standalone 模式作业提交流程
+会话模式的提交流程
+
+![img.png](./images/task-submint-flow-standalone.png)
+
+YARN会话模式作业提交流程
+
+![img.png](./images/submint-flow-yarn-session.png)
+
+## 第五章 DataStream API（基础篇）
+
+## 第6章 Flink中的事时间和窗口
+
+## 第7章 处理函数
+
+## 第8章 多流转换
+
+## 第9章 状态编程
+
+## 第10章 容错机制
+
+## 第11章 TableAPI和 SQL
+
+## 第12章 Flink CEP
+
+

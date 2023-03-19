@@ -412,6 +412,8 @@
     * [Hadoop-尚硅谷](大数据/1-Hadoop/Hadoop-尚硅谷.md)
     * [Hadoop基础-左腾云](大数据/1-Hadoop/Hadoop基础-左腾云.md)
   * Flink
+    * [Flink-1.14.4-易学](大数据/Flink/Flink-1.14.4-易学.md)
+    * [Flink-尚硅谷-2020版](大数据/Flink/Flink-尚硅谷-2020版.md)
     * [Flink-尚硅谷](大数据/Flink/Flink-尚硅谷.md)
     * [Flink-黑马](大数据/Flink/Flink-黑马.md)
   * [Hadoop3.0-HDFS-黑马](大数据/Hadoop3.0-HDFS-黑马.md)
