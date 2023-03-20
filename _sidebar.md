@@ -11,6 +11,8 @@
   * [OpenAPI](API/OpenAPI.md)
 * Apollo
   * [Appllo-黑马](Apollo/Appllo-黑马.md)
+* Blog
+  * [MyBlog](Blog/MyBlog.md)
 * Cache
   * EhCache
     * [EhCahce教程](Cache/EhCache/EhCahce教程.md)
@@ -209,7 +211,6 @@
   * [Mybatis-plus-尚硅谷](MybatisPlus/Mybatis-plus-尚硅谷.md)
   * [Mybatis-Plus-狂神](MybatisPlus/Mybatis-Plus-狂神.md)
   * [MyBatis-Plus](MybatisPlus/MyBatis-Plus.md)
-* [MyBlog](MyBlog.md)
 * MySQL
   * [MySQL-尚学堂](MySQL/MySQL-尚学堂.md)
   * [MySQL-黑马](MySQL/MySQL-黑马.md)
