@@ -4,6 +4,12 @@
 * Activiti
   * [Acitivi7基础到进阶-黑马](Activiti/Acitivi7基础到进阶-黑马.md)
   * [Activiti6整合RuoYi4.x](Activiti/Activiti6整合RuoYi4.x.md)
+* AI
+  * [Keras](AI/Keras.md)
+  * [OpenCV](AI/OpenCV.md)
+  * [Pytorch](AI/Pytorch.md)
+  * [Tensorflow](AI/Tensorflow.md)
+  * [学习路线](AI/学习路线.md)
 * Ansible
   * [运维自动化之Ansible](Ansible/运维自动化之Ansible.md)
 * API
@@ -265,6 +271,7 @@
   * [SIP协议](Protocal/SIP协议.md)
   * [Wireshark抓包工具介绍](Protocal/Wireshark抓包工具介绍.md)
 * Python
+  * [Python-小甲鱼](Python/Python-小甲鱼.md)
   * [Python](Python/Python.md)
 * Rancher
   * [1-Rancher入门](Rancher/1-Rancher入门.md)
@@ -315,6 +322,7 @@
   * [SpringBoot项目打war包](SpringBoot/SpringBoot项目打war包.md)
   * [SpringBoot高级-尚硅谷](SpringBoot/SpringBoot高级-尚硅谷.md)
 * SpringCloud
+  * [SpringCloud-Tencent](SpringCloud/SpringCloud-Tencent.md)
   * [SpringCloud-黑马](SpringCloud/SpringCloud-黑马.md)
   * [SpringCloud-黑马课件](SpringCloud/SpringCloud-黑马课件.md)
   * [SpringCloud](SpringCloud/SpringCloud.md)
@@ -417,13 +425,12 @@
     * [Flink-尚硅谷-2020版](大数据/Flink/Flink-尚硅谷-2020版.md)
     * [Flink-尚硅谷](大数据/Flink/Flink-尚硅谷.md)
     * [Flink-黑马](大数据/Flink/Flink-黑马.md)
-    * images
-      * [submint-flow-yarn-session.png](大数据/Flink/images/submint-flow-yarn-session.png)
-      * [system-architecture.png](大数据/Flink/images/system-architecture.png)
-      * [task-submint-flow-standalone.png](大数据/Flink/images/task-submint-flow-standalone.png)
-      * [task-submint-flow.png](大数据/Flink/images/task-submint-flow.png)
   * [Hadoop3.0-HDFS-黑马](大数据/Hadoop3.0-HDFS-黑马.md)
+  * Hudi
+    * [Hudi-尚硅谷](大数据/Hudi/Hudi-尚硅谷.md)
+    * [Hudi-黑马](大数据/Hudi/Hudi-黑马.md)
   * [大数据全套教程-尚学堂2020](大数据/大数据全套教程-尚学堂2020.md)
+  * [大数据学习路线图](大数据/大数据学习路线图.md)
   * [大数据零基础入门--黑马](大数据/大数据零基础入门--黑马.md)
 * 学习
   * [学习](学习/学习.md)

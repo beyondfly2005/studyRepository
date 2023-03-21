@@ -1,4 +1,4 @@
-# Flink
+# Flink-尚硅谷-2022版
 
 > Flink教程 尚硅谷
 > https://www.bilibili.com/video/BV133411s7Sa/
@@ -609,7 +609,341 @@ YARN会话模式作业提交流程
 
 ![img.png](./images/submint-flow-yarn-session.png)
 
+数据流图
+程序与数据流 DataFlow
+- 所有的Flink程序都是由三部分组成 Source Transformation 和Sink
+- Source负责读取 
+- 在运行时，Flink上运行的程序会被映射成 逻辑数据流 dataflows ,它包含了这三部分，
+- 每一个dataflow以一个或多个
+- 
+
+
+##### 并行度 Parallelism
+- 每一个算子operator 可以包含一个或多个子任务operator subtask,这些子任务在不同的现场、不同的物理机或者不同的容器中完全独立地执行。
+- 一个特定算子的子任务subtask的个数被称之为其并行度parallelism.setParallelism()  例如 flatMap()方法 env.setParallelism(),sum().setParallelism()
+  - 代码里的并行度设置，优先于全局的并行度设置
+  - 不提倡在代码里设置全局并行度 硬编码方式
+  - 可以在webUI中作业提交时设置 执行参数中设置 -P 
+  - 如果都没有 可以查看 配置文件flink.yaml中的默认设置parallelism.default
+
+##### 数据传输形式
+- 一个程序中，不同的算子可能具有不同的并行度
+- 算子直接阐述数据的形式可以是one-to-one(forwarding)的模式
+- 
+
+
+##### 算子链 Operator Chains
+
+前后发生的有数据两个算子 如果本身的操作都是one-to-one操作，并行度一致的话 ，可以河北
+- Flink采用了一种称为任务链的优化技术，客户在特定条件下减少本地通信的开销。为了满足任务链的要求， 必须将两个或多个算子设置为相同的并行度，并且通过本地转发Local Forward的方式进行连接
+- 相同并行度的one-to-one操作，FLink这样想了的算子链接在一起形成一个task，原来的算子称为里面的subtask
+- 并行度相同，并且是one-to-ooe操作，两个条件缺一不可
+
+![img.png](.//images/operator-chains.png)
+
+#### 执行图ExecutionGraph
+- Flink中的执行图可以分为四层：StreamGraph-> JobGraph -> ExecutionGraph -> 物理执行图
+- StreamGraph 是根据用户通过Stream API编写的代码生成的最初的图。用来标识程序的拓扑结构
+- JobGraph：StringGraph经过优化后生成了JobGraph，提交给JobManager的数据结构。主要的优化为，将多个符合条件的节点chain在一起作为一个节点
+- ExecutionGraph：JobManager根据JpbGraph生成ExecutionGraph
+- 执行物理图：JobManager根据ExecutionGraph对Job进行调度后，在各个TaskManager上部署Task后形成的“图”，并不是一个具体的数据结构。
+
+![四层执行图](./images/execution-graph.png)
+
+![四层执行图](./images/execution-graph.3.png)
+
+
+##### 任务Task和任务槽Task Slots
+![img.png](./images/task-and-slots.png)
+- Flink中每一个TaskManager都是一个JVM进程，他可能会在独立地现场上执行一个或多个子任务
+- 为了控制一个TaskManager能接受多少个Task，TaskManager通过task slot来进行控制（一个TaskManager至少有一个slot）
+- 推荐：按CPU的核心数配置任务槽的数量，每个核心处理不同的任务
+
+##### 任务共享Slot
+![img.png](./images/slot-share.png)
+- 默认情况下，Flink允许子任务共享slot。这样的结果是，一个slot可以保存作业的整个管道。
+- 当我们将资源密集型和非密集想的任务同事放到一个slot中，他们就可以自行分配对资源占用的比例，从而保证最重的子任务分配给所有的TaskManager
+
+##### Slot和并行度
+- 任务槽Task Slot
+  - 静态概念，是指TaskManager具有的并发执行能力
+  - 通过参数taskmanager.numberOfTaskSlots进行配置
+- 并行度（Parallelism）
+  - 动态概念，也就是TaskManager运行程序时实际使用的并发能力
+  - 通过参数parallelism.default进行配置
+
+![img.png](./images/task-slot-example.png)
+
+设置之后，后面的算子默认都是与之前的设置保持一致
+
+
 ## 第5章 DataStream API（基础篇）
+
+
+程序流程
+- 获取执行环境（execution environment）
+- 读取数据源（source）
+- 定义基于数据的转换操作： 分组、求和
+- 定义计算结果的输出位置（sink）：打印操作
+- 基于环境，触发程序启动执行
+
+其中，获取环境和触发执行，都可以认为是对执行环境的操作。 所以这里我们从执行环境Execution Environment、数据源Source、转换操作Transformation、输出Sink四大部分，对常用的DataSetAPI做基本介绍
+
+### 5.1 执行环境 Execution Environment
+
+#### 5.1.1 创建执行环境
+
+有三种
+##### getExecutionEnvironment 
+最简单的方式是直接调用getExecutionEnvironment方法，它UI根据当前的运行的上下文直接打得到正确的结果，如果陈谷是独立运行的，就返回一个本地的执行环境；如果是黄金了jar包，然后从命令行调用它并提交到集群执行，难免就返回集群的执行环境，。也就是说，这个方法会根据当前的运行方式，自行觉得该返回什么样的运行环境
+```java
+StreamExecutionEnvironment env = StreamExecutionEnvironment.getStreamExecutionEnvironment();
+
+```
+
+##### createLocalEnvironment
+返回一个本地执行环境，可以在调用时传入一个参数，指定默认的并行度；如果不指定，则默认的并行度就是本机CPU的核心数
+
+##### createRemoteEnvironment 
+返回集群的执行环境，需要调用时指定JobManager的注解名和端口号，并指定要在集群中运行的Jar包
+
+#### 5.1.2 执行模式Execution Mod
+Flink中有 批处理模式 和 流处理模式，默认情况下下使用StreamExecutionEnvironment.getExecutionEnvironment() 串讲
+单独配置
+从1.12.0版本开始，Flink实现了API上的流批统一，DataStream API新增了一个重要特性；可以支持不用的执行模式Execution Mod，通过简单的设置就可以让一段Flink程序在流处理和批处理之间切换，这样依赖，DataSet API也就没有存在的必要了。
+
+- 流执行模式 Streaming
+
+这是DataStream API最经典的模式，一般用于需要持续实施护理的无界数据流。默认情况下，程序使用的就是STREAMING执行模式
+
+- 批处理模式BATCH
+
+专门用于批处理的执行模式，这种模式下，Flink处理作业的方式类似于MapReduce框架，对于不会持续计算的有界数据，我们用这种模式处理会更方便
+
+- 自动模式AUTOMATIC
+
+在这种模式下，将有程序恩家数据源是否有界，来自动旋转执行模式。
+
+##### 1、BATCH模式的配置方法
+由于Flink程序时STREAMING模式，我们这里重点介绍一下BATCH模式的配置。 主要有两种方法
+- （1） 通过命令行配置
+
+```shell
+bin\flink run -Dexecution.runtime-mod=BATCH
+ 
+```
+在提交作业时，怎讲execution.runtime-mod参数，指定为BATCH
+
+- （2）通过代码配置
+```java
+StreamExecutionEnvironment env= StramExectionEnvironment.getExecutionEnvironment();
+env.setRuntimeMod(RuntimeExecutionMode.BATCH);
+```
+在代码中，直接基于执行环境调用setRuntimeMode方法，传入BATCH模式。
+建议：不建议直接在代码中配置， 而是使用命令行。这与并行度是类似的，在提交作业时指定参数可以更加灵活，同一段应用程序写好之后，既可以用于批处理也可以用于流处理。而在代码中硬编码Hard Code方式可扩展性比较差，一般都不推荐。
+
+##### 2. 什么时候选择BATCH模式 
+Flink本次持有的就是流处理的世界观，即使是批量数据，也可以呗看做是有界流来进行处理。索引STREAMING执行模式对于有界数据和无界数据都是有效性的；而BATCH模式仅能用于有界数据。
+如果只希望通过批处理得到最终结果，这时候应该用批处理模式
+总结：原则：用BATCH模式处理批量数据，用STREAMING模式处理流式数据。因为数据有界的时候，直接输出结果会更加高效；而当数据无界的时候，我们没有旋转，只能使用STREAMING模式才能处理持续的数据流
+
+#### 5.1.3 触发程序执行
+
+
+
+
+### 5.2 数据源 Source
+
+Flink可以从各种来源获取数据，然后构建DataStream进行转换处理，一般将数据的输入来源称为数据源DataSource，而读数据的算子就是源算子Source Op
+
+
+run()
+cancel()
+
+
+
+#### 5.2.1 准备工作
+
+为了更好的理解，可以构建一个时间的应用场景，比如网站的访问操作，可以抽象成一个三元组（用户名、用户访问的URL、用户访问的URL时间戳），索引在这里，我们创建一个类Event，将用户行为包装称为一个对象，Event好好如下自动
+- user String 用户名
+- url String 用户访问的url
+- timestamp Long 用户访问的url的时间戳
+
+具体代码
+```java
+public class Event{
+  public String user;//  用户名
+  public String url; //  用户访问的url
+  public long timestamp ; //时间戳
+  
+  // 无参构造
+  public Evnet(){
+      
+  }
+  
+  public Event(String user,String url ,Long timestamp){
+      this.user=user;
+      this.url=url;
+      this.timestamp=timestamp;
+  }
+  
+  @Override
+  public String toSting(){
+      return "Event{"+
+        "user='"+user+"\'"
+    "url='"+url+"\'"
+    "timestamp='"+new Timestamp(timestamp)
+        + "}";
+  }
+  
+  
+}
+```
+
+需要注意的是定义的Event类，具有如下特点：
+- 类是一个公用public的
+- 所有的熟悉都是共有的public
+- 所有属性的类型都是可以序列化的
+
+Flink中会将这样的类作为特殊的POJO数据类型来对待，方便数据的解析和序列化。
+
+
+#### 5.2.2 从集合中读取数据
+#### 5.2.3 从文件读取数据
+
+SourceTest
+
+```java
+public class SourceTest {
+  public static void main(String[] args) {
+    StreamExecutionEviroennt env = StreamExecutionEviroennt.getExecutionEnvironment();
+    env.setParallelism(1);
+    env.readTextFile();
+    // 1 从文件读取数据
+    DataStreamSource<String> stream = env.readTextFile("input/clicks.text");
+
+    //2 从集合中读取数据
+    ArrayList<Integer> nums = new ArrayList<>();
+    nums.add(2);
+    nums.add(5);
+    DataStreamSource<Integer> numStream = env.fromCollection(nums);
+
+    ArrayList<Event> events = new ArrayList<Event>();
+    events.add(new Event("Mary",'/home',1000L));
+    events.add(new Event("Mary",'/home',1000L));
+    events.add(new Event("Lili",'/card',2000L));
+    DataStreamSource<Event> stream2  = env.fromCollection(events)
+    
+    //从元素读取数据
+    DataStreamSource<Event> stream3  = env.fromElements(
+        new Event("Mary",'/home',1000L),
+        new Event("Mary",'/home',1000L)
+    );
+    stream.print();
+    stream1.print();
+    stream2.print();
+    stream3.print();
+    
+    env.execute();
+  }
+}
+```
+
+#### 5.2.4 从Socket读取数据
+用nc命令启动 socket发送数据
+```shell
+nc -lk 7777
+```
+
+```java
+  DataStreamSource<String> stream4  =env.socketTextStream("hadoop102",7777);
+  stream3.print();
+  env.execute();
+```
+
+#### 5.2.5 从Kafka读取数据
+
+对于真正的流数据，时间项目应该怎样读取呢？
+Kafka作为分布式消息传输队列，是一个高吞吐、易扩展的消息系统。而小的队列的传输方式，恰恰和流处理事完全一致的，所以可以说Kafka和Flink是天生一对，是当前数量流式数据的双子星
+在入境的实时流式处理应用中，由Kafka进行数据集的收集和传输，Flink进行分析技术，这样的架构已经成为众多企业的首选
+
+![Flink与Kafka](./images/Flink-Kafka.png)
+
+从Kafka读取数据
+env.addSource(SourceFunction... );
+
+连接器工具 
+引入连接器工具
+```pom
+<dependency>
+  <groupId>org.apache.flink</groupId>
+  <artifictId>flink-connector-kafka_${scala.binary.version}</artifictId>
+  <version>${flink.version}</version>
+</dependency>
+```
+调用env.addSource(),传入FlinkKafkaConsumer的对象实例
+```java
+    // 5、从kafka中读取数据
+    Properties Properties properties= new Properties();
+    properties.setProperty("bootstrap.servers", "hadoop102:9092");  
+    properties.setProperty("group.id","consumer-group");
+    properties.setProperty("key.deserializer","org.apache.kafka.common.serialization.StringDeserializer");
+    properties.setProperty("value.deserializer","org.apache.kafka.common.serialization.StringDeserializer");
+    properties.setProperty("auto.offset.reset","latest");
+    DataStreamSource<String> kafkaStream=env.addSource(new FinkKafkaConsumer<String>("clicks",
+        new SimpleStringSchema(),
+        new SimpleStringSchema(),properties));
+    kafkaStream.print();
+  
+    env.execute();
+```
+
+启动kafka程序
+```shell
+cd /opt/module/kafka_2.11-2.1.0/
+## 先启动zookeeper
+./bin/zookeeper-server-strt.sh -daemon ./config/zookeeper.properties
+
+jps
+
+./bin/kafka-server-strt.sh -daemon ./config/server.properties
+
+jps
+
+
+## 创建生产者 同时创建topic
+./bin/kafka-console-producer.sh --broker-list localhost:9092 --topic clicks
+
+```
+
+
+其他流式系统的连接器
+- RabbitMQ 
+- google pubsub
+- Twitter Steaming API
+
+#### 5.2.6 自定义Source
+
+自定义数据源，实现SourceFunction接口，主要实现两个方法run() cancel()
+
+
+
+
+
+
+#### 5.2.7Flink支持的数据类型
+
+
+
+
+### 5.3 转换操作 Transformation
+
+
+
+### 5.4 输出sink
+
+
+
 
 ## 第6章 Flink中的事时间和窗口
 
