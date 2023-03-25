@@ -8,7 +8,7 @@
 
 #### Flink的特点
 - 高吞吐量
-低延迟
+- 低延迟
 - 结果正确
 
 
@@ -302,14 +302,14 @@ nc -lk 7777
 ##### 修改硬编码的主机名和端口号 为外部参数传入
 
 ```java
-public static void main(String[]args){
-  ParameterTool parameterTool = ParameterTool.fromArgs(args);
-  String hostname = parameterTool.get("host");
-  Integer port parameterTool.get("port");
-  }
+    public static void main(String[]args){
+      ParameterTool parameterTool = ParameterTool.fromArgs(args);
+      String hostname = parameterTool.get("host");
+      Integer port parameterTool.get("port");
+    }
 ```
 Idea 运行时, 配置Program arguments
-```java
+```bash
 --host hadoop02 --port 7777
 ```
 
@@ -693,21 +693,28 @@ YARN会话模式作业提交流程
 
 #### 5.1.1 创建执行环境
 
-有三种
-##### getExecutionEnvironment 
-最简单的方式是直接调用getExecutionEnvironment方法，它UI根据当前的运行的上下文直接打得到正确的结果，如果陈谷是独立运行的，就返回一个本地的执行环境；如果是黄金了jar包，然后从命令行调用它并提交到集群执行，难免就返回集群的执行环境，。也就是说，这个方法会根据当前的运行方式，自行觉得该返回什么样的运行环境
+编写Flink程序第一步是创建执行环境，我们要获取的执行环境，是StreamExecutionEnvironment，这是所有的Flink程序的基础。
+在代码中创建执行环境的方式，就是调用这个类的静态方法，具体有以下三种：
+
+##### 1. getExecutionEnvironment 
+最简单的方式是直接调用getExecutionEnvironment方法，它会根据当前的运行的上下文直接打得到正确的结果，如果程序是独立运行的，就返回一个本地的执行环境；如果是创建了jar包，就从命令行调用它并提交到集群执行，那么就返回集群的执行环境。也就是说，这个方法会根据当前的运行方式，自行决定该返回什么样的运行环境。
 ```java
 StreamExecutionEnvironment env = StreamExecutionEnvironment.getStreamExecutionEnvironment();
+```
+这种“智能"的方式，不需要我们额外做出判断，用起来简单高效，是最常用的一种创建执行环境的方式。
 
+##### 2. createLocalEnvironment
+返回一个本地执行环境，可以在调用时传入一个参数，指定默认的并行度；如果不指定，则默认的并行度就是本机CPU的核心数。
+```java
+StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
+```
+##### 3. createRemoteEnvironment 
+返回集群的执行环境，需要调用时指定JobManager的注解名和端口号，并指定要在集群中运行的Jar包。
+```java
+StreamExecutionEnvironment env = StreamExecutionEnvironment.createRemoteEnvironment();
 ```
 
-##### createLocalEnvironment
-返回一个本地执行环境，可以在调用时传入一个参数，指定默认的并行度；如果不指定，则默认的并行度就是本机CPU的核心数
-
-##### createRemoteEnvironment 
-返回集群的执行环境，需要调用时指定JobManager的注解名和端口号，并指定要在集群中运行的Jar包
-
-#### 5.1.2 执行模式Execution Mod
+#### 5.1.2 执行模式(Execution Mod)
 Flink中有 批处理模式 和 流处理模式，默认情况下下使用StreamExecutionEnvironment.getExecutionEnvironment() 串讲
 单独配置
 从1.12.0版本开始，Flink实现了API上的流批统一，DataStream API新增了一个重要特性；可以支持不用的执行模式Execution Mod，通过简单的设置就可以让一段Flink程序在流处理和批处理之间切换，这样依赖，DataSet API也就没有存在的必要了。
