@@ -313,10 +313,6 @@ Idea 运行时, 配置Program arguments
 --host hadoop02 --port 7777
 ```
 
-
-P15
-
-
 ## 第3章 Flink部署
 
 开发环境中 由引入的jar包 模拟了一个集群环境
@@ -709,7 +705,7 @@ StreamExecutionEnvironment env = StreamExecutionEnvironment.getStreamExecutionEn
 StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
 ```
 ##### 3. createRemoteEnvironment 
-返回集群的执行环境，需要调用时指定JobManager的注解名和端口号，并指定要在集群中运行的Jar包。
+这个方法返回集群执行环境，需要调用时指定JobManager的注解名和端口号，并指定要在集群中运行的Jar包。
 ```java
 StreamExecutionEnvironment env = StreamExecutionEnvironment.createRemoteEnvironment();
 ```
@@ -755,23 +751,33 @@ Flink本次持有的就是流处理的世界观，即使是批量数据，也可
 总结：原则：用BATCH模式处理批量数据，用STREAMING模式处理流式数据。因为数据有界的时候，直接输出结果会更加高效；而当数据无界的时候，我们没有旋转，只能使用STREAMING模式才能处理持续的数据流
 
 #### 5.1.3 触发程序执行
+有了执行环境，我们就可以构建程序的处理流程了:基于环境读取数据源，进而进行各种转换操作，最后输出结果到外部系统。
+需要注意的是，写完输出sink()操作并不代表程序已经结束。因为当 main()方法被调用时，其实只是定义了作业的每个执行操作，然后添加到数据流图中;这时并没有真正处理数据——因为数据可能还没来。
+Flink 是由事件驱动的，只有等到数据到来，才会触发真正的计算，这也被称为“延迟执行”或“懒执行”(lazy execution)。
+所以我们需要显式地调用执行环境的 execute()方法，来触发程序执行。execute()方法将一直等待作业完成，然后返回一个执行结果(JobExecutionResult)。
+```java
+env.execute();
+```
 
-
-
-
-### 5.2 数据源 Source
-
-Flink可以从各种来源获取数据，然后构建DataStream进行转换处理，一般将数据的输入来源称为数据源DataSource，而读数据的算子就是源算子Source Op
-
-
-run()
-cancel()
+### 5.2 源算子（Source）
+数据源
+Flink可以从各种来源获取数据，然后构建DataStream进行转换处理，一般将数据的输入来源称为数据源DataSource，而读数据的算子就是源算子Source Operator。所以，source就是我们整个处理程序的输入端。
+Fink代码中通用的添加source的方式，是调用执行环境的addSource()方法；
+```java
+DataStream<String> stream= env.addSource(...);
+```
+方法传入一个对象参数，需要实现SourceFunction接口，返回DataStreamSource。这里的DataStreamSource 类继承自 SingleOutputStreamOperator 类，又进一步继承自 DataStream。所以很明显，读取数据的 source 操作是一个算子，得到的是一个数据流（DataStream）。
+传入的参数是一个“源函数”（source function），需要实现SourceFunction 接口。
+接口有两个方法：
+- run()方法
+- cancel()方法
+Flink 直接提供了很多预实现的接口，此外还有很多外部连接工具也帮我们实现了对应的 source function，通常情况下足以应对我们的实际需求。
 
 
 
 #### 5.2.1 准备工作
 
-为了更好的理解，可以构建一个时间的应用场景，比如网站的访问操作，可以抽象成一个三元组（用户名、用户访问的URL、用户访问的URL时间戳），索引在这里，我们创建一个类Event，将用户行为包装称为一个对象，Event好好如下自动
+为了更好地理解，可以构建一个时间的应用场景，比如网站的访问操作，可以抽象成一个三元组（用户名、用户访问的URL、用户访问的URL时间戳），所以在这里，我们创建一个类Event，将用户行为包装称为一个对象，Event包含如下字段
 - user String 用户名
 - url String 用户访问的url
 - timestamp Long 用户访问的url的时间戳
@@ -813,9 +819,43 @@ public class Event{
 - 所有属性的类型都是可以序列化的
 
 Flink中会将这样的类作为特殊的POJO数据类型来对待，方便数据的解析和序列化。
-
+另外我们在类中还重写了 toString 方法，主要是为了测试输出显示更清晰。关于 Flink 支持的数据类型，我们会在后面章节做详细说明。
+我们这里自定义的 Event POJO 类会在后面的代码中频繁使用，所以在后面的代码中碰到Event，把这里的 POJO 类导入就好了。
+注：Java 编程比较好的实践是重写每一个类的 toString 方法，来自 Joshua Bloch 编写的《Effective Java》
 
 #### 5.2.2 从集合中读取数据
+
+SourceTest
+```java
+public class SourceTest {
+
+    public static void main(String[] args) throws Exception {
+        readCollection();
+    }
+
+    /**
+     * 从集合中读取数据
+     * @throws Exception
+     */
+    private static void readCollection() throws Exception {
+        //创建执行环境
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+
+        List<Event> list = new ArrayList<>();
+        list.add(new Event("Mary","./home",1000L));
+        list.add(new Event("Bob","./cart",2000L));
+        //从集合中读取数据
+        DataStreamSource<Event> dataStream = env.fromCollection(list);
+
+        dataStream.print();
+
+        env.execute();
+    }
+}
+```
+
+
 #### 5.2.3 从文件读取数据
 
 SourceTest
@@ -863,18 +903,43 @@ nc -lk 7777
 ```
 
 ```java
-  DataStreamSource<String> stream4  =env.socketTextStream("hadoop102",7777);
-  stream3.print();
-  env.execute();
+public class SourceTest {
+
+  public static void main(String[] args) throws Exception {
+    readSocket();
+  }
+
+  /**
+   * 从socket中读取数据
+   * @throws Exception 异常
+   */
+  private static void readSocket() throws Exception {
+    //创建执行环境
+    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+    env.setParallelism(1);
+
+    //读取文本流, 监听linux主机端口, linux通过nc -lk 7777发送文本
+    DataStreamSource<String> stream4 = env.socketTextStream("hadoop102", 7777);
+    stream4.print();
+    env.execute();
+  }
+}
 ```
 
 #### 5.2.5 从Kafka读取数据
 
 对于真正的流数据，时间项目应该怎样读取呢？
-Kafka作为分布式消息传输队列，是一个高吞吐、易扩展的消息系统。而小的队列的传输方式，恰恰和流处理事完全一致的，所以可以说Kafka和Flink是天生一对，是当前数量流式数据的双子星
-在入境的实时流式处理应用中，由Kafka进行数据集的收集和传输，Flink进行分析技术，这样的架构已经成为众多企业的首选
+Kafka 作为分布式消息传输队列，是一个高吞吐、易于扩展的消息系统。而消息队列的传输方式，恰恰和流处理是完全一致的。所以可以说 Kafka 和 Flink 天生一对，是当前处理流式数据的双子星。
+在如今的实时流处理应用中，由 Kafka 进行数据的收集和传输，Flink 进行分析计算，这样的架构已经成为众多企业的首选。
 
 ![Flink与Kafka](./images/Flink-Kafka.png)
+
+Flink与Kafka的连接比较复杂，Flink内部并没有提供预实现的方法。所有智能通过addSource方式，实现一个SourceFunction。
+
+Flink官方提供了连接工具flink-connector-kafka，直接帮我们实现了一个消费者FlinkKafkaConsumer，它就是用来读取 Kafka 数据的SourceFunction。
+
+所以想要以 Kafka 作为数据源获取数据，我们只需要引入 Kafka 连接器的依赖。Flink 官方提供的是一个通用的 Kafka 连接器，它会自动跟踪最新版本的 Kafka 客户端。
+目前最新版本只支持 0.10.0 版本以上的 Kafka，读者使用时可以根据自己安装的 Kafka 版本选定连接器的依赖版本。这里我们需要导入的依赖如下。
 
 从Kafka读取数据
 env.addSource(SourceFunction... );
@@ -890,33 +955,50 @@ env.addSource(SourceFunction... );
 ```
 调用env.addSource(),传入FlinkKafkaConsumer的对象实例
 ```java
+public class SourceTest {
+
+  public static void main(String[] args) throws Exception {
+    readKafka();
+  }
+
+  /**
+   * 从kafka中读取数据
+   * @throws Exception
+   */
+  private static void readKafka() throws Exception {
+    //创建执行环境
+    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+    env.setParallelism(1);
     // 5、从kafka中读取数据
-    Properties Properties properties= new Properties();
-    properties.setProperty("bootstrap.servers", "hadoop102:9092");  
-    properties.setProperty("group.id","consumer-group");
-    properties.setProperty("key.deserializer","org.apache.kafka.common.serialization.StringDeserializer");
-    properties.setProperty("value.deserializer","org.apache.kafka.common.serialization.StringDeserializer");
-    properties.setProperty("auto.offset.reset","latest");
-    DataStreamSource<String> kafkaStream=env.addSource(new FinkKafkaConsumer<String>("clicks",
-        new SimpleStringSchema(),
-        new SimpleStringSchema(),properties));
+    Properties properties = new Properties();
+    properties.setProperty("bootstrap.servers", "hadoop102:9092");
+    properties.setProperty("group.id", "consumer-group");
+    properties.setProperty("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+    properties.setProperty("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+    properties.setProperty("auto.offset.reset", "latest");
+    DataStreamSource<String> kafkaStream = env.addSource(new FinkKafkaConsumer<String>("clicks",
+            new SimpleStringSchema(),
+            new SimpleStringSchema(), properties));
     kafkaStream.print();
-  
+
     env.execute();
+  }
+}
 ```
 
 启动kafka程序
 ```shell
+su root 
+
 cd /opt/module/kafka_2.11-2.1.0/
 ## 先启动zookeeper
-./bin/zookeeper-server-strt.sh -daemon ./config/zookeeper.properties
+./bin/zookeeper-server-start.sh -daemon ./config/zookeeper.properties
 
 jps
 
-./bin/kafka-server-strt.sh -daemon ./config/server.properties
+./bin/kafka-server-start.sh -daemon ./config/server.properties
 
 jps
-
 
 ## 创建生产者 同时创建topic
 ./bin/kafka-console-producer.sh --broker-list localhost:9092 --topic clicks
