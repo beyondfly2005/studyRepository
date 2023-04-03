@@ -171,7 +171,7 @@
 * Linux
   * [CentOS7修改IP地址](Linux/CentOS7修改IP地址.md)
   * [CentOS防火墙配置](Linux/CentOS防火墙配置.md)
-  * [Linux LVM扩容](Linux/Linux LVM扩容.md)
+  * [Linux-LVM扩容](Linux/Linux-LVM扩容.md)
   * [Linux安装JDK](Linux/Linux安装JDK.md)
   * [Linux教程-尚硅谷韩顺平-学习笔记](Linux/Linux教程-尚硅谷韩顺平-学习笔记.md)
   * [Linux环境搭建](Linux/Linux环境搭建.md)
