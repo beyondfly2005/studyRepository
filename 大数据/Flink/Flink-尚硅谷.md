@@ -986,6 +986,17 @@ public class SourceTest {
 }
 ```
 
+创建 FlinkKafkaConsumer 时需要传入三个参数：
+
+第一个参数 topic，定义了从哪些主题中读取数据。可以是一个 topic，也可以是 topic
+列表，还可以是匹配所有想要读取的 topic 的正则表达式。当从多个 topic 中读取数据
+时，Kafka 连接器将会处理所有 topic 的分区，将这些分区的数据放到一条流中去。
+第二个参数是一个 DeserializationSchema 或者 KeyedDeserializationSchema。Kafka 消
+息被存储为原始的字节数据，所以需要反序列化成 Java 或者 Scala 对象。上面代码中
+使用的 SimpleStringSchema，是一个内置的 DeserializationSchema，它只是将字节数
+组简单地反序列化成字符串。DeserializationSchema 和 KeyedDeserializationSchema 是公共接口，所以我们也可以自定义反序列化逻辑。
+第三个参数是一个 Properties 对象，设置了 Kafka 客户端的一些属性。
+
 启动kafka程序
 ```shell
 su root 
@@ -1013,10 +1024,63 @@ jps
 
 #### 5.2.6 自定义Source
 
-自定义数据源，实现SourceFunction接口，主要实现两个方法run() cancel()
+大多数情况下，前面的数据源已经能够满足需要。但是凡事总有例外，如果遇到特殊情况，我们想要读取的数据源来自某个外部系统，而 flink 既没有预实现的方法、也没有提供连接器，又该怎么办呢？
+那就只能自定义数据源，实现SourceFunction接口了。
+接下来我们创建一个自定义的数据源，实现 SourceFunction 接口。
+主要重写两个方法run() 和 cancel()。
+- run()方法：使用运行时上下文对象（SourceContext）向下游发送数据；
+- cancel()方法：通过标识位控制退出循环，来达到中断数据源的效果。
 
+定义数据源
+```java
+public class ClickSource implements SourceFunction<Event> {
 
+    //声明一个标志位
+    private boolean running = true;
 
+    @Override
+    public void run(SourceContext<Event> sourceContext) throws Exception {
+        //随机生成数据
+        Random random = new Random();
+        //定义字段选取的数据集
+        String[] users = {"Mary", "Alice", "Bobo", "lucy"};
+        String[] urls = {"./home", "./cart", "./prod", "./order"};
+
+        //循环生成数据
+        while (running){
+            String user = users[random.nextInt(users.length)];
+            String url = urls[random.nextInt(urls.length)];
+            long timestamp = System.currentTimeMillis();
+            sourceContext.collect(new Event(user,url,timestamp));
+
+            Thread.sleep(1000);
+        }
+    }
+
+    @Override
+    public void cancel() {
+        running = false;
+    }
+}
+```
+
+读取自定义的数据源
+```java
+public class SourceCustomTest {
+
+    public static void main(String[] args) throws Exception {
+        //创建执行环境
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+
+        DataStreamSource<Event> customDataStream = env.addSource(new ClickSource());
+
+        parallelDataStream.print();
+
+        env.execute();
+    }
+}
+```
 
 
 
