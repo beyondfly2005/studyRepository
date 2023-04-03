@@ -171,7 +171,7 @@
 * Linux
   * [CentOS7修改IP地址](Linux/CentOS7修改IP地址.md)
   * [CentOS防火墙配置](Linux/CentOS防火墙配置.md)
-  * [Linux LVM扩容](Linux/Linux LVM扩容.md)
+  * [Linux-LVM扩容](Linux/Linux-LVM扩容.md)
   * [Linux安装JDK](Linux/Linux安装JDK.md)
   * [Linux教程-尚硅谷韩顺平-学习笔记](Linux/Linux教程-尚硅谷韩顺平-学习笔记.md)
   * [Linux环境搭建](Linux/Linux环境搭建.md)
@@ -179,7 +179,7 @@
   * [Linux系统学习](Linux/Linux系统学习.md)
   * [Linux配置yum国内镜像源](Linux/Linux配置yum国内镜像源.md)
 * MarkDown
-  * [JS Markdown 编辑器](MarkDown/JS Markdown 编辑器.md)
+  * [markdown-JS编辑器](MarkDown/markdown-JS编辑器.md)
   * [markdown示例](MarkDown/markdown示例.md)
   * [markdown语法](MarkDown/markdown语法.md)
   * [Typora快捷键](MarkDown/Typora快捷键.md)
@@ -202,9 +202,9 @@
     * [ActiveMQ-马士兵教育张一明](MQ/ActiveMQ/ActiveMQ-马士兵教育张一明.md)
   * Kafka
     * [Kafka-千锋](MQ/Kafka/Kafka-千锋.md)
+    * [Kafka-尚硅谷2022](MQ/Kafka/Kafka-尚硅谷2022.md)
     * [Kafka-黑马2019版](MQ/Kafka/Kafka-黑马2019版.md)
     * [Kafka-黑马2020版](MQ/Kafka/Kafka-黑马2020版.md)
-    * [Kafka](MQ/Kafka/Kafka.md)
   * RabbitMQ
     * [RabbitMQ-尚硅谷](MQ/RabbitMQ/RabbitMQ-尚硅谷.md)
     * [RabbitMQ-黑马](MQ/RabbitMQ/RabbitMQ-黑马.md)
@@ -264,6 +264,7 @@
     * [Toad安装oracle客户端过程](Oracle/Toad安装/Toad安装oracle客户端过程.md)
 * PMP
   * [PMP-光环国际](PMP/PMP-光环国际.md)
+  * [PMP-敏捷专题](PMP/PMP-敏捷专题.md)
   * [PMP-现代卓越](PMP/PMP-现代卓越.md)
 * Postman
   * [Postman介绍](Postman/Postman介绍.md)

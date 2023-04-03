@@ -1,6 +1,22 @@
 > 参考文档：
 >
 > https://www.jianshu.com/p/5d47e56f89de
+>
+> Mina学习（一）：mina实现简单服务端与客户端
+> https://www.jianshu.com/p/3593cc6ff45f
+>
+> Mina学习（二）: mina体系结构简要分析
+> https://www.jianshu.com/p/ac99f3317608
+> 
+> Mina学习（三）：实现简单自定义协议包（报文）
+> https://www.jianshu.com/p/a88d78bd3b46
+> 
+> Mina学习（四）：实现自定义编解码器并解决半包，丢包，粘包问题
+> https://www.jianshu.com/u/83cd3678313e
+> 
+
+
+
 
 
 
