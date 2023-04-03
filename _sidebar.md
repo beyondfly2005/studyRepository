@@ -264,6 +264,7 @@
     * [Toad安装oracle客户端过程](Oracle/Toad安装/Toad安装oracle客户端过程.md)
 * PMP
   * [PMP-光环国际](PMP/PMP-光环国际.md)
+  * [PMP-敏捷专题](PMP/PMP-敏捷专题.md)
   * [PMP-现代卓越](PMP/PMP-现代卓越.md)
 * Postman
   * [Postman介绍](Postman/Postman介绍.md)
