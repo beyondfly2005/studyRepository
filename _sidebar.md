@@ -202,9 +202,9 @@
     * [ActiveMQ-马士兵教育张一明](MQ/ActiveMQ/ActiveMQ-马士兵教育张一明.md)
   * Kafka
     * [Kafka-千锋](MQ/Kafka/Kafka-千锋.md)
+    * [Kafka-尚硅谷2022](MQ/Kafka/Kafka-尚硅谷2022.md)
     * [Kafka-黑马2019版](MQ/Kafka/Kafka-黑马2019版.md)
     * [Kafka-黑马2020版](MQ/Kafka/Kafka-黑马2020版.md)
-    * [Kafka](MQ/Kafka/Kafka.md)
   * RabbitMQ
     * [RabbitMQ-尚硅谷](MQ/RabbitMQ/RabbitMQ-尚硅谷.md)
     * [RabbitMQ-黑马](MQ/RabbitMQ/RabbitMQ-黑马.md)

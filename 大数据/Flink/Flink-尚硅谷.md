@@ -1137,3 +1137,11 @@ new PatternFlatTimeoutFunction<Event, TimeoutEvent>() [...}new PatternFlatSelect
 DataStream<TimeoutEvent> timeoutFlatResult =flatResult .getSideOutput(outputTag);
 
 ```
+
+
+
+
+
+
+
+
