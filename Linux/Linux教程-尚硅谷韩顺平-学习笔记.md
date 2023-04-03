@@ -1,4 +1,4 @@
-# 尚硅谷-韩顺平-Linux教程
+# Linux教程-尚硅谷-韩顺平
 
 > 视频地址 https://www.bilibili.com/video/BV1dW411M7xL?t=109
 

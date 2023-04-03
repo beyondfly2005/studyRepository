@@ -34,7 +34,7 @@ sudo docker run -d -v /workspace/rancher/mysql:/var/lib/mysql --restart=unless-s
 
 
 
-```php
+```nginx
 server {
         listen 80;
         server_name rancher.bysir.store;

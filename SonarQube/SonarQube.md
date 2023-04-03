@@ -1,6 +1,6 @@
 # SonarQube
 
-Gitlab 与 SnonarQube集成
+Gitlab 与 SonarQube集成
 
 Jenkins 与 SonarQube集成
 

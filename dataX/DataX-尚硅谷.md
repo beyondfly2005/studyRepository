@@ -1,6 +1,7 @@
-> 视频地址
+# DataX-尚硅谷教程
 
-https://www.bilibili.com/video/BV1QV411d7at?p=1
+> 视频地址
+> https://www.bilibili.com/video/BV1QV411d7at?p=1
 
 ##### 尚硅谷大数据技术之DataX
 
