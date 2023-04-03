@@ -179,7 +179,7 @@
   * [Linux系统学习](Linux/Linux系统学习.md)
   * [Linux配置yum国内镜像源](Linux/Linux配置yum国内镜像源.md)
 * MarkDown
-  * [JS Markdown 编辑器](MarkDown/JS Markdown 编辑器.md)
+  * [markdown-JS编辑器](MarkDown/markdown-JS编辑器.md)
   * [markdown示例](MarkDown/markdown示例.md)
   * [markdown语法](MarkDown/markdown语法.md)
   * [Typora快捷键](MarkDown/Typora快捷键.md)
