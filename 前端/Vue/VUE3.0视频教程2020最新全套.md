@@ -1,4 +1,4 @@
-# Vue
+# Vue 3.0 视频教程
 
 >  https://www.bilibili.com/video/BV1op4y1U7Bz?p=1
 
