@@ -94,3 +94,49 @@ Producer 生产者
 Consumer 消费者
 
 
+Kafka 基础架构
+
+1、为扩展方便，并提高吞吐量，一个topic分为多个partition
+2、配合分区的设计，提出消费者组的概念，组内每个消费者并行消费
+   每一个分区的数据 只能由同一个消费者 进行消费
+3、为提高可用性，为每个partition增加若干副本，类似NameNode HA
+  副本分为Leader 和Flower之分  消费对象只能是Leader中的信息，如果Leader挂掉 会重新通过ZK选举Leader 
+4、Zookeeper记录节点运行的基本状态，记录Leader相关信息
+   ZK中记录谁是leader ，Kafka2.8.0之后也可以配置不采用ZK
+
+Kafka 有逐渐去Zookeeper之势
+
+
+## 第2章 Kafka快速入门
+
+2.1 安装部署
+2.1.1 集群规划
+- Hadoop102
+  - ZK
+  - kafka
+- Hadoop103
+  - ZK
+  - kafka
+- Hadoop104
+  - ZK
+  - kafka
+
+> 官网地址 ： kafka.apache.org/downloads
+
+kafka是由 两种代码写的
+- 生产者消费者 Java写的
+- Broker是用 Scala写的
+
+使用 Kafka2.8.0
+cd /opt/software
+tar -zxvf kafka_2.12-3.0
+
+
+
+borker.id=0  # 唯一标识 不能重复
+log.dirs=/opt/module/kafka/datas  ## 不建议放到临时目录
+zookeeper.connect=hadoop102:2181,hadoop103:2381,hadoop104:2381/kafka
+
+
+
+
