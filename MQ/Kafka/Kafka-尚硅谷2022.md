@@ -288,6 +288,11 @@ spring.kafka.producer.value-serializer=org.apache.kafka.common.serialization.Str
 
 ```
 
+命令行方式创建一个消费者 以进行测试
+```bash
+bin/kafka-console-consumer.sh --bootstrap-server hadoop102:9092 --topic first
+```
+
 ## 3.2 SpringBoot消费者
 
 项目准备
@@ -324,6 +329,24 @@ public class KafkaConsumer{
 
 
 # 第4章 集成Spark
+Spark 是一个在大学数据咖啡中常用的组件，可以用于Kafka的生产者，也可以用于Spark的消费者
+
+1、 Scala环境准备
+   Scala 3.8 环境搭建
+1.1、安装步骤：   
+- 安装JDK1.8
+- 下载对用的Scala安装文件Scala-2.12.11.zip
+- 解压scala-2.11.zip, 我这解压到E:\02_software
+- 配置Scala的环境变量
+- 
+  
+2、Spark环境准备
+- 创建一个maven项目spark-kafka
+- 在项目spark-kafka上点击右键，Add Frameworks 勾选scala
+- 在main下创建scala文件夹，并右击 Mark Dictory as Sources Root => 在Scala下创建
+- 验证安装成功 命令行 输入 scala
+
+3、
 
 # 第三篇 生产调优手册
 # 第1章 Kafka硬件配置选择
