@@ -2,7 +2,8 @@
 
 
 > https://mp.weixin.qq.com/s/B2loaFg-FUvwFhx4JJn_VQ
-> 
+> 中文官网文档
+> https://clickhouse.com/docs/zh
 
 
 ### docker-compose 方式部署 Clickhouse
