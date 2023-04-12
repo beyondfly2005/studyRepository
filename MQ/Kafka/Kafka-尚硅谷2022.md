@@ -343,7 +343,7 @@ Spark 是一个在大学数据咖啡中常用的组件，可以用于Kafka的生
 2、Spark环境准备
 - 创建一个maven项目spark-kafka
 - 在项目spark-kafka上点击右键，Add Frameworks 勾选scala
-- 在main下创建scala文件夹，并右击 Mark Dictory as Sources Root => 在Scala下创建
+- 在main下创建scala文件夹，并右击 Mark Directory as Sources Root => 在Scala下创建
 - 验证安装成功 命令行 输入 scala
 
 3、
