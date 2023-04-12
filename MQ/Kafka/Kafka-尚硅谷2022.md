@@ -329,28 +329,117 @@ public class KafkaConsumer{
 
 
 # 第4章 集成Spark
-Spark 是一个在大学数据咖啡中常用的组件，可以用于Kafka的生产者，也可以用于Spark的消费者
+Spark 是一个在大学数据开发中常用的组件，可以用于Kafka的生产者，也可以用于Spark的消费者
 
 ## 4.1 Spark 生产者
 
 ### 1、 Scala环境准备
    Scala 3.8 环境搭建
-1.1、安装步骤：   
+#### 1.1、安装步骤：   
 - 安装JDK1.8
 - 下载对用的Scala安装文件Scala-2.12.11.zip
-- 解压scala-2.11.zip, 我这解压到E:\02_software
+- 解压scala-2.11.zip, 我这解压到E:\software
 - 配置Scala的环境变量
-- 
+- 验证安装成功 命令行 输入 scala
+
+#### 1.2 Scala插件安装
+
   
 ### 2、Spark环境准备
 - 创建一个maven项目spark-kafka
 - 在项目spark-kafka上点击右键，Add Frameworks 勾选scala
-- 在main下创建scala文件夹，并右击 Mark Directory as Sources Root => 在Scala下创建
-- 验证安装成功 命令行 输入 scala
+- 在main下创建scala文件夹，并右击 Mark Directory as Sources Root => 在Scala下创建package 名为 com.beyond.spark
+- 添加配置文件
+```pom
+<dependency>
+  <groupId>org.apache.spark</groupId>
+  <artifactId>spark-streaming-kafka-0-10_2.12</artifactId>
+  <version>3.0.0</version>
+</dependency>
+```
+- 将log4j.properties文件添加到resources里面，就能更改打印日志的级别为error
+```properties
+log4j.rootLogger=error,stdout,R
+log4j.appender.stdout=org.apache.log4j.ConsoleAppender
+log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
+log4j.appender.stdout.layout.ConversionPattern=%d{yyyy-MM-dd HH:mm:ss,SSSS}  %5p --- [%50t] %800c(line:%5L) : %m%n
+
+log4j.appender.R=org.apache.log4j.RollingFileAppender
+log4j.appender.R.File=../log/agent.log
+log4j.appender.R.MaxFileSize=1024KB
+log4j.appender.R.MaxBackupIndex=1
+
+
+log4j.appender.R.layout=org.apache.log4j.PatternLayout
+log4j.appender.R.layout.ConversionPattern=%d{yyyy-MM-dd HH:mm:ss,SSSS}  %5p --- [%50t] %800c(line:%5L) : %m%n
+```
+
+SparkKafkaProducer
+
+```scala
+package com.beyond.spark
+
+object SparkKafkaProducer {
+
+   def main(args: Array[String]): Unit = {
+        // 0 配置信息
+        val properties = new Properties()
+        properties.put()
+        properties.put()
+        properties.put()
+        
+        //1 创建一个生产者
+        val producer = new KafkaProducer[String,String](properties)
+        
+        //2 发送数据
+        for(i<- 1 to 5){
+            producer.sen(new Producer())
+        }
+   }
+}
+```
+
+#### 3、
 
 ## 4.2 Spark 消费者
 
+#### 4.2.1 添加pom文件
+```pom
+<dependency>
+  <groupId>org.apache.spark</groupId>
+  <artifactId>spark-streaming-kafka-0-10_2.12</artifactId>
+  <version>3.0.0</version>
+</dependency>
+<dependency>
+  <groupId>org.apache.spark</groupId>
+  <artifactId>spark-core_2.12</artifactId>
+  <version>3.0.0</version>
+</dependency>
+<dependency>
+  <groupId>org.apache.spark</groupId>
+  <artifactId>spark-streaming_2.12</artifactId>
+  <version>3.0.0</version>
+</dependency>
+```
 
+
+创建com.beyond.spark包下创建 scala Object SparkKafkaConsumer
+
+```scala
+
+package com.beyond.spark
+
+object SparkKafkaProducer {
+
+    def main(args: Array[String]): Unit = {
+        // 1 初始化上下文环境
+        new SparkConf().setMaster("local[*]").setAppName("spark-kafka")
+        
+        new StreamingContext(conf,)
+   }
+}
+
+```
 
 # 第三篇 生产调优手册
 ## 第1章 Kafka硬件配置选择
