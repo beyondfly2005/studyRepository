@@ -489,25 +489,129 @@ jmap -heap 2732
 
 ```
 
+页缓存 segment (1G) 1G *25% 存入内存
+3台服务器 总共 (分区数Leader(10)  *1G *25%)  = 2.5G
+(分区数Leader(10)  *1G *25%)  / 3 = 1G 每台服务器设置1G
+
+
 ### 1.5 CPU选择
 
+num.io.threads =8  负责写磁盘的线程数， 整个参数值要占用总核心数的50%
+num.replica.fetchers=1 副本拉取线程数， 这个参数栈总核心数的 50% 的1/3
+num.network.thread  数据传输线程数 ，这个参数占用总核心数的50%的2/3
+预留8核心，  建议32核
+
+### 1.6 网络选择
+网络带宽 = 峰值吞吐量 ≈ 20MB/2 选择千兆网络即可
+100Mbps单位是bit；10M/s单位是byte  1byte=8bit  100Mbps/8 =12.5M/s
+一般百兆网卡 100Mbps 千兆网卡 1000Mbps  万兆网卡1000000Mbps
+
+
+
 ## 第2章 Kafka生产者
-### 身缠这核心参数配置
-### 生产者
+
+Updating Broker Configs
+read-only 只有集群重启时 才进行更新
+per-broker 每一个集群节点 
+cluster-wide
+
+### 2.1生产者核心参数配置
+
+batch.size 只有数据积累到batch.size之后，sender才会发送数据，默认是16K
+linger.ms 如果数据迟迟未达到batch.size, sender 等待linger.ms设置的时间到了之后就会发送数据，
+单位ms 默认值是0ms 表示没有延迟
+
+ACK应答：
+0  生产者发送过来的数据，不需要等数据落盘应答，一般不使用
+1  生产者发送过来的数据 Leader收到数据后应答
+-1(all)  生产者发送过来的数据，Leader和ISR队列里面的所有节点收齐数据后应答 -1和all等价
+
+bootstrap.servers 生产者连接
+
+
+max.in.flight.requests.per.connection 预习最多没有返回ack的次数，默认为5，开启幂等性要保证数值是1-5的数字
+
+
+### 2.2生产者如何提高吞吐量
+buffer.memory 
+batch.size 16K改为32K
+lig
+### 2.3数据可靠性
+acks ： -1 可靠性高一些
+至少一次 AtLeast
+
+### 2.4 数据去重
+
+
+### 2.5 数据有序
+将数据保存在 单分区内部，有序（ 有条件的 不能乱序）；多分区 分区与分区肩 无需
+
+### 2.6 数据乱序
+enable.idempotence 是否开启幂等性 默认true 表示开启幂等性
+max.in.flight.requests.per.connection 运行最多没有返回ack的次数，默认为5，开启莫等闲要保证该值是1-5的数字。
 
 ## 第3章 Kafka Broker
-### Broker核心参数配置
-### 服役新节点
-### 
+### 3.1 Broker核心参数配置
+replica.lag.time.max.ms 
+auto.leader.rebalance.enable 默认是true 一般不建议打开
+log.index.interval.bytes 默认4kb kafka里面每当写入了4kb
+
+log.retention.hours 数据默认保存的时间  默认7天
+log.retention.minite
+log.retention.bytes
+log.cleanup.policy
+num.io.threads
+
+log.flush.interval.messages
+log.flush.interval.ms 每隔多久 刷新
+
+### 3.2 服役新节点
+
+2 生产一个负载均衡计划
+3、创建
+4、
+5、验证副本存储计划
+
+### 3.3 增加分区
+
+分区只能增加 不能减少
+
+### 3.4 增加副本因子
+
+1、创建topic
+2、手动增加副本存储
+
+### 3.5 手动调整分区副本存储
+1、创建副本存储计划
+2、执行副本存储计划
+3、验证副本存储计划
+
+### 3.6 Leader Partition负载平衡
+一般建议关闭掉 ，生产环境中不建议使用
+auto
+
+### 3.7 自动创建主题
+1、向一个没有提前创建five主题发送数据
+```
+bin/kafka-topics.sh --bootstrap-server hadoop102:9002 --list
+bin/kafka-topics.sh --bootstrap-server hadoop102:9002 --topic five
+bin/kafka-topics.sh --bootstrap-server hadoop102:9002 --describe --topic five
+ 查看 five主题的分区 
+ 
+```
+
+auto.create.topic.enable 设置为false  一般不建议生产环境 开启默认创建主题
 
 ## 第4章 Kafka消费者
-### 核心参数配置
-### 消费者再平衡
+### 4.1 核心参数配置
+### 4.2 消费者再平衡
+### 4.3 消费者事务
+### 4.4 消费者如何提高吞吐量 
 
 ## 第5章 Kafka总体
-### 如何提高吞吐量
-### 数据精准一次
-### 合理设置分区数
+### 5.1如何提高吞吐量
+### 5.2数据精准一次
+### 5.3合理设置分区数
 ### 
 
 
