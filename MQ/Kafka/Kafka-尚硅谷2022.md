@@ -331,7 +331,9 @@ public class KafkaConsumer{
 # 第4章 集成Spark
 Spark 是一个在大学数据咖啡中常用的组件，可以用于Kafka的生产者，也可以用于Spark的消费者
 
-1、 Scala环境准备
+## 4.1 Spark 生产者
+
+### 1、 Scala环境准备
    Scala 3.8 环境搭建
 1.1、安装步骤：   
 - 安装JDK1.8
@@ -340,13 +342,15 @@ Spark 是一个在大学数据咖啡中常用的组件，可以用于Kafka的生
 - 配置Scala的环境变量
 - 
   
-2、Spark环境准备
+### 2、Spark环境准备
 - 创建一个maven项目spark-kafka
 - 在项目spark-kafka上点击右键，Add Frameworks 勾选scala
 - 在main下创建scala文件夹，并右击 Mark Directory as Sources Root => 在Scala下创建
 - 验证安装成功 命令行 输入 scala
 
-3、
+## 4.2 Spark 消费者
+
+
 
 # 第三篇 生产调优手册
 # 第1章 Kafka硬件配置选择
