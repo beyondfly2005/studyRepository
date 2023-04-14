@@ -603,9 +603,22 @@ bin/kafka-topics.sh --bootstrap-server hadoop102:9002 --describe --topic five
 auto.create.topic.enable 设置为false  一般不建议生产环境 开启默认创建主题
 
 ## 第4章 Kafka消费者
-### 4.1 核心参数配置
+1、coordinator 辅助消费者组的初始化和分区的分配
+coordinator 阶段选择= groupid的hashcode值 % 50(__consumer_offsets的分区数量)
+李世荣 groupid的hashcode值=1  1%50 =1 ,那么 __consumr_offsets 主题
+
+ConsumerNetworkClient
+Fetch.min.bytes 每批次最小抓取打下哦默认1字节
+fetch.max.wait.ms一批数据
+
+
+
+### 4.1 核心参数配置git
+
 ### 4.2 消费者再平衡
+
 ### 4.3 消费者事务
+
 ### 4.4 消费者如何提高吞吐量 
 
 ## 第5章 Kafka总体
