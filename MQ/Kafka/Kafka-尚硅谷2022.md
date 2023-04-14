@@ -613,23 +613,206 @@ fetch.max.wait.ms一批数据
 
 
 
-### 4.1 核心参数配置git
+### 4.1 核心参数配置
+
+
+核心参数
+fetch.min.bytes 每批次最小抓取数量 默认1字节
+fetch.max.wait.ms 一批数据最小值未达到的超时时间 默认500ms
+fetch.max.bytes 每批次最大抓取大小 默认50m
+max.poll.records 一次拉取数据返回消息的最大条数 默认500条
+
+配置参数
+bootstrap.servers
+key.deserializer
+value.deserializer
+
+group.id
+enable.auto.commit 默认设置为true
+auto.commit.interval.ms
+
+auto.offset.reset
+
+offsets.topic.num.partitions
+heartbeat.interval.ms
+session.timout.ms
+max.poll.interval.ms
+fetch.max.bytes
+max.poll.records
 
 ### 4.2 消费者再平衡
 
-### 4.3 消费者事务
+heartbeat.interval.ms
+session.timout.ms Kafka消费者coordinator之间的超时时间，默认45ms 超过该值，该消费者被溢出，消费者组执行再平衡
+max.pool.interval.ms  消费者处理消息的最大时长，默认是5分钟，超过该值，该消费者被溢出，消费者执行再平衡
+partition.assignment.strategy 消费者分区分配策略，默认策略是：Range + CooperativeSticky ;
+    Kafka可以同事使用多个分区分配策略，可以选择的策略包括：
+    Range RoundRobin Sticky黏性 CooperativeSticky
 
-### 4.4 消费者如何提高吞吐量 
+### 4.3 指定Offset消费
+kafkaConsumer.seek(topic, 1000);
+
+### 4.4 指定消费时间消费
+
+```java
+    HashMap<TopicPartition, Long> timestampToSearch=new HashMap<>();
+    timestampTToSearch.put(TopicPartition,System.currentTimeMillis(()-1*24*3600*10000));
+    kafkaConsumer.offsetsForTimes(timestampToSearch);
+```
+
+### 4.5 消费者事务
+    项目讲解时 再进行讲解
+
+### 4.6 消费者如何提高吞吐量
+
+- 增加分区
+bin/kafka-topics.sh --bootstrap-server hadoop102:9092 --alter --topic first --partitions 3
+
+- 修改参数
+  - fetch.max.bytes 
+  默认Default 524288000（50M） 消费者获取服务器端一批消息最大的字节数。如果服务器端一批次的数据大于该值（50M）
+仍然可以拉取回来这批数据，因此，这不是一个绝对的最大值。一批次的大小手message.max.bytes(broker config)或者
+max.message.bytes(topic config)影响
+  - max.poll.records 一次拉取数据返回消息的最大条数，默认是500条
+
 
 ## 第5章 Kafka总体
-### 5.1如何提高吞吐量
-### 5.2数据精准一次
-### 5.3合理设置分区数
-### 
 
+### 5.1如何提高吞吐量
+如何提生吞吐量？
+1、提升生产吞吐量
+- buffer.memory 发送消息的缓冲区大小，默认值是32M 可以增加到64M
+- batch.size 默认是16K 
+- linger.ms 这个值默认是0 一般设置5-100毫秒 
+- compression.type 默认是none 不压缩，但是会加大producer端的开销
+2、增加分区
+3、消费者提高吞吐量
+- 调整fetch.max.bytes 大小 默认是50M
+- 调整max.poll.records大小  默认500条
+4、增加下游消费者处理能力
+
+### 5.2数据精准一次
+1、生产者角度
+- acks 设置为-1  acks=-1 保证数据不丢
+- 幂等性 enable.idempotence=true + 事务
+2、 broker服务端角度
+- 分区副本数大于等于2 -- replication-factor=2
+- ISR队列里应答的最小副本数量大于等于2  min.insync.replicas=2
+3、消费者
+- 事务 + 手动提交offset （enable.auto.commit=false）
+- 消费者输出的目的地必须支持事务MySQL Kafka
+- 
+### 5.3合理设置分区数
+- 创建一个只有一个分区的topic
+- 测试这个topic的producer吞吐量和consumer吞吐量
+- 假设他们的值分别是TTp和TTc 单位可以是MB/s
+- 然后假设总的目标吞吐量是Ttt 那么分区数= TTtt/min(Tp,Tc);
+  例如producer吞吐量=20m/s consumer吞吐量=50m/s 期望吞吐量100m/s
+  分区数= 100/20=5分区
+  分区数一般设置为  3-10个
+  分区数不是越多越好 也不是越少越好，需要搭建完成集群，进行压测，再调整分区个数
+
+### 5.4 单条日志大于1M
+如果大于1M  kafka会被卡死
+message.max.bytes 默认1M  broker端接收每个批次消息最大值
+max.request.size 默认1M 生产者发往broker每个请求消息的最大值，针对topic级别设置消息体的大小
+replica.fetch.max.bytes 默认值1M 副本同步数据，每隔批次消息最大值
+fetch.max.bytes 默认值Default 52428800（50M） 消费者获取服务器端一批消息最大的字节数。如果服务器端一批次的数据大于该值（50M）
+仍然可以拉取回来这批数据，因此，这不是一个绝对的最大值。一批次的大小手message.max.bytes(broker config)或者
+max.message.bytes(topic config)影响
+
+### 5.5 服务器挂了
+在生产环境中，如果某个Kafka节点挂掉
+正常处理方法
+- 1 先尝试重启一下，如果能正常启动，那直接解决
+- 2 如果重启不行，考虑增加内存 增加CPU 网络带宽
+- 3 如果Kafka整个节点误删，如果副本数大于等于2，可以安装服役新节点的方式重新服役一个新节点，并执行负载均衡
+
+### 5.5 集群压力测试
+
+1 Kafka压力测试
+用Kafka官方自带的脚步 对Kafka进行压测
+- 生产者压测 kafka-producer-perf-test.sh
+- 消费者压测 kafka-consumer-perf-test.sh
+测试环境准备
+- 三台服务器
+- 一台hadoop105 不需要启动 作为客户端
+
+2 Kafka Producer 压力测试
+- 创建一个test topic 设置3个分区3个副本
+```
+bin/kafka-topics.sh --bootstrap-server hadoop102:9092 --create  --replication-factor 3  --partition3 --topic test
+```
+查看
+```
+bin/kafka-topics.sh --bootstrap-server hadoop102:9092 --lsit
+```
+
+- 在/opt/module/kafka/bin目录下有这两个文件 我们来测试一下
+```bash
+kafka-producer-perf-test.sh --topic test  --record-size 1024 --num-records 1000000  --throughput 10000  --producer-props
+bootstrap.servers=hadoop102:9092,hadoop103:9092,hadoop104:90992 batch.size=166384 linger.ms=0
+```
+```bash
+kafka-producer-perf-test.sh --topic test  --record-size 1024 --num-records 1000000  --throughput 10000  --producer-props
+bootstrap.servers=hadoop102:9092,hadoop103:9092,hadoop104:90992 batch.size=332768 linger.ms=0
+```
+参数说明
+- record-size 1024字节 1K大小
+- num-records 总共发送的条数
+- throughput 10000  
+- producer-props
+- producer-props 后面可以配置生产者相关参数 batch.size 配置为16K  linger.ms 零毫秒  
+
+测试：
+batch.size 配置为16K  linger.ms=0 零毫秒  9.76MB/sec
+batch.size 配置为32K  linger.ms=0 零毫秒  9.76MB/sec
+batch.size 配置为4K  linger.ms=0 零毫秒  3.81MB/sec
+不是越多越好 也不是越小越好
+
+##### 4 调整 linger.ms时间
+batch.size 配置为4K  linger.ms=50 零毫秒  3.83MB/sec  linger在生产环境中 会出现等待数据 拼凑为4k的
+
+
+##### 5 compression 压缩
+不采用压缩 3.83Mb/s
+compression.tye=snappy 3.77M/s  
+compression.tye=zstd  5.68M/s
+compression.tye=gzip  5.90M/s
+compression.tye=lz4   3.72M/s
+日志大的时候，压缩效果
+
+##### 6 调整缓存大小
+默认生产者缓存大小32M  调整为64M
+buffer.memory=33554432 默认值        
+buffer.memory=67108864    3.76MB/sec
+
+#### Kafka Consumer压力测试
+
+```bash
+kafka-consumer-perf-test.sh  bootstrap-server hadoop102 
+```
+3 
+4 调整fetch.max. 
 
 # 第四篇 源码解析
 ## 第1章 源码环境准备
+### 1.1 源码下载地址
+http://kafka.apache.org/downloads
+
+### 1.2 安装JDK和Scala
+
+### 1.3 下载源码
+
+### 1.4 安装gradle
+Gradle是类似于maven的代码管理工具，安卓程序管理通常是使用Gradle
+IDEA自动帮你下载，下载的时间比较长 网络慢 需要1天时候，有VPN需要几分钟 
+
 ## 第2章 生产者源码
+### 2.1 
+
+### 2.2
+
+
 ## 第3章 消费者源码
 ## 第4章 服务器源码
