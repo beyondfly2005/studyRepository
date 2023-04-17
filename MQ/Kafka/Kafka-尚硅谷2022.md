@@ -146,22 +146,173 @@ zookeeper.connect=hadoop102:2181,hadoop103:2381,hadoop104:2381/kafka
 
 ### 2.1.3 集群启停脚本
 
+```bash
+#!/bin/bash
+
+case $1 in
+"start")
+    for i  in hadoop1002 hadoop102 hadoop104
+    do
+        echo "--- 去顶 ￥i kafka --- "
+        ssh &i 
+
+"stop")
+
+
+"restart")
+
+```
+给脚本赋予执行权限
+````bash
+chmod +777
+
+kf.sh start
+ 
+````
+
+注意：
+- 需要在停止kafka之后 再停止zookeeper
+
+
+
 ## 2.2 Kafka命令行操作
 ### 2.2.1 主题命令行操作
+
+--topic<String:topic>
+--create
+--delete
+--alter
+--list
+--describe
+--partitions<Integer:>
+
+```bash
+## 写一个或者写两个
+bin/kafka-topics.sh --bootstrap-server hadoop102:9002
+bin/kafka-topics.sh --bootstrap-server hadoop102:9002,hadoop103:9002
+
+## 
+bin/kafka-topics.sh --bootstrap-server hadoop102:9002 --list
+
+bin/kafka-topics.sh --bootstrap-server hadoop102:9002 --topic first --create --partitions 1 --repication-facttor 3
+
+bin/kafka-topics.sh --bootstrap-server hadoop102:9002 --list
+
+## 详细查看
+bin/kafka-topics.sh --bootstrap-server hadoop102:9002 --topic first --describe
+
+## 修改分区 分区数 只能增加不能减少
+bin/kafka-topics.sh --bootstrap-server hadoop102:9002 --topic first --alter --partitions 3
+
+bin/kafka-topics.sh --bootstrap-server hadoop102:9002 --topic first --describe
+
+## 修改副本数 不能通过命令行方式 类似以下
+bin/kafka-topics.sh --bootstrap-server hadoop102:9002 --topic first --alter --repliacation-facttor 2
+
+
+
+```
+
 ### 2.2.2 生产者命令行操作
+
+```bash
+bin/kafka-console-producer.sh  --bootstrap-server hadoop102:9002 --topic first
+
+```
 ### 2.2.3 消费者命令行操作
+
+```bash
+
+bin/kafka-console-consummer.sh --bootstrap-server hadoop102:9002 --topic first
+## 消费者 历史数据 默认不能消费
+
+## 消费历史数据
+bin/kafka-console-consummer.sh --bootstrap-server hadoop102:9002 --topic first --from-beginning
+
+
+
+```
 
 # 第3章 Kafka生产者
 ## 3.1 生产者消费发送过程
 ### 3.1.1 发送原理
+- main线程中，创建Producer对象
+- 调用send(ProducerRecord)发送数据
+- Interceptions 拦截器
+- 通过Serializer 序列化器，对数据进行序列化，用Kafka自带的
+- Partitioner 分区器 用于发送到哪个分区
+- 一个分区创建一个队列（双端队列）
+- 内存中创建多个对了
+- 队列的大小默认32M
+- 每个批次大小默认16K
+- 发送条件：批次大小达到batch.size(默认16K) 或者 达到linger.ms设置的时间 默认0毫秒
+- Send线程  拉取数据
+- Selector 把底层链路打通
+- 进行同步
+- 应答
+
+ 应答机制
+- 0 生产者发送过来的数据，不需要等数据落盘应答
+- 1 生产者发送过来的数据 Leader收到数据后应答
+- -1(all) 生产者发送过来的数据 Leader和ISR队列里面的所有节点收齐数据后应答 -1和all等价
+
+ 应答
+ - 应答成功：
+ - 应答失败：不断重试
 ### 3.1.2 生产者重要参数列表
+
 ## 3.2 异步发送API
 ### 3.2.1 普通异步发送
+需求： 创建
+所有任务都完成之后 才能
+
+
+外部数据发送到Kafka队列中，不管集群中有没有落盘
+
+1、创建Kafka工程
+kafka-sync
+
+导入依赖
+```pom
+<dependency>
+    <artifictId>kafka-client</artifictId>
+    <group></group>
+</dependency>
+```
+
+```java
+public class CustomProducer{
+    public static void main(String[] args) {
+        //1 创建kafka生产者对象
+        Properties properties = new Properties();
+
+        //连接集群
+        properties.put(ProducerConfig.BOOTSTARAP_SERVER_CONFIG,"hadoop102:9002,hadoop103:9002");
+        
+        //指定序列化器
+        //properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringsERIALIZER")
+        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, sTRINGsERIALIZER.CLASS.GETnAME());
+        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.CLASS.GETnAME());
+        new KafkaProducer<String,String>(properties); 
+        
+        
+        
+        //2 发送数据
+        
+        
+        //3 关闭资源
+    }
+}
+```
 ### 3.2.2 带回调含糊的异步发送
+
 ## 3.3 同步发送API
 ## 3.4 生产者发送分区
+
 ### 3.4.1 分区好处
+
 ### 3.4.2 生产者发送消息的分区策略
+
 ### 3.4.3 自定义分区策略
 
 ## 3.5 生产经验—生产者如何提高吞吐量
@@ -535,7 +686,8 @@ max.in.flight.requests.per.connection 预习最多没有返回ack的次数，默
 ### 2.2生产者如何提高吞吐量
 buffer.memory 
 batch.size 16K改为32K
-lig
+liger
+
 ### 2.3数据可靠性
 acks ： -1 可靠性高一些
 至少一次 AtLeast
@@ -829,6 +981,33 @@ IDEA自动帮你下载，下载的时间比较长 网络慢 需要1天时候，�
 ### 2.1 初始化
 #### 2.1.1 程序入口
 #### 2.1.2 生产者main线程初始化
+
+- key和value的序列化
+- 拦截器  
+  - 拦截器可以有多个 组成连接器链
+- 控制单条日志的大小 默认是1M
+- buffer memory 缓冲器大小 默认32M
+- 压缩相关处理
+- accumulate 缓冲区大小  默认32M
+- batch.size 默认166K
+- 压缩方式accumulator 
+- lingerMS 与Integer最大值 取最小的 防止lingerMS的值 超过 Integer的最大值
+- 内存池 Buffer.totalMemorySize
+- 连接上Kafka集群地址
+- 获取元数据
+- 生产者 两个线程：一个main线程， 一个sender线程
+- new Sender，
+  - 参数 maxRequest  请求个数 默认5
+  - 请求超时时间 默认30秒
+- Kafka客户端对象的创建
+  - 参数
+  - clientId客户端ID
+  - maxInfLi缓存请求的个数 默认5个
+  - 重试时间  
+  - RECONNECT_BACK总的重试时间
+  - akcs 0 生产者发送过 不需要应答 1 leader收到，应答  -1 leader和isr队列中，所有都收到
+  - 
+
 #### 2.1.3 生产者sender线程初始化
 
 ### 2.2 发送数据到缓冲器
