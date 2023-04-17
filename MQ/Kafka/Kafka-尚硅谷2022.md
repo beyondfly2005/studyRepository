@@ -801,17 +801,43 @@ kafka-consumer-perf-test.sh  bootstrap-server hadoop102
 http://kafka.apache.org/downloads
 
 ### 1.2 安装JDK和Scala
+Kafka是由两种语言编写的，Java和Scala
+需要再Windows本地安装JDK8或者JDK8以上的版本
+需要再Windows本地安装Scala2.12
 
-### 1.3 下载源码
+### 1.3 加载源码
+将kafka-3.0.0.src.tgz源码包,解压到非中文目录下，
+打开IDEA File Open 源码包解压的位置
 
 ### 1.4 安装gradle
 Gradle是类似于maven的代码管理工具，安卓程序管理通常是使用Gradle
 IDEA自动帮你下载，下载的时间比较长 网络慢 需要1天时候，有VPN需要几分钟 
 
 ## 第2章 生产者源码
-### 2.1 
 
-### 2.2
+发送流程
+
+生产者做的事情是：把外部数据发送到Kafka集群
+- 首先创建main线程，
+- 在main线程中，创建了一个Kafka Producer，Kafka Producer调用send(ProducerRecord)方法，进行发送数据
+- 数据经过拦截器Interceptors，对数据进行加工
+- 之后经过序列化器Serializer 对数据进行key和value的序列化
+- 通过分区器Partitioner  把数据发往对应的缓冲区，每批次数据大小是16K
+- 接下来 由Send线程发送数据，发送数据是由条件的，bathSize如果达到16k  或者lingerMS时间到了，都可以发送数据 
+- 
+
+### 2.1 初始化
+#### 2.1.1 程序入口
+#### 2.1.2 生产者main线程初始化
+#### 2.1.3 生产者sender线程初始化
+
+### 2.2 发送数据到缓冲器
+#### 2.2.1 发送总计流程
+#### 2.2.2 分歧旋转
+#### 2.2.3 发送消息大小校验
+#### 2.2.4 内存池
+
+### 2.3 sender线程发送数据
 
 
 ## 第3章 消费者源码
