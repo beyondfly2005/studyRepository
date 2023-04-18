@@ -99,14 +99,17 @@ Consumer 消费者
 ### 1.3 Kafka 基础架构
 
 1、为扩展方便，并提高吞吐量，一个topic分为多个partition
-2、配合分区的设计，提出消费者组的概念，组内每个消费者并行消费
-每一个分区的数据 只能由同一个消费者 进行消费
-3、为提高可用性，为每个partition增加若干副本，类似NameNode HA
-副本分为Leader 和Flower之分  消费对象只能是Leader中的信息，如果Leader挂掉 会重新通过ZK选举Leader
-4、Zookeeper记录节点运行的基本状态，记录Leader相关信息
-ZK中记录谁是leader ，Kafka2.8.0之后也可以配置不采用ZK
 
-Kafka 有逐渐去Zookeeper之势
+2、配合分区的设计，提出消费者组的概念，组内每个消费者并行消费
+  每一个分区的数据 只能由同一个消费者 进行消费
+
+3、为提高可用性，为每个partition增加若干副本，类似NameNode HA
+  副本分为Leader 和Flower之分  消费对象只能是Leader中的信息，如果Leader挂掉 会重新通过ZK选举Leader
+
+4、Zookeeper记录节点运行的基本状态，记录Leader相关信息
+  ZK中记录谁是leader ，Kafka2.8.0之后也可以配置不采用ZK
+
+Kafka 有逐渐去Zookeeper之势 
 
 
 ## 第2章 Kafka快速入门
@@ -151,16 +154,37 @@ zookeeper.connect=hadoop102:2181,hadoop103:2381,hadoop104:2381/kafka
 #!/bin/bash
 
 case $1 in
-"start")
-    for i  in hadoop1002 hadoop102 hadoop104
+"start"){
+    for i in hadoop102 hadoop103 hadoop104;
     do
-        echo "--- 去顶 ￥i kafka --- "
-        ssh &i 
+        echo "---- zookeeper $i kafka ----"
+        ssh &i "/opt/module/zookeeper/bin/zkServer.sh start"
+    done
+};;
 
-"stop")
+"stop"){
+    for i in hadoop1002 hadoop103 hadoop104;
+    do
+        echo "---- zookeeper $i kafka ----"
+        ssh &i "/opt/module/zookeeper/bin/zkServer.sh stop"
+    done  
+};;
 
+"restart"){
+    for i in hadoop102 hadoop103 hadoop104; 
+    do
+        echo "---- zookeeper $i 重启 ----"
+        ssh $i "/opt/module/zookeeper/bin/zkServer.sh restart"
+    done  
+};;
 
-"restart")
+"status") {
+    for i in hadoop102 hadoop103 hadoop104; 
+    do
+        echo "---- zookeeper $i 状态 ----" 
+        ssh $i "/opt/module/zookeeper/bin/zkServer.sh status"
+    done
+};;
 
 ```
 给脚本赋予执行权限
@@ -818,7 +842,8 @@ auto
 bin/kafka-topics.sh --bootstrap-server hadoop102:9002 --list
 bin/kafka-topics.sh --bootstrap-server hadoop102:9002 --topic five
 bin/kafka-topics.sh --bootstrap-server hadoop102:9002 --describe --topic five
- 查看 five主题的分区 
+
+## 查看five主题的分区 
  
 ```
 
@@ -830,7 +855,7 @@ coordinator 阶段选择= groupid的hashcode值 % 50(__consumer_offsets的分区
 李世荣 groupid的hashcode值=1  1%50 =1 ,那么 __consumr_offsets 主题
 
 ConsumerNetworkClient
-Fetch.min.bytes 每批次最小抓取打下哦默认1字节
+fetch.min.bytes 每批次最小抓取打下哦默认1字节
 fetch.max.wait.ms一批数据
 
 
@@ -868,7 +893,7 @@ heartbeat.interval.ms
 session.timout.ms Kafka消费者coordinator之间的超时时间，默认45ms 超过该值，该消费者被溢出，消费者组执行再平衡
 max.pool.interval.ms  消费者处理消息的最大时长，默认是5分钟，超过该值，该消费者被溢出，消费者执行再平衡
 partition.assignment.strategy 消费者分区分配策略，默认策略是：Range + CooperativeSticky ;
-    Kafka可以同事使用多个分区分配策略，可以选择的策略包括：
+    Kafka可以同时使用多个分区分配策略，可以选择的策略包括：
     Range RoundRobin Sticky黏性 CooperativeSticky
 
 ### 4.3 指定Offset消费
