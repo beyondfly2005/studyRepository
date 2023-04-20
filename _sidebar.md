@@ -26,6 +26,10 @@
     * [MemCached教程](Cache/Memcache/MemCached教程.md)
   * Redis
     * [Redis缓存](Cache/Redis/Redis缓存.md)
+* Clickhouse
+  * [Clickhouse](Clickhouse/Clickhouse.md)
+* DataBase
+  * [kudu](DataBase/kudu.md)
 * dataX
   * [DataX-Migration数据迁移工具](dataX/DataX-Migration数据迁移工具.md)
   * [DataX-尚硅谷](dataX/DataX-尚硅谷.md)
@@ -165,6 +169,8 @@
 * K8S
   * [Kubernetes-黑马](K8S/Kubernetes-黑马.md)
   * [Kubernetes学习](K8S/Kubernetes学习.md)
+  * [KubeSphere](K8S/KubeSphere.md)
+  * [Rancher](K8S/Rancher.md)
   * [SpringCloud+K8s](K8S/SpringCloud+K8s.md)
 * LibreOffice
   * [Linux安装LibreOffice](LibreOffice/Linux安装LibreOffice.md)

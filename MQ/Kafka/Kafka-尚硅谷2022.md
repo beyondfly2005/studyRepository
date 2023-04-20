@@ -333,45 +333,46 @@ public class CustomProducer{
 #### 3.2.2 带回调函数的异步发送
  main线程 send(ProducerRecord,Callback)  返回 主题 分区
 ```java
-public class CustomProducer{
-    public static void main(String[] args) {
-        //1 创建kafka生产者对象
-        Properties properties = new Properties();
+public class CustomProducerCallback {
+  public static void main(String[] args) {
+    //1 创建kafka生产者对象
+    Properties properties = new Properties();
 
-        //连接集群
-        properties.put(ProducerConfig.BOOTSTARAP_SERVER_CONFIG,"hadoop102:9002,hadoop103:9002");
-        
-        //指定序列化器
-        //properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringsERIALIZER")
-        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-        properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-        new KafkaProducer<String,String>(properties); 
-                        
-        //2 发送数据
-        for(int i=0;i<5;i++){
-            kafkaProducer.send(new ProducerRecord<>("first", "atguigu" + i), new Callback(){
-                @Override
-                public void onCompletion(RecordMetadate metadate, Exception exception){
-                    if(exception!=null){
-                        System.out.println("主题："+metadate.topic() + " 分区："+metadata.partition());
-                    }
-                }
-            });
+    //连接集群
+    properties.put(ProducerConfig.BOOTSTARAP_SERVER_CONFIG, "hadoop102:9002,hadoop103:9002");
+
+    //指定序列化器
+    //properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringsERIALIZER")
+    properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+    properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+    new KafkaProducer<String, String>(properties);
+
+    //2 发送数据
+    for (int i = 0; i < 5; i++) {
+      kafkaProducer.send(new ProducerRecord<>("first", "atguigu" + i), new Callback() {
+        @Override
+        public void onCompletion(RecordMetadate metadate, Exception exception) {
+          if (exception != null) {
+            System.out.println("主题：" + metadate.topic() + " 分区：" + metadata.partition());
+          }
         }
-        
-        //3 关闭资源
-        kafkaProducer.close();
+      });
     }
+
+    //3 关闭资源
+    kafkaProducer.close();
+  }
 }
 ```
 ### 3.3 同步发送API
+
   只要在异步发送的基础上 再调用一下get()方法即可
 
   CustomProducerSync.java
 
 ```java
 public class CustomProducer{
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ExecutionExeception, InterruptedException {
         //1 创建kafka生产者对象
         Properties properties = new Properties();
 
@@ -386,7 +387,7 @@ public class CustomProducer{
                         
         //2 发送数据
         for(int i=0;i<5;i++){
-            kafkaProducer.send(new ProducerRecord<>("first", "atguigu" + i));
+            kafkaProducer.send(new ProducerRecord<>("first", "atguigu" + i)).get();
         }
         
         //3 关闭资源
@@ -396,14 +397,155 @@ public class CustomProducer{
 ```
 
 ### 3.4 生产者发送分区
+- 外部数据 经过
+- 拦截器 在生产环境中用的不多，一般用Flume的拦截器
+- 序列化器 一般使用String类型 ，很少用自定义
+- 分区器：下面开始将分区器
 
 #### 3.4.1 分区好处
+- 便于合理使用存储资源，每个Partition再一个Broker上存储，可以把海龙的数据安装分歧切割成一块一块数据存储在多台Broker上。
+  合理控制分区的任务，可以实现负载均衡的效果
+- 提高并行度，生产者可以以分区为单位发送数据，消费者可以以分歧为单位进行消费数据。
 
 #### 3.4.2 生产者发送消息的分区策略
 
+##### 1) 默认的分区器器DefaultPartitioner
+
+
+ProducerRecord类的构造方法：
+
+ProducerRecord(String topic, Integer partition, Long timestamp, K key ,V value, Iterable<Header> headers);
+ProducerRecord(String topic, Integer partition, Long timestamp, K key ,V value);
+ProducerRecord(String topic, Integer partition, K key ,V value, Iterable<Header> headers);
+ProducerRecord(String topic, Integer partition, K key ,V value);
+ProducerRecord(String topic, K key ,V value);
+ProducerRecord(String topic, V value);
+
+- 指定partition的情况下，直接将指明的值作为partition值，例如partition=0， 素有数据写入分区0
+- 没有指明partition值但又key的情况下下，将key的hash值域topic的partition数进行`取余` 得到的partition值
+  例如：key1的hash值=5，key的hash值=6，topic的partition数=2 那么key1对于的value1写入1号分区，key2对应的value2写入0号分区。
+- 既没有partition值有没有key的情况下，Kafka采用Sticky Partition(黏性分区器)，会随机选择一个分区器，并尽可能一直使用该分区，待该分区的batch已满或者已完成，Kafka再随机选择一个分歧进行使用（和上一次的分区不同）
+  例如：第一次随机喧杂0号分歧，等0号分歧当前批次满了(默认16K) 或者linger.ms设置的时间到，Kafka再随机一个分区进行使用（如果还是0会继续随机）。
+
+
+  下面验证分区分配策略
+
+```java
+
+public class CustomProducerCallbackPartition{
+  public static void main(String[] args) {
+    //1 创建kafka生产者对象
+    Properties properties = new Properties();
+
+    //连接集群
+    properties.put(ProducerConfig.BOOTSTARAP_SERVER_CONFIG, "hadoop102:9002,hadoop103:9002");
+
+    //指定序列化器
+    //properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringsERIALIZER")
+    properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+    properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+    new KafkaProducer<String, String>(properties);
+
+    //2 发送数据
+    for (int i = 0; i < 5; i++) {
+      //不指定分区  
+      //kafkaProducer.send(new ProducerRecord<>("first",, "atguigu" + i), new Callback() {
+      //指定分区  1号分歧
+      //kafkaProducer.send(new ProducerRecord<>("first", 1, "", "atguigu" + i), new Callback() {
+      //指定Key
+      kafkaProducer.send(new ProducerRecord<>("first", "a", "atguigu" + i), new Callback() {
+      //指定Key 在生产环境中的应用
+      //订单表的所有数据 发送到Kafka的指定分区，需要在Key值 写入订单表的表名 同一个表名 HashCode值是相同的 从而保证想同的表数据写入同一个分区 
+        @Override
+        public void onCompletion(RecordMetadate metadate, Exception exception) {
+          if (exception != null) {
+            System.out.println("主题：" + metadate.topic() + " 分区：" + metadata.partition());
+          }
+        }
+      });
+    }
+
+    //3 关闭资源
+    kafkaProducer.close();
+  }
+}
+
+```
+
 #### 3.4.3 自定义分区策略
 
+  需求：如果发送过来的数据包含 包含beyond 则发送到0号分区，如果不包含 则发送到1号分区
+
+```java
+public class MyPartitioner implements Partitioner {
+  @Override
+  public int partition(String topic, Object key, byte[] keyBytes, Object value, Byte[] valueBytes, Cluster cluster) {
+    String msgValue = value.toString();
+    int partition;
+    if (msgValues.contains("beyond")) {
+      partition = 0;
+    } else {
+      partition = 1;
+    }
+    return partition;
+  }
+
+  @Override
+  public close() {
+
+  }
+
+  @Override
+  public configure(Map<String, ?> configs) {
+
+  }
+}
+
+```
+如何使用？
+```java
+public class CustomProducer{
+  public static void main(String[] args) {
+    //... ...
+    
+    properties.put(ProdcucerConfig.PARTITIONER_CLASS_CONFIG, "com.beyond.kafka.producer.MyPartitioner");
+
+    //... ...
+  }
+}
+```
+
 ### 3.5 生产经验—生产者如何提高吞吐量
+
+batch.size 批次大小  默认16K
+linger.ms 等待时间，默认0毫秒 建议修改为：5-100ms
+compression.type 压缩snappy
+recordAccumulator: 缓冲区大小 默认32M 修改为64M
+
+- batch.size 类似火车 一次多拉一点
+- linger.ms 默认0毫秒 来了就走，还不够一个批次大小就拉走了 ；如果太大就会产生延迟
+- compression 一个批次 占用的体积 更少，承载更多
+- recordAccumulator 如果分区很多 每个分区所用的缓存就更少， 导致效率下级
+
+```java
+public class CustomProducerParameters{
+  public static void main(String[] args) {
+    //0 配置
+    Properties properties = new Properties;
+    properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "hadoop102:9002,hadoop103:9002");
+    properties.put(ProducerConfig.KEY_SERIALIZWER_CLASS_CONFIG, StringSerializer.class.getName());
+    properties.put(ProducerConfig.VALUE_SERIALIZWER_CLASS_CONFIG, StringSerializer.class.getName());
+    properties.put(ProducerConfig.BUFFER_MEMORY_CONFIG, 33554432);
+    properties.put(ProducerConfig.BATCH.SIZE_CONFIG,16384);
+    
+    // linger.ms
+    properties.put(ProducerConfig.LINGER_MS_CONFIG, 1);
+    //压缩  none gzip snappy
+    properties.put(ProducerConfig.compression.type, );
+  }
+}
+```
+
 ### 3.6 生产经验—数据可靠性
 ### 3.7 生产经验—数据去重
 ### 3.8 生产经验—数据有序
