@@ -57,7 +57,8 @@ Java后台日志数据   服务器本地磁盘文件夹  采集到HDFS 或者Kaf
 
 ### 1.2 Flume基础架构
 Flume组成架构
-
+![Flume组成架构图](https://flume.apache.org/_images/DevGuide_image00.png "Flume架构图")
+![Flume组成架构图](https://img2.baidu.com/it/u=109148212,1315003415&fm=253&fmt=auto&app=138&f=PNG?w=1149&h=500 "Flume架构图")
 #### 1.2.1 Agent
 Agent是一个JVM进程，他以实践的形式将数据从源头送至目的地
 Agent主要有三个部分组成Source Channel Sink
