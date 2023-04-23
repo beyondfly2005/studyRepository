@@ -737,7 +737,14 @@ public class CustomProducerTransactions {
 
 ### 3.9 生产经验—数据乱序
 
-
+1) kafka 在1.x版本之前保证塑胶单分区有序，条件
+ max.in.flight.request.per.connection=1 （不需要靠率是否开启幂等性)
+2) kafka在1.x以后得版本保证书粉有序条件如下
+- 未开启幂等性
+  - max.in.flight.request.per.connection=1
+- 开启幂等性
+  - max.in.flight.request.per.connection=需要设置小于等于5
+  - 原因说明：因为在kafka1.x之后，启用幂等性后，kafka服务器会缓存producer发来的最近5个request的元数据，所以物理如何，都可以保证最近5个request的数据都是有序的
 
 
 ## 第4章 Kafka Broker
@@ -745,13 +752,79 @@ public class CustomProducerTransactions {
 ### 4.1 Kafka Broker工作流程
 
 #### 4.1.1 Zookeeper存储的Kafka信息
+1) 启动Zookeeper客户端
+
+ls /kafka
+ls /kafka/brokers/ids
+
+软件：perttyzoo 漂亮的Zookeeper 查看节点信息
+ls /kafka/brokers/ids
+ids 记录哪些服务器
+topics 记录谁是Leader 有哪些服务器可用
+consumers 0.9版本之前保存offset信息 0.9版本之后offset存储在kafka主题中
+controller 
+
+2) 通过ts
 
 #### 4.1.2 Kafka Broker总体工作流程
 
+1) broker 启动后会在zk中注册
+2) controller谁先注册 谁说了算
+3) 有选举处理的Controller监听brokers节点变化
+4) Controller绝对Leader选举
+5) Controller将节点信息上传ZK
+6) 
+
+
+模拟kafka节点变化
+```java
+
+```
 #### 4.1.3 Broker重要参数
 
 ### 4.2 生产经验——节点服役和退役
+1) 新节点准备
+  关闭hadoop104 ，并右键执行克隆操作
+2) 修改105的IP地址和主机名称之后 再打开104
+```bash
+vim /etc/sysconfig/network-script
 
+```
+3) 进入105 删除datas logs 里面有集群的唯一标识
+```bash
+cd /opt/module/kafka
+rm -rf datas/ logs/
+```
+4) 进入config目录 修改broker.id=3
+```bash
+cd config/
+vim server.properties
+broker.id=3
+```
+5) 启动105
+bin /kafka-server-start
+6) 以前创建的主题 并没有到105上
+
+执行负载均衡的主题
+vim topics-to-move.jso
+```json
+{
+  "topics": [
+    {"topic": "first"}
+  ],
+  "version": 1
+}
+```
+生成一个负载均衡计划
+```bash
+bin /kafka-reassign-partitions.sh --bootstrap-server hadoop102:9092 --topics-to-move-json-file topics-tp-move.json --broker-list "0,1,2,3" --generate
+```
+
+4、执行副本存储计划
+```bash
+bin /kafka-reassign-partitions.sh --bootstrap-server hadoop102:9092 --reassignment--json-file increase-replication-factor.json --execute
+```
+5、严重副本存储计划
 #### 4.2.1 服役新节点
 
 #### 4.2.2 退役旧节点
