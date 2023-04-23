@@ -431,11 +431,14 @@
   * 1-Hadoop
     * [Hadoop-尚硅谷](大数据/1-Hadoop/Hadoop-尚硅谷.md)
     * [Hadoop基础-左腾云](大数据/1-Hadoop/Hadoop基础-左腾云.md)
+  * [CDH6.3.2教程-尚硅谷](大数据/CDH6.3.2教程-尚硅谷.md)
   * Flink
     * [Flink-1.14.4-易学](大数据/Flink/Flink-1.14.4-易学.md)
     * [Flink-尚硅谷-2020版](大数据/Flink/Flink-尚硅谷-2020版.md)
     * [Flink-尚硅谷](大数据/Flink/Flink-尚硅谷.md)
     * [Flink-黑马](大数据/Flink/Flink-黑马.md)
+  * Flume
+    * [Flume-尚硅谷-2021版](大数据/Flume/Flume-尚硅谷-2021版.md)
   * [Hadoop3.0-HDFS-黑马](大数据/Hadoop3.0-HDFS-黑马.md)
   * Hudi
     * [Hudi-尚硅谷](大数据/Hudi/Hudi-尚硅谷.md)
@@ -443,6 +446,7 @@
   * [大数据全套教程-尚学堂2020](大数据/大数据全套教程-尚学堂2020.md)
   * [大数据学习路线图](大数据/大数据学习路线图.md)
   * [大数据零基础入门--黑马](大数据/大数据零基础入门--黑马.md)
+  * [电商数仓5.0-尚硅谷](大数据/电商数仓5.0-尚硅谷.md)
 * 学习
   * [学习](学习/学习.md)
   * [海马体学习法](学习/海马体学习法.md)
@@ -497,6 +501,7 @@
   * PostgreSQL
     * [PostgreSQL+MADlib分析](数据库/PostgreSQL/PostgreSQL+MADlib分析.md)
     * [PostgreSQL](数据库/PostgreSQL/PostgreSQL.md)
+  * [Redis](数据库/Redis)
   * Sybase
     * [Sybase](数据库/Sybase/Sybase.md)
   * TDengine
